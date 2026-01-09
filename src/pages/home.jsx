@@ -240,7 +240,7 @@ export default function Home({ isOpen, onClose, onSuccess }) {
     <div className="fixed inset-0 backdrop-blur-sm z-50 flex items-center justify-center p-4">
       <div className="bg-white rounded-2xl w-full max-w-6xl max-h-[95vh] overflow-hidden shadow-2xl flex flex-col">
         {/* Tracking Section */}
-        <div className="bg-gradient-to-r from-slate-700 to-slate-800 p-4">
+        {/* <div className="bg-gradient-to-r from-slate-700 to-slate-800 p-4">
           <div className="flex flex-col sm:flex-row gap-3">
             <div className="relative flex-1">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
@@ -272,13 +272,13 @@ export default function Home({ isOpen, onClose, onSuccess }) {
               </button>
             </div>
           </div>
-        </div>
+        </div> */}
 
         {/* Header */}
         <div className="bg-gradient-to-r from-blue-600 to-blue-700 text-white p-6">
           <div className="flex justify-between items-center">
             <div>
-              <h2 className="text-2xl font-bold">
+              <h2 className="md:text-2xl text-base font-bold">
                 Pesan Voucher Grosir Java Cell
               </h2>
               <p className="text-blue-100 text-sm mt-1">
