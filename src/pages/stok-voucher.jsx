@@ -400,6 +400,17 @@ export default function StokVoucherPage() {
                 )}
               </th>
               <th
+                className="p-4 text-right cursor-pointer hover:text-blue-600"
+                onClick={() => handleSort("hargaEceran")}
+              >
+                Harga Eceran
+                {sortConfig.key === "hargaEceran" && (
+                  <span className="ml-1">
+                    {sortConfig.direction === "asc" ? "↑" : "↓"}
+                  </span>
+                )}
+              </th>
+              <th
                 className="p-4 text-left cursor-pointer hover:text-blue-600"
                 onClick={() => handleSort("createdAt")}
               >
@@ -438,11 +449,15 @@ export default function StokVoucherPage() {
                   <td className="p-4">{v.nama}</td>
                   <td className="p-4 text-center font-medium">{v.stok}</td>
                   <td className="p-4">{v.penempatan}</td>
+
                   <td className="p-4 text-right text-green-700">
                     Rp {v.hargaPokok.toLocaleString("id-ID")}
                   </td>
                   <td className="p-4 text-right font-medium text-blue-700">
                     Rp {v.hargaJual.toLocaleString("id-ID")}
+                  </td>
+                  <td className="p-4 text-right font-medium text-blue-700">
+                    Rp {v.hargaEceran.toLocaleString("id-ID")}
                   </td>
                   <td className="p-4 text-gray-600">
                     {formatDate(v.createdAt)}
@@ -548,6 +563,27 @@ function ModalForm({
   errors,
   isEdit = false,
 }) {
+  // Validasi custom untuk harga
+  const validateHargaJual = (value, formValues) => {
+    const hargaPokok = formValues.hargaPokok
+      ? Number(formValues.hargaPokok)
+      : 0;
+    const hargaJual = Number(value);
+    if (hargaJual < hargaPokok) {
+      return "Harga grosir tidak boleh lebih kecil dari harga modal";
+    }
+    return true;
+  };
+
+  const validateHargaEceran = (value, formValues) => {
+    const hargaJual = formValues.hargaJual ? Number(formValues.hargaJual) : 0;
+    const hargaEceran = Number(value);
+    if (hargaEceran < hargaJual) {
+      return "Harga eceran tidak boleh lebih kecil dari harga grosir";
+    }
+    return true;
+  };
+
   return (
     <div className="fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center z-50 p-4">
       <div className="bg-white w-full max-w-md p-6 rounded-xl shadow-xl relative">
@@ -614,6 +650,7 @@ function ModalForm({
             )}
           </div>
           <div className="grid grid-cols-2 gap-4 mb-4">
+            {/* Harga Modal */}
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">
                 Harga Modal *
@@ -629,10 +666,17 @@ function ModalForm({
                 className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                 placeholder="12000"
               />
+              {errors.hargaPokok && (
+                <p className="text-xs text-red-500 mt-1">
+                  {errors.hargaPokok.message || "Harga modal wajib diisi"}
+                </p>
+              )}
             </div>
+
+            {/* Harga Grosir */}
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">
-                Harga Jual *
+                Harga Grosir *
               </label>
               <input
                 type="number"
@@ -641,10 +685,50 @@ function ModalForm({
                   required: true,
                   min: 0,
                   valueAsNumber: true,
+                  validate: (value) =>
+                    validateHargaJual(value, {
+                      hargaPokok: document.querySelector(
+                        'input[name="hargaPokok"]'
+                      )?.value,
+                    }),
                 })}
                 className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                 placeholder="15000"
               />
+              {errors.hargaJual && (
+                <p className="text-xs text-red-500 mt-1">
+                  {errors.hargaJual.message || "Harga grosir wajib diisi"}
+                </p>
+              )}
+            </div>
+
+            {/* Harga Eceran */}
+            <div className="col-span-2">
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Harga Eceran *
+              </label>
+              <input
+                type="number"
+                min="0"
+                {...register("hargaEceran", {
+                  required: true,
+                  min: 0,
+                  valueAsNumber: true,
+                  validate: (value) =>
+                    validateHargaEceran(value, {
+                      hargaJual: document.querySelector(
+                        'input[name="hargaJual"]'
+                      )?.value,
+                    }),
+                })}
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                placeholder="18000"
+              />
+              {errors.hargaEceran && (
+                <p className="text-xs text-red-500 mt-1">
+                  {errors.hargaEceran.message || "Harga eceran wajib diisi"}
+                </p>
+              )}
             </div>
           </div>
           <div className="flex justify-end gap-3">

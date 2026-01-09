@@ -23,6 +23,7 @@ import LoginPage from "./pages/login";
 import UserManagementPage from "./pages/user";
 import ListMemberPage from "./pages/list-member";
 import Home from "./pages/home";
+import JualanVoucher from "./pages/jualan-voucher";
 
 function App() {
   const { user, isLoading, isCheckingAuth, fetchUser } = useAuthStore();
@@ -38,6 +39,7 @@ function App() {
       <Route path="/login" element={<LoginPage />} />
 
       <Route path="/dashboard" element={<DashboardLayout />}>
+        <Route path="jualan-voucher" element={<JualanVoucher />} />
         <Route path="overview" element={<Overview />} />
         <Route path="user" element={<UserManagementPage />} />
         <Route path="transaksi" element={<TransaksiPage />} />

@@ -8,8 +8,16 @@ export const navItems = [
     items: [],
   },
   {
-    title: "Yuk Jualan",
+    title: "Yuk Transaksi ",
     url: "/dashboard/transaksi",
+    icon: "university",
+    isActive: false,
+    shortcut: ["d", "d"],
+    items: [],
+  },
+  {
+    title: "Yuk Jualan Voucher ",
+    url: "/dashboard/jualan-voucher",
     icon: "university",
     isActive: false,
     shortcut: ["d", "d"],
