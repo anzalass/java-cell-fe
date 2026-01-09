@@ -1,44 +1,29 @@
-import React from "react";
-import { useState } from "react";
+// src/pages/LoginPage.jsx
+import React, { useState } from "react";
 import { useForm } from "react-hook-form";
 import { Lock, Mail, Eye, EyeOff, LogIn } from "lucide-react";
-import { Link, Navigate, useNavigate } from "react-router-dom";
+import { Navigate, useNavigate } from "react-router-dom";
+import Swal from "sweetalert2";
 import api from "../api/client";
 import { useAuthStore } from "../store/useAuthStore";
-import Swal from "sweetalert2";
 
 export default function LoginPage() {
+  const { user, isCheckingAuth, fetchUser } = useAuthStore();
+  const navigate = useNavigate();
+
+  // ✅ Redirect jika sudah login (sebelum render apapun)
+
+  // Form state
   const {
     register,
     handleSubmit,
     formState: { errors, isSubmitting },
-    watch,
   } = useForm();
 
-  const { user, isCheckingAuth, fetchUser } = useAuthStore();
-
-  // ✅ Redirect jika sudah login
-  if (!isCheckingAuth && user) {
-    return <Navigate to="/dashboard/overview" replace />;
-  }
-
-  // ✅ Tampilkan loading jika sedang mengecek auth
-  if (isCheckingAuth) {
-    return (
-      <div className="flex items-center justify-center min-h-screen">
-        Memeriksa sesi...
-      </div>
-    );
-  }
-
-  const nav = useNavigate();
-
   const [showPassword, setShowPassword] = useState(false);
-  const navigate = useNavigate();
 
   const onSubmit = async (data) => {
     try {
-      // Tampilkan loading
       Swal.fire({
         title: "Masuk...",
         text: "Memproses login Anda",
@@ -54,7 +39,6 @@ export default function LoginPage() {
 
       Swal.close();
 
-      // Opsional: tampilkan notifikasi sukses singkat
       await Swal.fire({
         title: "Login Berhasil!",
         text: "Selamat datang kembali!",
@@ -63,14 +47,12 @@ export default function LoginPage() {
         showConfirmButton: false,
       });
 
-      fetchUser();
-      nav("/dashboard/overview");
+      fetchUser(); // Perbarui state auth
+      navigate("/dashboard/overview");
     } catch (error) {
       Swal.close();
 
       let errorMsg = "Email atau password salah.";
-
-      // Jika error dari backend menyediakan pesan spesifik
       if (error.response?.data?.error) {
         errorMsg = error.response.data.error;
       } else if (error.response?.status === 401) {
@@ -88,10 +70,12 @@ export default function LoginPage() {
         icon: "error",
         confirmButtonText: "OK",
       });
-
-      console.error("Login error:", error);
     }
   };
+
+  if (isCheckingAuth) return <div>Memeriksa sesi...</div>;
+
+  if (user) return <Navigate to="/dashboard/overview" replace />;
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center p-4">
@@ -250,8 +234,6 @@ export default function LoginPage() {
               )}
             </button>
           </form>
-
-          {/* Divider */}
         </div>
 
         {/* Footer */}
