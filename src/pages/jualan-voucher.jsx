@@ -8,6 +8,7 @@ import {
   BarChart3,
   X,
   RefreshCw,
+  Tag,
 } from "lucide-react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import Swal from "sweetalert2";
@@ -180,26 +181,40 @@ export default function JualanVoucher() {
 
   return (
     <div className="p-4 sm:p-6 w-full mx-auto">
-      <h1 className="text-2xl font-bold text-gray-800 mb-6 flex items-center gap-2">
-        <Wallet className="w-7 h-7 text-blue-600" />
-        Penjualan Voucher
-      </h1>
+      <div className="bg-white rounded-2xl mt-3 shadow-md p-6 mb-6">
+        <div className="flex items-center gap-4">
+          <div className="bg-gradient-to-r from-cyan-600 to-blue-600 p-4 rounded-xl">
+            <Wallet className="w-8 h-8 text-white" />
+          </div>
+          <div>
+            <h1 className="text-base md:text-3xl font-bold text-gray-800">
+              Penjualan Voucher
+            </h1>
+            <p className="text-gray-600 text-sm mt-1">
+              Kelola transaksi penjualan voucher pulsa & data
+            </p>
+          </div>
+        </div>
+      </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* === KIRI: BRAND & VOUCHER === */}
         <div className="lg:col-span-2 space-y-6">
           {/* Brand Buttons */}
-          <div>
-            <h2 className="text-lg font-semibold text-gray-700 mb-3">
-              Pilih Provider
-            </h2>
-            <div className="flex flex-wrap gap-2">
+          <div className="bg-white rounded-2xl shadow-sm p-3">
+            <div className="flex items-center gap-2 mb-4">
+              <Tag className="w-5 h-5 text-cyan-600" />
+              <h2 className="text-lg font-bold text-gray-800">
+                Pilih Provider
+              </h2>
+            </div>
+            <div className="grid grid-cols-3 sm:grid-cols-6 gap-3">
               <button
                 onClick={() => setSelectedBrand("")}
-                className={`px-4 py-2 rounded-lg font-medium transition ${
+                className={`px-4 py-3 rounded-xl font-semibold transition-all ${
                   !selectedBrand
-                    ? "bg-blue-600 text-white shadow"
-                    : "bg-gray-100 text-gray-700 hover:bg-gray-200"
+                    ? "bg-gradient-to-r from-cyan-600 to-blue-600 text-white shadow-lg scale-105"
+                    : "bg-gray-100 text-gray-700 hover:bg-gray-200 hover:shadow-md"
                 }`}
               >
                 Semua
@@ -208,13 +223,13 @@ export default function JualanVoucher() {
                 <button
                   key={brand}
                   onClick={() => setSelectedBrand(brand)}
-                  className={`px-4 py-2 rounded-lg font-medium transition ${
+                  className={`px-4 py-3 text-sm rounded-xl font-semibold transition-all ${
                     selectedBrand === brand
-                      ? "bg-blue-600 text-white shadow"
-                      : "bg-gray-100 text-gray-700 hover:bg-gray-200"
+                      ? "bg-gradient-to-r from-cyan-600 to-blue-600 text-white shadow-lg scale-105"
+                      : "bg-gray-100 text-gray-700 hover:bg-gray-200 hover:shadow-md"
                   }`}
                 >
-                  {brand}
+                  {brand === "Indosat / IM3" ? "Indosat" : brand}
                 </button>
               ))}
             </div>
@@ -345,6 +360,16 @@ export default function JualanVoucher() {
                       </p>
                       <p className="text-xs text-gray-600">
                         {item.voucher.brand}
+                      </p>
+                      <p className="text-xs">
+                        {" "}
+                        {new Date(item.tanggal).toLocaleString("id-ID", {
+                          day: "numeric",
+                          month: "long",
+                          year: "numeric",
+                          hour: "2-digit",
+                          minute: "numeric",
+                        })}{" "}
                       </p>
                     </div>
                     <div className="flex items-center gap-2">

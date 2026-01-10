@@ -289,7 +289,7 @@ export default function TransaksiPage() {
   const queryClient = useQueryClient();
   const timeoutRef = useRef(null);
 
-  const kategoriList = ["Tarik Tunai", "Transit", "Transfer-Topup", "VD"];
+  const kategoriList = ["Tarik Tunai", "Transit", "Transfer", "Top-Up"];
   const nominalList = [
     1000, 1500, 2000, 2500, 3000, 4000, 5000, 6000, 7000, 8000, 9000, 10000,
     12000, 15000, 20000, 25000, 30000,
@@ -447,7 +447,7 @@ export default function TransaksiPage() {
     manualMutation.mutate({
       kategori: data.kategori,
       nominal: Number(data.nominal),
-      ...(data.memberId && { idMember: data.memberId }),
+      ...(selectedMember?.id && { idMember: selectedMember?.id }),
     });
   };
 
@@ -517,10 +517,10 @@ export default function TransaksiPage() {
               <TrendingUp className="w-8 h-8 text-white" />
             </div>
             <div>
-              <h1 className="lg:text-3xl text-lg font-bold text-gray-800">
+              <h1 className="lg:text-3xl text-base font-bold text-gray-800">
                 Hitung Keuntungan Hari Ini
               </h1>
-              <p className="text-gray-600 mt-1">
+              <p className="text-gray-600 mt-1 text-xs md:">
                 Kelola dan pantau keuntungan transaksi harian
               </p>
             </div>
@@ -529,7 +529,7 @@ export default function TransaksiPage() {
 
         {/* Quick Input Section */}
         <div className="bg-white rounded-2xl shadow-xl p-6 mb-6">
-          <h2 className="font-bold text-xl text-gray-800 mb-6 flex items-center gap-2">
+          <h2 className="font-bold md:text-xl text=base text-gray-800 mb-6 flex items-center gap-2">
             <DollarSign className="w-6 h-6 text-blue-600" />
             Input Cepat
           </h2>
@@ -545,7 +545,7 @@ export default function TransaksiPage() {
                 <button
                   key={kat}
                   onClick={() => setSelectedKategori(kat)}
-                  className={`px-4 py-3 rounded-xl border-2 font-medium transition-all ${
+                  className={`px-4 py-3 text-sm md:text-base rounded-xl border-2 font-medium transition-all ${
                     selectedKategori === kat
                       ? "bg-gradient-to-r from-blue-600 to-indigo-600 text-white border-blue-600 shadow-lg scale-105"
                       : "bg-white border-gray-200 text-gray-700 hover:border-blue-300 hover:shadow-md"
@@ -585,13 +585,13 @@ export default function TransaksiPage() {
             <div className="flex flex-col sm:flex-row gap-3 p-4 bg-gradient-to-r from-blue-50 to-indigo-50 rounded-xl border-2 border-blue-200">
               <button
                 onClick={() => submitTransaksi(null)}
-                className="flex-1 px-6 py-3 bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 text-white rounded-lg font-semibold shadow-md hover:shadow-lg transition-all"
+                className="flex-1 text-sm md:text-base px-6 py-3 bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 text-white rounded-lg font-semibold shadow-md hover:shadow-lg transition-all"
               >
                 💾 Simpan Tanpa Member
               </button>
               <button
                 onClick={() => setShowMemberInput(true)}
-                className="flex-1 px-6 py-3 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white rounded-lg font-semibold shadow-md hover:shadow-lg transition-all"
+                className="flex-1 text-sm md:text-base px-6 py-3 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white rounded-lg font-semibold shadow-md hover:shadow-lg transition-all"
               >
                 👤 Simpan Dengan Member
               </button>
@@ -687,12 +687,15 @@ export default function TransaksiPage() {
 
         {/* Manual Input Section */}
         <div className="bg-white rounded-2xl shadow-xl p-6 mb-6">
-          <h2 className="font-bold text-xl text-gray-800 mb-6 flex items-center gap-2">
+          <h2 className="font-bold md:text-xl text-base text-gray-800 mb-6 flex items-center gap-2">
             <Wallet className="w-6 h-6 text-purple-600" />
             Input Manual Keuntungan
           </h2>
 
-          <div className="space-y-4">
+          <form
+            className="space-y-4"
+            onSubmit={handleSubmit(handleManualSubmit)}
+          >
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
                 <label className="block text-sm font-semibold text-gray-700 mb-2">
@@ -700,6 +703,9 @@ export default function TransaksiPage() {
                 </label>
                 <input
                   type="text"
+                  {...register("kategori", {
+                    required: "Kategori wajib diisi",
+                  })}
                   placeholder="Contoh: Tarik Tunai"
                   className="w-full px-4 py-3 border-2 border-gray-200 rounded-lg focus:border-purple-500 focus:outline-none transition"
                 />
@@ -710,7 +716,16 @@ export default function TransaksiPage() {
                 </label>
                 <input
                   type="number"
+                  {...register("nominal", {
+                    required: "Nominal wajib diisi",
+                    min: { value: 1, message: "Minimal 1" },
+                  })}
+                  min="1"
                   placeholder="Contoh: 5000"
+                  onKeyDown={(e) => {
+                    if (e.key === "-" || e.key === "e" || e.key === "E")
+                      e.preventDefault();
+                  }}
                   className="w-full px-4 py-3 border-2 border-gray-200 rounded-lg focus:border-purple-500 focus:outline-none transition"
                 />
               </div>
@@ -718,10 +733,10 @@ export default function TransaksiPage() {
 
             <div className="flex items-center gap-2 bg-purple-50 p-3 rounded-lg">
               <input
+                checked={watchIsForMember}
                 type="checkbox"
                 id="isForMember"
-                checked={watchIsForMember}
-                onChange={(e) => setWatchIsForMember(e.target.checked)}
+                {...register("isForMember")}
                 className="h-5 w-5 text-purple-600 rounded focus:ring-purple-500"
               />
               <label
@@ -732,13 +747,77 @@ export default function TransaksiPage() {
               </label>
             </div>
 
+            {watchIsForMember && (
+              <div className="mt-4 p-5 border-2 border-blue-200 rounded-xl bg-gradient-to-br from-blue-50 to-indigo-50">
+                <h3 className="font-semibold text-gray-800 mb-3 flex items-center gap-2">
+                  <Search className="w-5 h-5 text-blue-600" />
+                  Pilih Member
+                </h3>
+                <div className="relative mb-4">
+                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+                  <input
+                    type="text"
+                    value={memberSearch}
+                    onChange={(e) => {
+                      setMemberSearch(e.target.value);
+                      if (e.target.value.trim()) setShowMemberDropdown(true);
+                    }}
+                    placeholder="Cari nama atau no HP..."
+                    className="w-full border-2 border-blue-200 rounded-lg pl-10 pr-4 py-3 focus:border-blue-500 focus:outline-none transition"
+                    onFocus={() =>
+                      membersList.length > 0 && setShowMemberDropdown(true)
+                    }
+                  />
+
+                  {showMemberDropdown && (
+                    <div className="absolute z-50 bg-white border-2 border-blue-200 w-full rounded-lg shadow-xl mt-2 max-h-48 overflow-y-auto">
+                      {membersList.length === 0 ? (
+                        <p className="p-3 text-gray-500 text-center">
+                          Member tidak ditemukan
+                        </p>
+                      ) : (
+                        membersList.map((m) => (
+                          <div
+                            key={m.id}
+                            className="p-3 hover:bg-blue-50 cursor-pointer flex justify-between transition"
+                            onClick={() => selectMember(m)}
+                          >
+                            <span className="font-medium">{m.nama}</span>
+                            <span className="text-gray-500 text-sm">
+                              {m.noTelp || "-"}
+                            </span>
+                          </div>
+                        ))
+                      )}
+                    </div>
+                  )}
+
+                  {selectedMember && (
+                    <div className="mt-3 flex items-center justify-between bg-green-50 border-2 border-green-200 rounded-lg p-3">
+                      <div className="flex items-center gap-2">
+                        <CheckCircle className="w-5 h-5 text-green-600" />
+                        <span className="text-sm text-green-800">
+                          Member: <b>{selectedMember.nama}</b>
+                        </span>
+                      </div>
+                      <button
+                        onClick={() => setSelectedMember(null)}
+                        className="text-red-500 hover:text-red-700"
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </button>
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
             <button
-              onClick={handleManualSubmit}
-              className="w-full md:w-auto px-8 py-3 bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 text-white font-semibold rounded-lg shadow-md hover:shadow-lg transition-all"
+              type="submit"
+              className="w-full text-sm md:text-base md:w-auto px-8 py-3 bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 text-white font-semibold rounded-lg shadow-md hover:shadow-lg transition-all"
             >
               ➕ Tambah Keuntungan
             </button>
-          </div>
+          </form>
         </div>
 
         {/* Summary Card */}
@@ -748,7 +827,7 @@ export default function TransaksiPage() {
               <p className="text-green-100 text-sm mb-1">
                 Total Keuntungan Hari Ini
               </p>
-              <h3 className="text-4xl font-bold">
+              <h3 className="md:text-4xl text-xl font-bold">
                 Rp {totalKeuntungan.toLocaleString()}
               </h3>
             </div>
@@ -760,7 +839,7 @@ export default function TransaksiPage() {
 
         {/* Table Section */}
         <div className="bg-white rounded-2xl shadow-xl p-6">
-          <h2 className="font-bold text-xl text-gray-800 mb-4 flex items-center gap-2">
+          <h2 className="font-bold md:text-xl text-base text-gray-800 mb-4 flex items-center gap-2">
             <Calendar className="w-6 h-6 text-blue-600" />
             Riwayat Keuntungan Hari Ini
           </h2>

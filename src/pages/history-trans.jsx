@@ -22,6 +22,8 @@ export default function LaporanKeuanganPage() {
 
   // Filter state
   const [page, setPage] = useState(1);
+  const [page2, setPage2] = useState(1);
+
   const [pageSize, setPageSize] = useState(2);
   const [pageSize2, setPageSize2] = useState(2);
 
@@ -34,6 +36,8 @@ export default function LaporanKeuanganPage() {
   const fetchLaporanKeuangan = async ({
     page,
     pageSize,
+    page2,
+    pageSize2,
     filterPeriod,
     dateFrom,
     dateTo,
@@ -44,6 +48,8 @@ export default function LaporanKeuanganPage() {
     const params = new URLSearchParams();
     params.append("page", page);
     params.append("pageSize", pageSize);
+    params.append("page2", page2);
+    params.append("pageSize2", pageSize2);
     params.append("filterPeriod", filterPeriod);
     params.append("filterJenis", filterJenis);
 
@@ -72,6 +78,8 @@ export default function LaporanKeuanganPage() {
       "laporan-keuangan",
       page,
       pageSize,
+      page2,
+      pageSize2,
       filterPeriod,
       dateFrom,
       dateTo,
@@ -82,6 +90,8 @@ export default function LaporanKeuanganPage() {
       fetchLaporanKeuangan({
         page,
         pageSize,
+        page2,
+        pageSize2,
         filterPeriod,
         dateFrom,
         dateTo,
@@ -502,29 +512,46 @@ export default function LaporanKeuanganPage() {
             {filterJenis !== "keuntungan" && (
               <div className="flex justify-between items-center px-4 py-3 border-t bg-gray-50">
                 <span className="text-sm text-gray-600">
-                  Menampilkan {(page - 1) * pageSize + 1} -{" "}
-                  {Math.min(page * pageSize, data.meta.totalUnexpectedItems)}{" "}
+                  Menampilkan {(page2 - 1) * pageSize2 + 1} -{" "}
+                  {Math.min(page2 * pageSize2, data.meta.totalUnexpectedItems)}{" "}
                   dari {data.meta.totalUnexpectedItems} data
                 </span>
+                <div>
+                  <select
+                    id="itemPerPage"
+                    name="itemPerPage"
+                    value={pageSize2}
+                    onChange={(e) => {
+                      setPageSize2(e.target.value);
+                      resetPage();
+                    }}
+                    className="px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  >
+                    <option value="5">5 / hal</option>
+                    <option value="10">10 / hal</option>
+                    <option value="30">30 / hal</option>
+                    <option value="50">50 / hal</option>
+                  </select>
+                </div>
                 <div className="flex items-center gap-2">
                   <button
-                    onClick={() => setPage(page - 1)}
-                    disabled={page <= 1}
+                    onClick={() => setPage2(page2 - 1)}
+                    disabled={page2 <= 1}
                     className="px-3 py-1.5 border rounded text-sm disabled:opacity-40"
                   >
                     Sebelumnya
                   </button>
                   <span className="text-sm">
-                    Halaman {page} dari{" "}
+                    Halaman {page2} dari{" "}
                     {Math.max(
                       1,
-                      Math.ceil(data.meta.totalUnexpectedItems / pageSize)
+                      Math.ceil(data.meta.totalUnexpectedItems / pageSize2)
                     )}
                   </span>
                   <button
-                    onClick={() => setPage(page + 1)}
+                    onClick={() => setPage2(page2 + 1)}
                     disabled={
-                      page >=
+                      page2 >=
                       Math.ceil(data.meta.totalUnexpectedItems / pageSize)
                     }
                     className="px-3 py-1.5 border rounded text-sm disabled:opacity-40"

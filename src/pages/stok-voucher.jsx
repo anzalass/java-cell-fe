@@ -6,6 +6,19 @@ import Swal from "sweetalert2";
 import UpdateStokModal from "../components/update-stok";
 import api from "../api/client";
 import { useAuthStore } from "../store/useAuthStore";
+import {
+  ArrowUpDown,
+  Calendar,
+  ChevronLeft,
+  ChevronRight,
+  Edit,
+  Filter,
+  Package,
+  Plus,
+  Search,
+  Trash2,
+  TrendingUp,
+} from "lucide-react";
 
 export default function StokVoucherPage() {
   const { user } = useAuthStore();
@@ -17,6 +30,9 @@ export default function StokVoucherPage() {
 
   // Filter & Sort
   const [searchNama, setSearchNama] = useState("");
+  const [searchquery, setSearchQuery] = useState("");
+  const [brand, setBrand] = useState("");
+
   const [filterDibuat, setFilterDibuat] = useState("");
   const [sortConfig, setSortConfig] = useState({
     key: "createdAt",
@@ -30,6 +46,7 @@ export default function StokVoucherPage() {
     setSearchNama("");
     setFilterDibuat("");
     setPage(1);
+    setSearchQuery("");
   };
 
   // === QUERY: Fetch Voucher Data ===
@@ -40,11 +57,21 @@ export default function StokVoucherPage() {
     error,
     refetch,
   } = useQuery({
-    queryKey: ["vouchers", searchNama, filterDibuat, sortConfig, page, perPage],
+    queryKey: [
+      "vouchers",
+      searchquery,
+      filterDibuat,
+      brand,
+      sortConfig,
+      page,
+      perPage,
+    ],
     queryFn: async () => {
       const params = new URLSearchParams();
-      if (searchNama) params.append("search", searchNama);
+      if (searchquery) params.append("search", searchquery);
       if (filterDibuat) params.append("createdAt", filterDibuat);
+      if (brand) params.append("brand", brand);
+
       params.append("sortBy", sortConfig.key);
       params.append("sortOrder", sortConfig.direction);
       params.append("page", page);
@@ -60,7 +87,7 @@ export default function StokVoucherPage() {
   });
 
   const data = queryData?.data || [];
-  const totalPage = Math.ceil((data.length || 0) / perPage);
+  const totalPage = queryData?.meta?.totalPages;
 
   useEffect(() => {
     setPage(1);
@@ -259,263 +286,289 @@ export default function StokVoucherPage() {
   }
 
   return (
-    <div className="p-4 sm:p-6 w-full mx-auto">
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
-        <h1 className="text-2xl font-bold text-gray-800">
-          Manajemen Stok Voucher
-        </h1>
-        <button
-          onClick={openAddModal}
-          className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors whitespace-nowrap"
-        >
-          + Tambah Voucher
-        </button>
-      </div>
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50 p-4 md:p-6">
+      <div className="w-full mx-auto">
+        {/* Header */}
+        <div className="bg-white rounded-2xl shadow-xl p-6 mb-6">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+            <div className="flex items-center gap-4">
+              <div className="bg-gradient-to-r from-blue-600 to-indigo-600 p-4 rounded-xl">
+                <Package className="w-8 h-8 text-white" />
+              </div>
+              <div>
+                <h1 className="text-base md:text-3xl font-bold text-gray-800">
+                  Manajemen Stok Voucher
+                </h1>
+                <p className="text-gray-600 text-sm mt-1">
+                  Kelola inventori voucher dengan mudah
+                </p>
+              </div>
+            </div>
+            <button
+              onClick={openAddModal}
+              className="px-6 py-3 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white rounded-lg font-semibold shadow-md hover:shadow-lg transition-all flex items-center gap-2 justify-center"
+            >
+              <Plus className="w-5 h-5" />
+              Tambah Voucher
+            </button>
+          </div>
+        </div>
 
-      {/* Filter */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">
-            Cari Nama
-          </label>
-          <input
-            type="text"
-            value={searchNama}
-            onChange={(e) => {
-              setSearchNama(e.target.value);
-              resetPage();
-            }}
-            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-            placeholder="6 GB, Harian, dll..."
-          />
-        </div>
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">
-            Tanggal Dibuat
-          </label>
-          <input
-            type="date"
-            value={filterDibuat}
-            onChange={(e) => {
-              setFilterDibuat(e.target.value);
-              resetPage();
-            }}
-            className="w-full px-3 py-2 border border-gray-300 rounded-md"
-          />
-        </div>
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">
-            Item per Halaman
-          </label>
-          <select
-            value={perPage}
-            onChange={(e) => setPerPage(Number(e.target.value))}
-            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-          >
-            <option value={10}>10</option>
-            <option value={20}>20</option>
-            <option value={50}>50</option>
-            <option value={100}>100</option>
-          </select>
-        </div>
-        <div className="flex items-end">
-          <button
-            onClick={clearFilters}
-            className="px-4 py-2 text-sm text-gray-600 hover:text-gray-800 border border-gray-300 rounded-md w-full"
-          >
-            Reset Filter
-          </button>
-        </div>
-      </div>
+        {/* Filters */}
+        <div className="bg-white rounded-2xl shadow-xl p-6 mb-6">
+          {/* Header */}
+          <div className="flex items-center gap-2 mb-6">
+            <Filter className="w-5 h-5 text-blue-600" />
+            <h2 className="font-bold text-lg text-gray-800">
+              Filter & Pencarian
+            </h2>
+          </div>
 
-      {/* Table */}
-      <div className="w-full overflow-x-auto bg-white rounded-lg shadow-sm border">
-        <table className="w-full text-sm">
-          <thead className="bg-gray-50 text-gray-600">
-            <tr>
-              <th
-                className="p-4 text-left cursor-pointer hover:text-blue-600"
-                onClick={() => handleSort("brand")}
+          {/* Filter Grid */}
+          <div className="grid grid-cols-1 md:grid-cols-6 gap-4 items-end">
+            {/* Search */}
+            <div className="md:col-span-3">
+              <label className="block text-sm font-semibold text-gray-700 mb-2">
+                Cari Nama Paket
+              </label>
+              <div className="flex gap-2">
+                <div className="relative flex-1">
+                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+                  <input
+                    type="text"
+                    value={searchNama}
+                    onChange={(e) => setSearchNama(e.target.value)}
+                    className="w-full pl-10 pr-4 py-3 border-2 border-gray-200 rounded-lg focus:border-blue-500 focus:outline-none transition"
+                    placeholder="6 GB, Harian, dll..."
+                  />
+                </div>
+                <button
+                  onClick={() => setSearchQuery(searchNama)}
+                  className="px-5 py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-semibold transition"
+                >
+                  Cari
+                </button>
+              </div>
+            </div>
+            <div>
+              <label className="block text-sm font-semibold text-gray-700 mb-2">
+                Brand / Provider
+              </label>
+              <select
+                value={brand}
+                onChange={(e) => setBrand(e.target.value)}
+                className="w-full px-4 py-3 border-2 border-gray-200 rounded-lg focus:border-blue-500 focus:outline-none"
               >
-                Brand
-                {sortConfig.key === "brand" && (
-                  <span className="ml-1">
-                    {sortConfig.direction === "asc" ? "↑" : "↓"}
-                  </span>
-                )}
-              </th>
-              <th
-                className="p-4 text-left cursor-pointer hover:text-blue-600"
-                onClick={() => handleSort("nama")}
-              >
-                Nama Paket
-                {sortConfig.key === "nama" && (
-                  <span className="ml-1">
-                    {sortConfig.direction === "asc" ? "↑" : "↓"}
-                  </span>
-                )}
-              </th>
-              <th
-                className="p-4 text-center cursor-pointer hover:text-blue-600"
-                onClick={() => handleSort("stok")}
-              >
-                Stok
-                {sortConfig.key === "stok" && (
-                  <span className="ml-1">
-                    {sortConfig.direction === "asc" ? "↑" : "↓"}
-                  </span>
-                )}
-              </th>
-              <th
-                className="p-4 text-center cursor-pointer hover:text-blue-600"
-                onClick={() => handleSort("penempatan")}
-              >
-                Penempatan
-                {sortConfig.key === "penempatan" && (
-                  <span className="ml-1">
-                    {sortConfig.direction === "asc" ? "↑" : "↓"}
-                  </span>
-                )}
-              </th>
-              <th
-                className="p-4 text-right cursor-pointer hover:text-blue-600"
-                onClick={() => handleSort("hargaPokok")}
-              >
-                Modal
-                {sortConfig.key === "hargaPokok" && (
-                  <span className="ml-1">
-                    {sortConfig.direction === "asc" ? "↑" : "↓"}
-                  </span>
-                )}
-              </th>
-              <th
-                className="p-4 text-right cursor-pointer hover:text-blue-600"
-                onClick={() => handleSort("hargaJual")}
-              >
-                Harga Jual
-                {sortConfig.key === "hargaJual" && (
-                  <span className="ml-1">
-                    {sortConfig.direction === "asc" ? "↑" : "↓"}
-                  </span>
-                )}
-              </th>
-              <th
-                className="p-4 text-right cursor-pointer hover:text-blue-600"
-                onClick={() => handleSort("hargaEceran")}
-              >
-                Harga Eceran
-                {sortConfig.key === "hargaEceran" && (
-                  <span className="ml-1">
-                    {sortConfig.direction === "asc" ? "↑" : "↓"}
-                  </span>
-                )}
-              </th>
-              <th
-                className="p-4 text-left cursor-pointer hover:text-blue-600"
-                onClick={() => handleSort("createdAt")}
-              >
-                Dibuat
-                {sortConfig.key === "createdAt" && (
-                  <span className="ml-1">
-                    {sortConfig.direction === "asc" ? "↑" : "↓"}
-                  </span>
-                )}
-              </th>
-              <th
-                className="p-4 text-left cursor-pointer hover:text-blue-600"
-                onClick={() => handleSort("updatedAt")}
-              >
-                Diupdate
-                {sortConfig.key === "updatedAt" && (
-                  <span className="ml-1">
-                    {sortConfig.direction === "asc" ? "↑" : "↓"}
-                  </span>
-                )}
-              </th>
-              <th className="p-4 text-center">Aksi</th>
-            </tr>
-          </thead>
-          <tbody className="divide-y divide-gray-100">
-            {data.length === 0 ? (
-              <tr>
-                <td colSpan={9} className="text-center py-8 text-gray-500">
-                  Tidak ada data
-                </td>
-              </tr>
-            ) : (
-              data.map((v) => (
-                <tr key={v.id} className="hover:bg-gray-50">
-                  <td className="p-4 font-medium text-gray-800">{v.brand}</td>
-                  <td className="p-4">{v.nama}</td>
-                  <td className="p-4 text-center font-medium">{v.stok}</td>
-                  <td className="p-4">{v.penempatan}</td>
+                <option value={""}>Semua</option>
+                <option value={"Smartfren"}>Smartfren</option>
+                <option value={"XL"}>XL</option>
+                <option value={"Axis"}>Axis</option>
+                <option value={"Indosat / IM3"}>Indosat / IM3</option>
+                <option value={"Telkomsel"}>Telkomsel</option>
+                <option value={"Tri"}>Tri</option>
+              </select>
+            </div>
 
-                  <td className="p-4 text-right text-green-700">
-                    Rp {v.hargaPokok.toLocaleString("id-ID")}
-                  </td>
-                  <td className="p-4 text-right font-medium text-blue-700">
-                    Rp {v.hargaJual.toLocaleString("id-ID")}
-                  </td>
-                  <td className="p-4 text-right font-medium text-blue-700">
-                    Rp {v.hargaEceran.toLocaleString("id-ID")}
-                  </td>
-                  <td className="p-4 text-gray-600">
-                    {formatDate(v.createdAt)}
-                  </td>
-                  <td className="p-4 text-gray-600">
-                    {formatDate(v.updatedAt)}
-                  </td>
-                  <td className="p-4 text-center">
-                    <div className="flex justify-center gap-2">
-                      <button
-                        onClick={() => {
-                          reset(v);
-                          setOpenEdit(v);
-                        }}
-                        className="px-3 py-1.5 bg-amber-500 text-white text-xs rounded hover:bg-amber-600"
-                      >
-                        Edit
-                      </button>
-                      <button
-                        onClick={() => handleDelete(v.id)}
-                        className="px-3 py-1.5 bg-rose-600 text-white text-xs rounded hover:bg-rose-700"
-                      >
-                        Hapus
-                      </button>
-                      <button
-                        onClick={() => handleUpdateStok(v)}
-                        className="px-3 py-1 bg-green-600 text-white text-xs rounded hover:bg-green-700"
-                      >
-                        Update Stok
-                      </button>
+            {/* Date Filter */}
+            <div>
+              <label className="block text-sm font-semibold text-gray-700 mb-2">
+                Tanggal Dibuat
+              </label>
+              <div className="relative">
+                <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+                <input
+                  type="date"
+                  value={filterDibuat}
+                  onChange={(e) => setFilterDibuat(e.target.value)}
+                  className="w-full pl-10 pr-4 py-3 border-2 border-gray-200 rounded-lg focus:border-blue-500 focus:outline-none"
+                />
+              </div>
+            </div>
+
+            {/* Per Page */}
+            <div>
+              <label className="block text-sm font-semibold text-gray-700 mb-2">
+                Item per Halaman
+              </label>
+              <select
+                value={perPage}
+                onChange={(e) => setPerPage(Number(e.target.value))}
+                className="w-full px-4 py-3 border-2 border-gray-200 rounded-lg focus:border-blue-500 focus:outline-none"
+              >
+                <option value={5}>5</option>
+                <option value={10}>10</option>
+                <option value={20}>20</option>
+                <option value={50}>50</option>
+                <option value={100}>100</option>
+              </select>
+            </div>
+          </div>
+
+          {/* Footer Actions */}
+          <div className="mt-6 flex justify-end">
+            <button
+              onClick={clearFilters}
+              className="px-4 py-2 text-sm font-semibold text-gray-600 hover:text-gray-800 border-2 border-gray-300 rounded-lg hover:bg-gray-50 transition"
+            >
+              Reset Filter
+            </button>
+          </div>
+        </div>
+
+        {/* Table */}
+        <div className="bg-white rounded-2xl shadow-xl overflow-hidden">
+          <div className="overflow-x-auto">
+            <table className="w-full text-sm">
+              <thead>
+                <tr className="bg-gradient-to-r from-blue-600 to-indigo-600 text-white">
+                  <th
+                    className="p-4 text-left font-semibold cursor-pointer hover:bg-blue-700 transition"
+                    onClick={() => handleSort("brand")}
+                  >
+                    <div className="flex items-center gap-2">
+                      Brand
+                      <ArrowUpDown className="w-4 h-4" />
                     </div>
-                  </td>
+                  </th>
+                  <th
+                    className="p-4 text-left font-semibold cursor-pointer hover:bg-blue-700 transition"
+                    onClick={() => handleSort("nama")}
+                  >
+                    <div className="flex items-center gap-2">
+                      Nama Paket
+                      <ArrowUpDown className="w-4 h-4" />
+                    </div>
+                  </th>
+                  <th
+                    className="p-4 text-center font-semibold cursor-pointer hover:bg-blue-700 transition"
+                    onClick={() => handleSort("stok")}
+                  >
+                    <div className="flex items-center justify-center gap-2">
+                      Stok
+                      <ArrowUpDown className="w-4 h-4" />
+                    </div>
+                  </th>
+                  <th className="p-4 text-center font-semibold">Penempatan</th>
+                  <th className="p-4 text-right font-semibold">Modal</th>
+                  <th className="p-4 text-right font-semibold">Harga Grosir</th>
+                  <th className="p-4 text-right font-semibold">Harga Eceran</th>
+                  <th className="p-4 text-left font-semibold">Dibuat</th>
+                  <th className="p-4 text-center font-semibold">Aksi</th>
                 </tr>
-              ))
-            )}
-          </tbody>
-        </table>
-      </div>
+              </thead>
+              <tbody className="divide-y divide-gray-100">
+                {data.length === 0 ? (
+                  <tr>
+                    <td colSpan={9} className="text-center py-12 text-gray-500">
+                      <Package className="w-12 h-12 mx-auto mb-2 opacity-50" />
+                      <p>Tidak ada data voucher</p>
+                    </td>
+                  </tr>
+                ) : (
+                  data.map((v) => (
+                    <tr key={v.id} className="hover:bg-blue-50 transition">
+                      <td className="p-4">
+                        <span className="font-bold text-gray-800">
+                          {v.brand}
+                        </span>
+                      </td>
+                      <td className="p-4 font-medium text-gray-700">
+                        {v.nama}
+                      </td>
+                      <td className="p-4 text-center">
+                        <span
+                          className={`px-3 py-1 rounded-full text-xs font-semibold ${
+                            v.stok > 30
+                              ? "bg-green-100 text-green-700"
+                              : v.stok > 10
+                                ? "bg-yellow-100 text-yellow-700"
+                                : "bg-red-100 text-red-700"
+                          }`}
+                        >
+                          {v.stok}
+                        </span>
+                      </td>
+                      <td className="p-4 text-center text-gray-600">
+                        {v.penempatan}
+                      </td>
+                      <td className="p-4 text-right text-gray-600">
+                        Rp {v.hargaPokok.toLocaleString("id-ID")}
+                      </td>
+                      <td className="p-4 text-right font-semibold text-blue-600">
+                        Rp {v.hargaJual.toLocaleString("id-ID")}
+                      </td>
+                      <td className="p-4 text-right font-semibold text-indigo-600">
+                        Rp {v.hargaEceran.toLocaleString("id-ID")}
+                      </td>
+                      <td className="p-4 text-gray-600 text-sm">
+                        {formatDate(v.createdAt)}
+                      </td>
+                      <td className="p-4">
+                        <div className="flex justify-center gap-2">
+                          <button
+                            onClick={() => {
+                              reset(v);
+                              setOpenEdit(v);
+                            }}
+                            className="p-2 bg-amber-500 hover:bg-amber-600 text-white rounded-lg transition shadow-md hover:shadow-lg"
+                            title="Edit"
+                          >
+                            <Edit className="w-4 h-4" />
+                          </button>
+                          <button
+                            onClick={() => handleDelete(v.id)}
+                            className="p-2 bg-red-600 hover:bg-red-700 text-white rounded-lg transition shadow-md hover:shadow-lg"
+                            title="Hapus"
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </button>
+                          <button
+                            onClick={() => handleUpdateStok(v)}
+                            className="p-2 bg-green-600 hover:bg-green-700 text-white rounded-lg transition shadow-md hover:shadow-lg"
+                            title="Update Stok"
+                          >
+                            <TrendingUp className="w-4 h-4" />
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  ))
+                )}
+              </tbody>
+            </table>
+          </div>
 
-      {/* Pagination */}
-      <div className="flex justify-center items-center gap-2 mt-6">
-        <button
-          disabled={page === 1}
-          onClick={() => setPage(page - 1)}
-          className="px-3 py-1.5 border rounded text-sm disabled:text-gray-400 disabled:cursor-not-allowed hover:bg-gray-100"
-        >
-          Sebelumnya
-        </button>
-        <span className="text-sm font-medium">
-          Halaman {page} dari {Math.max(1, totalPage)}
-        </span>
-        <button
-          disabled={page >= totalPage || data.length === 0}
-          onClick={() => setPage(page + 1)}
-          className="px-3 py-1.5 border rounded text-sm disabled:text-gray-400 disabled:cursor-not-allowed hover:bg-gray-100"
-        >
-          Berikutnya
-        </button>
+          {/* Pagination */}
+          <div className="bg-gray-50 border-t-2 border-gray-200 p-4">
+            <div className="flex flex-col sm:flex-row justify-between items-center gap-4">
+              <div className="text-sm text-gray-600">
+                Menampilkan <span className="font-semibold">{data.length}</span>{" "}
+                dari <span className="font-semibold">{perPage}</span> data
+              </div>
+              <div className="flex items-center gap-2">
+                <button
+                  disabled={page === 1}
+                  onClick={() => setPage(page - 1)}
+                  className="px-4 py-2 border-2 border-gray-300 rounded-lg text-sm font-medium disabled:text-gray-400 disabled:cursor-not-allowed hover:bg-gray-100 transition flex items-center gap-2"
+                >
+                  <ChevronLeft className="w-4 h-4" />
+                  Sebelumnya
+                </button>
+                <div className="px-4 py-2 bg-blue-600 text-white rounded-lg font-semibold text-sm">
+                  {page} / {totalPage}
+                </div>
+                <button
+                  disabled={page >= totalPage || data.length === 0}
+                  onClick={() => setPage(page + 1)}
+                  className="px-4 py-2 border-2 border-gray-300 rounded-lg text-sm font-medium disabled:text-gray-400 disabled:cursor-not-allowed hover:bg-gray-100 transition flex items-center gap-2"
+                >
+                  Berikutnya
+                  <ChevronRight className="w-4 h-4" />
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
       </div>
 
       {/* MODALS */}

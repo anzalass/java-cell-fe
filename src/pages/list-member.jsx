@@ -5,6 +5,23 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import Swal from "sweetalert2";
 import { useAuthStore } from "../store/useAuthStore";
 import api from "../api/client";
+import {
+  Plus,
+  Search,
+  Filter,
+  Edit,
+  Trash2,
+  Users,
+  Phone,
+  DollarSign,
+  Calendar,
+  ChevronLeft,
+  ChevronRight,
+  ArrowUpDown,
+  TrendingUp,
+  UserCheck,
+} from "lucide-react";
+import { useDebounce } from "../components/use-debounce";
 
 export default function ListMemberPage() {
   const { user } = useAuthStore();
@@ -35,6 +52,9 @@ export default function ListMemberPage() {
     setPage(1);
   }, [perPage]);
 
+  const debouncedSearchNama = useDebounce(filterNama, 1000);
+  const debouncedTelp = useDebounce(filterNoTelp, 3000);
+
   // === QUERY: Fetch Members ===
   const {
     data: membersData,
@@ -45,8 +65,8 @@ export default function ListMemberPage() {
   } = useQuery({
     queryKey: [
       "members",
-      filterNama,
-      filterNoTelp,
+      debouncedSearchNama,
+      debouncedTelp,
       filterMinTransaksi,
       filterMaxTransaksi,
       sortConfig,
@@ -266,235 +286,285 @@ export default function ListMemberPage() {
   }
 
   return (
-    <div className="p-4 sm:p-6 w-full mx-auto">
-      {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
-        <h1 className="text-2xl font-bold text-gray-800">Manajemen Member</h1>
-        <button
-          onClick={openAddModal}
-          className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors whitespace-nowrap"
-        >
-          + Tambah Member
-        </button>
-      </div>
+    <div className="min-h-screen bg-gradient-to-br from-rose-50 via-pink-50 to-orange-50 p-4 md:p-6">
+      <div className="w-full mx-auto">
+        {/* Header */}
+        <div className="bg-white rounded-2xl shadow-xl p-6 mb-6">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+            <div className="flex items-center gap-4">
+              <div className="bg-gradient-to-r from-rose-600 to-pink-600 p-4 rounded-xl">
+                <Users className="w-8 h-8 text-white" />
+              </div>
+              <div>
+                <h1 className="text-base md:text-3xl font-bold text-gray-800">
+                  Manajemen Member
+                </h1>
+                <p className="text-gray-600 text-sm mt-1">
+                  Kelola data pelanggan setia Anda
+                </p>
+              </div>
+            </div>
+            <button
+              onClick={openAddModal}
+              className="px-6 py-3 bg-gradient-to-r from-rose-600 to-pink-600 hover:from-rose-700 hover:to-pink-700 text-white rounded-lg font-semibold shadow-md hover:shadow-lg transition-all flex items-center gap-2 justify-center"
+            >
+              <Plus className="w-5 h-5" />
+              Tambah Member
+            </button>
+          </div>
+        </div>
 
-      {/* Stats Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
-        <div className="bg-gradient-to-r from-blue-500 to-blue-600 rounded-xl p-5 text-white shadow-md">
-          <h3 className="text-sm font-medium opacity-90">Total Member</h3>
-          <p className="text-2xl font-bold mt-1">{stats.totalMembers}</p>
-        </div>
-        <div className="bg-gradient-to-r from-emerald-500 to-emerald-600 rounded-xl p-5 text-white shadow-md">
-          <h3 className="text-sm font-medium opacity-90">Total Transaksi</h3>
-          <p className="text-2xl font-bold mt-1">
-            {formatRupiah(stats.totalTransaksi)}
-          </p>
-        </div>
-      </div>
+        {/* Stats Cards */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+          <div className="bg-white rounded-2xl shadow-xl overflow-hidden">
+            <div className="bg-gradient-to-r from-rose-600 to-pink-600 p-6">
+              <div className="flex items-center justify-between text-white">
+                <div>
+                  <p className="text-rose-100 text-sm mb-1">Total Member</p>
+                  <p className="text-4xl font-bold">{stats.totalMembers}</p>
+                </div>
+                <div className="bg-white/20 p-4 rounded-xl">
+                  <UserCheck className="w-10 h-10" />
+                </div>
+              </div>
+            </div>
+            <div className="p-4 bg-rose-50">
+              <p className="text-xs text-rose-700">Pelanggan terdaftar</p>
+            </div>
+          </div>
 
-      {/* Filter Section */}
-      <div className="grid grid-cols-1 md:grid-cols-5 gap-4 mb-6">
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">
-            Nama Member
-          </label>
-          <input
-            type="text"
-            value={filterNama}
-            onChange={(e) => {
-              setFilterNama(e.target.value);
-              resetPage();
-            }}
-            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-            placeholder="Cari nama..."
-          />
+          <div className="bg-white rounded-2xl shadow-xl overflow-hidden">
+            <div className="bg-gradient-to-r from-emerald-600 to-teal-600 p-6">
+              <div className="flex items-center justify-between text-white">
+                <div>
+                  <p className="text-emerald-100 text-sm mb-1">
+                    Total Transaksi
+                  </p>
+                  <p className="text-3xl font-bold">
+                    {formatRupiah(stats.totalTransaksi)}
+                  </p>
+                </div>
+                <div className="bg-white/20 p-4 rounded-xl">
+                  <TrendingUp className="w-10 h-10" />
+                </div>
+              </div>
+            </div>
+            <div className="p-4 bg-emerald-50">
+              <p className="text-xs text-emerald-700">Akumulasi semua member</p>
+            </div>
+          </div>
         </div>
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">
-            No. Telepon
-          </label>
-          <input
-            type="text"
-            value={filterNoTelp}
-            onChange={(e) => {
-              setFilterNoTelp(e.target.value);
-              resetPage();
-            }}
-            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-            placeholder="0812..."
-          />
-        </div>
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">
-            Transaksi Min (Rp)
-          </label>
-          <input
-            type="number"
-            value={filterMinTransaksi}
-            onChange={(e) => {
-              setFilterMinTransaksi(e.target.value);
-              resetPage();
-            }}
-            min="0"
-            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-            placeholder="100000"
-          />
-        </div>
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">
-            Transaksi Max (Rp)
-          </label>
-          <input
-            type="number"
-            value={filterMaxTransaksi}
-            onChange={(e) => {
-              setFilterMaxTransaksi(e.target.value);
-              resetPage();
-            }}
-            min="0"
-            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-            placeholder="500000"
-          />
-        </div>
-        <div className="flex items-end">
-          <button
-            onClick={clearFilters}
-            className="w-full px-4 py-2 text-sm text-gray-600 border border-gray-300 rounded-md hover:bg-gray-50"
-          >
-            Reset Filter
-          </button>
-        </div>
-      </div>
 
-      {/* Table */}
-      <div className="w-full overflow-x-auto bg-white rounded-lg shadow-sm border">
-        <table className="w-full text-sm">
-          <thead className="bg-gray-50 text-gray-600">
-            <tr>
-              <th className="p-4 text-center">No</th>
-              <th
-                className="p-4 text-left cursor-pointer hover:text-blue-600"
-                onClick={() => handleSort("nama")}
-              >
+        {/* Filters */}
+        <div className="bg-white rounded-2xl shadow-xl p-6 mb-6">
+          <div className="flex items-center gap-2 mb-4">
+            <Filter className="w-5 h-5 text-rose-600" />
+            <h2 className="font-bold text-lg text-gray-800">
+              Filter & Pencarian
+            </h2>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {/* Search Nama */}
+            <div>
+              <label className="block text-sm font-semibold text-gray-700 mb-2">
                 Nama Member
-                {sortConfig.key === "nama" && (
-                  <span className="ml-1">
-                    {sortConfig.direction === "asc" ? "↑" : "↓"}
-                  </span>
-                )}
-              </th>
-              <th
-                className="p-4 text-left cursor-pointer hover:text-blue-600"
-                onClick={() => handleSort("noTelp")}
-              >
+              </label>
+              <div className="relative">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+                <input
+                  type="text"
+                  value={filterNama}
+                  onChange={(e) => setFilterNama(e.target.value)}
+                  className="w-full pl-10 pr-4 py-3 border-2 border-gray-200 rounded-lg focus:border-rose-500 focus:outline-none transition"
+                  placeholder="Cari nama..."
+                />
+              </div>
+            </div>
+
+            {/* No Telepon */}
+            <div>
+              <label className="block text-sm font-semibold text-gray-700 mb-2">
                 No. Telepon
-                {sortConfig.key === "noTelp" && (
-                  <span className="ml-1">
-                    {sortConfig.direction === "asc" ? "↑" : "↓"}
-                  </span>
-                )}
-              </th>
-              <th
-                className="p-4 text-left cursor-pointer hover:text-blue-600"
-                onClick={() => handleSort("totalTransaksi")}
-              >
-                Total Transaksi
-                {sortConfig.key === "totalTransaksi" && (
-                  <span className="ml-1">
-                    {sortConfig.direction === "asc" ? "↑" : "↓"}
-                  </span>
-                )}
-              </th>
-              <th
-                className="p-4 text-left cursor-pointer hover:text-blue-600"
-                onClick={() => handleSort("dibuat")}
-              >
-                Tanggal Dibuat
-                {sortConfig.key === "createdAt" && (
-                  <span className="ml-1">
-                    {sortConfig.direction === "asc" ? "↑" : "↓"}
-                  </span>
-                )}
-              </th>
-              <th className="p-4 text-center">Aksi</th>
-            </tr>
-          </thead>
-          <tbody className="divide-y divide-gray-100">
-            {members.length === 0 ? (
-              <tr>
-                <td colSpan={6} className="text-center py-8 text-gray-500">
-                  Tidak ada data member
-                </td>
-              </tr>
-            ) : (
-              members.map((member, index) => (
-                <tr key={member.id} className="hover:bg-gray-50">
-                  <td className="p-4 text-center">
-                    {(page - 1) * perPage + index + 1}
-                  </td>
-                  <td className="p-4 font-medium text-gray-800">
-                    {member.nama}
-                  </td>
-                  <td className="p-4 text-gray-600">{member.noTelp || "-"}</td>
-                  <td className="p-4 font-medium text-emerald-600">
-                    {formatRupiah(member.totalTransaksi)}
-                  </td>
-                  <td className="p-4 text-gray-600">
-                    {formatDate(member.createdAt)}
-                  </td>
-                  <td className="p-4 text-center">
-                    <div className="flex justify-center gap-2">
-                      <button
-                        onClick={() => {
-                          resetForm({
-                            nama: member.nama,
-                            noTelp: member.noTelp || "",
-                            totalTransaksi: member.totalTransaksi.toString(),
-                          });
-                          setOpenEdit(member);
-                        }}
-                        className="px-3 py-1.5 bg-amber-500 text-white text-xs rounded hover:bg-amber-600"
-                      >
-                        Edit
-                      </button>
-                      <button
-                        onClick={() => handleDelete(member.id)}
-                        className="px-3 py-1.5 bg-rose-600 text-white text-xs rounded hover:bg-rose-700"
-                      >
-                        Hapus
-                      </button>
-                    </div>
-                  </td>
-                </tr>
-              ))
-            )}
-          </tbody>
-        </table>
-      </div>
+              </label>
+              <div className="relative">
+                <Phone className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+                <input
+                  type="text"
+                  value={filterNoTelp}
+                  onChange={(e) => setFilterNoTelp(e.target.value)}
+                  className="w-full pl-10 pr-4 py-3 border-2 border-gray-200 rounded-lg focus:border-rose-500 focus:outline-none transition"
+                  placeholder="0812..."
+                />
+              </div>
+            </div>
 
-      {/* Pagination */}
-      {totalPages > 1 && (
-        <div className="flex justify-center items-center gap-2 mt-6">
-          <button
-            disabled={page === 1}
-            onClick={() => setPage(page - 1)}
-            className="px-3 py-1.5 border rounded text-sm disabled:text-gray-400 disabled:cursor-not-allowed hover:bg-gray-100"
-          >
-            Sebelumnya
-          </button>
-          <span className="text-sm font-medium">
-            Halaman {page} dari {Math.max(1, totalPages)}
-          </span>
-          <button
-            disabled={page >= totalPages}
-            onClick={() => setPage(page + 1)}
-            className="px-3 py-1.5 border rounded text-sm disabled:text-gray-400 disabled:cursor-not-allowed hover:bg-gray-100"
-          >
-            Berikutnya
-          </button>
+            {/* Min Transaksi */}
+          </div>
+
+          {/* Reset Button */}
+          <div className="mt-4 flex justify-end">
+            <button
+              onClick={clearFilters}
+              className="px-4 py-2 text-sm text-gray-600 hover:text-gray-800 border-2 border-gray-300 rounded-lg hover:bg-gray-50 transition"
+            >
+              Reset Filter
+            </button>
+          </div>
         </div>
-      )}
 
+        {/* Table */}
+        <div className="bg-white rounded-2xl shadow-xl overflow-hidden">
+          <div className="overflow-x-auto">
+            <table className="w-full text-sm">
+              <thead>
+                <tr className="bg-gradient-to-r from-rose-600 to-pink-600 text-white">
+                  <th className="p-4 text-center font-semibold w-20">No</th>
+                  <th
+                    className="p-4 text-left font-semibold cursor-pointer hover:bg-rose-700 transition"
+                    onClick={() => handleSort("nama")}
+                  >
+                    <div className="flex items-center gap-2">
+                      <Users className="w-4 h-4" />
+                      Nama Member
+                      <ArrowUpDown className="w-4 h-4" />
+                    </div>
+                  </th>
+                  <th
+                    className="p-4 text-left font-semibold cursor-pointer hover:bg-rose-700 transition"
+                    onClick={() => handleSort("noTelp")}
+                  >
+                    <div className="flex items-center gap-2">
+                      <Phone className="w-4 h-4" />
+                      No. Telepon
+                      <ArrowUpDown className="w-4 h-4" />
+                    </div>
+                  </th>
+                  <th
+                    className="p-4 text-left font-semibold cursor-pointer hover:bg-rose-700 transition"
+                    onClick={() => handleSort("totalTransaksi")}
+                  >
+                    <div className="flex items-center gap-2">
+                      <DollarSign className="w-4 h-4" />
+                      Total Transaksi
+                      <ArrowUpDown className="w-4 h-4" />
+                    </div>
+                  </th>
+                  <th
+                    className="p-4 text-left font-semibold cursor-pointer hover:bg-rose-700 transition"
+                    onClick={() => handleSort("createdAt")}
+                  >
+                    <div className="flex items-center gap-2">
+                      <Calendar className="w-4 h-4" />
+                      Tanggal Dibuat
+                      <ArrowUpDown className="w-4 h-4" />
+                    </div>
+                  </th>
+                  <th className="p-4 text-center font-semibold">Aksi</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-gray-100">
+                {members.length === 0 ? (
+                  <tr>
+                    <td colSpan={6} className="text-center py-12 text-gray-500">
+                      <Users className="w-12 h-12 mx-auto mb-2 opacity-50" />
+                      <p>Tidak ada data member</p>
+                    </td>
+                  </tr>
+                ) : (
+                  members.map((member, index) => (
+                    <tr key={member.id} className="hover:bg-rose-50 transition">
+                      <td className="p-4 text-center">
+                        <span className="bg-rose-100 text-rose-700 px-3 py-1 rounded-full font-semibold text-xs">
+                          {(page - 1) * perPage + index + 1}
+                        </span>
+                      </td>
+                      <td className="p-4 font-bold text-gray-800">
+                        {member.nama}
+                      </td>
+                      <td className="p-4 text-gray-600">
+                        {member.noTelp ? (
+                          <span className="bg-gray-100 px-2 py-1 rounded font-mono text-xs">
+                            {member.noTelp}
+                          </span>
+                        ) : (
+                          <span className="text-gray-400 italic text-xs">
+                            -
+                          </span>
+                        )}
+                      </td>
+                      <td className="p-4 font-bold text-emerald-600">
+                        {formatRupiah(member.totalTransaksi)}
+                      </td>
+                      <td className="p-4 text-gray-600 text-sm">
+                        {formatDate(member.createdAt)}
+                      </td>
+                      <td className="p-4">
+                        <div className="flex justify-center gap-2">
+                          <button
+                            onClick={() => {
+                              resetForm({
+                                nama: member.nama,
+                                noTelp: member.noTelp || "",
+                                totalTransaksi:
+                                  member.totalTransaksi.toString(),
+                              });
+                              setOpenEdit(member);
+                            }}
+                            className="p-2 bg-amber-500 hover:bg-amber-600 text-white rounded-lg transition shadow-md hover:shadow-lg"
+                            title="Edit"
+                          >
+                            <Edit className="w-4 h-4" />
+                          </button>
+                          <button
+                            onClick={() => handleDelete(member.id)}
+                            className="p-2 bg-red-600 hover:bg-red-700 text-white rounded-lg transition shadow-md hover:shadow-lg"
+                            title="Hapus"
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  ))
+                )}
+              </tbody>
+            </table>
+          </div>
+
+          {/* Pagination */}
+          <div className="bg-gray-50 border-t-2 border-gray-200 p-4">
+            <div className="flex flex-col sm:flex-row justify-between items-center gap-4">
+              <div className="text-sm text-gray-600">
+                Menampilkan{" "}
+                <span className="font-semibold">{members.length}</span> dari{" "}
+                <span className="font-semibold">{perPage}</span> data
+              </div>
+              <div className="flex items-center gap-2">
+                <button
+                  disabled={page === 1}
+                  onClick={() => setPage(page - 1)}
+                  className="px-4 py-2 border-2 border-gray-300 rounded-lg text-sm font-medium disabled:text-gray-400 disabled:cursor-not-allowed hover:bg-gray-100 transition flex items-center gap-2"
+                >
+                  <ChevronLeft className="w-4 h-4" />
+                  Sebelumnya
+                </button>
+                <div className="px-4 py-2 bg-rose-600 text-white rounded-lg font-semibold text-sm">
+                  {page} / {totalPages}
+                </div>
+                <button
+                  disabled={page >= totalPages}
+                  onClick={() => setPage(page + 1)}
+                  className="px-4 py-2 border-2 border-gray-300 rounded-lg text-sm font-medium disabled:text-gray-400 disabled:cursor-not-allowed hover:bg-gray-100 transition flex items-center gap-2"
+                >
+                  Berikutnya
+                  <ChevronRight className="w-4 h-4" />
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
       {/* MODAL TAMBAH */}
       {openAdd && (
         <MemberModal
@@ -566,11 +636,16 @@ function MemberModal({
               No. Telepon
             </label>
             <input
-              {...register("noTelp")}
+              {...register("noTelp", { required: "Wajib diisi" })}
               defaultValue={defaultValues?.noTelp || ""}
               className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
               placeholder="081234567890"
             />
+            {errors.noTelp && (
+              <p className="text-xs text-red-500 mt-1">
+                {errors.noTelp.message}
+              </p>
+            )}
           </div>
 
           <div className="mb-4">
@@ -582,7 +657,6 @@ function MemberModal({
               {...register("totalTransaksi", {
                 required: "Wajib diisi",
                 min: { value: 0, message: "Minimal 0" },
-                valueAsNumber: true,
               })}
               defaultValue={defaultValues?.totalTransaksi || "0"}
               min="0"

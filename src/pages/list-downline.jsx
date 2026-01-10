@@ -5,7 +5,21 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import Swal from "sweetalert2";
 import api from "../api/client";
 import { useAuthStore } from "../store/useAuthStore";
-
+import {
+  Plus,
+  Search,
+  Filter,
+  Edit,
+  Trash2,
+  Users,
+  Calendar,
+  ChevronLeft,
+  ChevronRight,
+  ArrowUpDown,
+  Hash,
+  User,
+} from "lucide-react";
+import { useDebounce } from "../components/use-debounce";
 export default function ListDownlinePage() {
   const { user } = useAuthStore();
   const queryClient = useQueryClient();
@@ -30,6 +44,9 @@ export default function ListDownlinePage() {
 
   const resetPage = () => setPage(1);
 
+  const debounceNama = useDebounce(filterNama, 1000);
+  const debounceKode = useDebounce(filterKode, 1000);
+
   // === QUERY: Fetch Downline Data ===
   const {
     data: queryData,
@@ -40,8 +57,8 @@ export default function ListDownlinePage() {
   } = useQuery({
     queryKey: [
       "downline",
-      filterNama,
-      filterKode,
+      debounceKode,
+      debounceNama,
       filterTanggal,
       sortConfig,
       page,
@@ -238,200 +255,297 @@ export default function ListDownlinePage() {
   }
 
   return (
-    <div className="p-4 sm:p-6 w-full mx-auto">
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
-        <h1 className="text-2xl font-bold text-gray-800">List Downline</h1>
-        <button
-          onClick={openAddModal}
-          className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors whitespace-nowrap"
-        >
-          + Tambah Downline
-        </button>
-      </div>
+    <div className="min-h-screen bg-gradient-to-br from-violet-50 via-purple-50 to-fuchsia-50 p-4 md:p-6">
+      <div className="w-full mx-auto">
+        {/* Header */}
+        <div className="bg-white rounded-2xl shadow-xl p-6 mb-6">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+            <div className="flex items-center gap-4">
+              <div className="bg-gradient-to-r from-violet-600 to-purple-600 p-4 rounded-xl">
+                <Users className="w-8 h-8 text-white" />
+              </div>
+              <div>
+                <h1 className="text-2xl md:text-3xl font-bold text-gray-800">
+                  List Downline
+                </h1>
+                <p className="text-gray-600 text-sm mt-1">
+                  Kelola jaringan downline Anda
+                </p>
+              </div>
+            </div>
+            <button
+              onClick={openAddModal}
+              className="px-6 py-3 bg-gradient-to-r from-violet-600 to-purple-600 hover:from-violet-700 hover:to-purple-700 text-white rounded-lg font-semibold shadow-md hover:shadow-lg transition-all flex items-center gap-2 justify-center"
+            >
+              <Plus className="w-5 h-5" />
+              Tambah Downline
+            </button>
+          </div>
+        </div>
 
-      {/* Filter Section */}
-      <div className="grid grid-cols-1 md:grid-cols-5 gap-4 mb-6">
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">
-            Nama Downline
-          </label>
-          <input
-            type="text"
-            value={filterNama}
-            onChange={(e) => {
-              setFilterNama(e.target.value);
-              resetPage();
-            }}
-            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-            placeholder="Cari nama..."
-          />
-        </div>
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">
-            Kode Downline
-          </label>
-          <input
-            type="text"
-            value={filterKode}
-            onChange={(e) => {
-              setFilterKode(e.target.value);
-              resetPage();
-            }}
-            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-            placeholder="DL001, dll..."
-          />
-        </div>
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">
-            Tanggal Dibuat
-          </label>
-          <input
-            type="date"
-            value={filterTanggal}
-            onChange={(e) => {
-              setFilterTanggal(e.target.value);
-              resetPage();
-            }}
-            className="w-full px-3 py-2 border border-gray-300 rounded-md"
-          />
-        </div>
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">
-            Item per Halaman
-          </label>
-          <select
-            value={perPage}
-            onChange={(e) => setPerPage(Number(e.target.value))}
-            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-          >
-            <option value={10}>10</option>
-            <option value={20}>20</option>
-            <option value={50}>50</option>
-            <option value={100}>100</option>
-          </select>
-        </div>
-        <div className="flex items-end">
-          <button
-            onClick={clearFilters}
-            className="w-full px-4 py-2 text-sm text-gray-600 border border-gray-300 rounded-md hover:bg-gray-50"
-          >
-            Reset Filter
-          </button>
-        </div>
-      </div>
+        {/* Filters */}
+        <div className="bg-white rounded-2xl shadow-xl p-6 mb-6">
+          <div className="flex items-center gap-2 mb-4">
+            <Filter className="w-5 h-5 text-violet-600" />
+            <h2 className="font-bold text-lg text-gray-800">
+              Filter & Pencarian
+            </h2>
+          </div>
 
-      {/* Table */}
-      <div className="w-full overflow-x-auto bg-white rounded-lg shadow-sm border">
-        <table className="w-full text-sm">
-          <thead className="bg-gray-50 text-gray-600">
-            <tr>
-              <th className="p-4 text-center">No</th>
-              <th
-                className="p-4 text-left cursor-pointer hover:text-blue-600"
-                onClick={() => handleSort("kodeDownline")}
-              >
-                Kode Downline
-                {sortConfig.key === "kodeDownline" && (
-                  <span className="ml-1">
-                    {sortConfig.direction === "asc" ? "↑" : "↓"}
-                  </span>
-                )}
-              </th>
-              <th
-                className="p-4 text-left cursor-pointer hover:text-blue-600"
-                onClick={() => handleSort("namaDownline")}
-              >
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+            {/* Search Nama */}
+            <div>
+              <label className="block text-sm font-semibold text-gray-700 mb-2">
                 Nama Downline
-                {sortConfig.key === "nama" && (
-                  <span className="ml-1">
-                    {sortConfig.direction === "asc" ? "↑" : "↓"}
-                  </span>
-                )}
-              </th>
-              <th
-                className="p-4 text-left cursor-pointer hover:text-blue-600"
-                onClick={() => handleSort("dibuat")}
-              >
+              </label>
+              <div className="relative">
+                <User className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+                <input
+                  type="text"
+                  value={filterNama}
+                  onChange={(e) => setFilterNama(e.target.value)}
+                  className="w-full pl-10 pr-4 py-3 border-2 border-gray-200 rounded-lg focus:border-violet-500 focus:outline-none transition"
+                  placeholder="Cari nama..."
+                />
+              </div>
+            </div>
+
+            {/* Kode Downline */}
+            <div>
+              <label className="block text-sm font-semibold text-gray-700 mb-2">
+                Kode Downline
+              </label>
+              <div className="relative">
+                <Hash className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+                <input
+                  type="text"
+                  value={filterKode}
+                  onChange={(e) => setFilterKode(e.target.value)}
+                  className="w-full pl-10 pr-4 py-3 border-2 border-gray-200 rounded-lg focus:border-violet-500 focus:outline-none transition"
+                  placeholder="DL001, dll..."
+                />
+              </div>
+            </div>
+
+            {/* Date Filter */}
+            <div>
+              <label className="block text-sm font-semibold text-gray-700 mb-2">
                 Tanggal Dibuat
-                {sortConfig.key === "createdAt" && (
-                  <span className="ml-1">
-                    {sortConfig.direction === "asc" ? "↑" : "↓"}
-                  </span>
-                )}
-              </th>
-              <th className="p-4 text-center">Aksi</th>
-            </tr>
-          </thead>
-          <tbody className="divide-y divide-gray-100">
-            {downlines.length === 0 ? (
-              <tr>
-                <td colSpan={5} className="text-center py-8 text-gray-500">
-                  Tidak ada data downline
-                </td>
-              </tr>
-            ) : (
-              downlines.map((item, index) => (
-                <tr key={item.id} className="hover:bg-gray-50">
-                  <td className="p-4 text-center">
-                    {(page - 1) * perPage + index + 1}
-                  </td>
-                  <td className="p-4 font-mono font-medium text-gray-800">
-                    {item.kodeDownline}
-                  </td>
-                  <td className="p-4">{item.nama}</td>
-                  <td className="p-4 text-gray-600">
-                    {formatDate(item.createdAt)}
-                  </td>
-                  <td className="p-4 text-center">
-                    <div className="flex justify-center gap-2">
-                      <button
-                        onClick={() => {
-                          resetForm({
-                            kodeDownline: item.kodeDownline,
-                            namaDownline: item.nama,
-                          });
-                          setOpenEdit(item);
-                        }}
-                        className="px-3 py-1.5 bg-amber-500 text-white text-xs rounded hover:bg-amber-600"
-                      >
-                        Edit
-                      </button>
-                      <button
-                        onClick={() => handleDelete(item.id)}
-                        className="px-3 py-1.5 bg-rose-600 text-white text-xs rounded hover:bg-rose-700"
-                      >
-                        Hapus
-                      </button>
+              </label>
+              <div className="relative">
+                <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+                <input
+                  type="date"
+                  value={filterTanggal}
+                  onChange={(e) => setFilterTanggal(e.target.value)}
+                  className="w-full pl-10 pr-4 py-3 border-2 border-gray-200 rounded-lg focus:border-violet-500 focus:outline-none"
+                />
+              </div>
+            </div>
+
+            {/* Per Page */}
+            <div>
+              <label className="block text-sm font-semibold text-gray-700 mb-2">
+                Item per Halaman
+              </label>
+              <select
+                value={perPage}
+                onChange={(e) => setPerPage(Number(e.target.value))}
+                className="w-full px-4 py-3 border-2 border-gray-200 rounded-lg focus:border-violet-500 focus:outline-none"
+              >
+                <option value={10}>10</option>
+                <option value={20}>20</option>
+                <option value={50}>50</option>
+                <option value={100}>100</option>
+              </select>
+            </div>
+          </div>
+
+          {/* Reset Button */}
+          <div className="mt-4 flex justify-end">
+            <button
+              onClick={clearFilters}
+              className="px-4 py-2 text-sm text-gray-600 hover:text-gray-800 border-2 border-gray-300 rounded-lg hover:bg-gray-50 transition"
+            >
+              Reset Filter
+            </button>
+          </div>
+        </div>
+
+        {/* Stats Summary */}
+        {/* <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+          <div className="bg-white rounded-2xl shadow-xl p-6 border-l-4 border-violet-600">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm text-gray-600 mb-1">Total Downline</p>
+                <p className="text-3xl font-bold text-violet-600">
+                  {downlines.length}
+                </p>
+              </div>
+              <div className="bg-violet-100 p-4 rounded-xl">
+                <Users className="w-8 h-8 text-violet-600" />
+              </div>
+            </div>
+          </div>
+
+          <div className="bg-white rounded-2xl shadow-xl p-6 border-l-4 border-purple-600">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm text-gray-600 mb-1">Aktif Bulan Ini</p>
+                <p className="text-3xl font-bold text-purple-600">
+                  {downlines.length - 1}
+                </p>
+              </div>
+              <div className="bg-purple-100 p-4 rounded-xl">
+                <Users className="w-8 h-8 text-purple-600" />
+              </div>
+            </div>
+          </div>
+
+          <div className="bg-white rounded-2xl shadow-xl p-6 border-l-4 border-fuchsia-600">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm text-gray-600 mb-1">Terdaftar Baru</p>
+                <p className="text-3xl font-bold text-fuchsia-600">1</p>
+              </div>
+              <div className="bg-fuchsia-100 p-4 rounded-xl">
+                <Plus className="w-8 h-8 text-fuchsia-600" />
+              </div>
+            </div>
+          </div>
+        </div> */}
+
+        {/* Table */}
+        <div className="bg-white rounded-2xl shadow-xl overflow-hidden">
+          <div className="overflow-x-auto">
+            <table className="w-full text-sm">
+              <thead>
+                <tr className="bg-gradient-to-r from-violet-600 to-purple-600 text-white">
+                  <th className="p-4 text-center font-semibold w-20">No</th>
+                  <th
+                    className="p-4 text-left font-semibold cursor-pointer hover:bg-violet-700 transition"
+                    onClick={() => handleSort("kodeDownline")}
+                  >
+                    <div className="flex items-center gap-2">
+                      <Hash className="w-4 h-4" />
+                      Kode Downline
+                      <ArrowUpDown className="w-4 h-4" />
                     </div>
-                  </td>
+                  </th>
+                  <th
+                    className="p-4 text-left font-semibold cursor-pointer hover:bg-violet-700 transition"
+                    onClick={() => handleSort("nama")}
+                  >
+                    <div className="flex items-center gap-2">
+                      <User className="w-4 h-4" />
+                      Nama Downline
+                      <ArrowUpDown className="w-4 h-4" />
+                    </div>
+                  </th>
+                  <th
+                    className="p-4 text-left font-semibold cursor-pointer hover:bg-violet-700 transition"
+                    onClick={() => handleSort("createdAt")}
+                  >
+                    <div className="flex items-center gap-2">
+                      <Calendar className="w-4 h-4" />
+                      Tanggal Dibuat
+                      <ArrowUpDown className="w-4 h-4" />
+                    </div>
+                  </th>
+                  <th className="p-4 text-center font-semibold">Aksi</th>
                 </tr>
-              ))
-            )}
-          </tbody>
-        </table>
-      </div>
+              </thead>
+              <tbody className="divide-y divide-gray-100">
+                {downlines.length === 0 ? (
+                  <tr>
+                    <td colSpan={5} className="text-center py-12 text-gray-500">
+                      <Users className="w-12 h-12 mx-auto mb-2 opacity-50" />
+                      <p>Tidak ada data downline</p>
+                    </td>
+                  </tr>
+                ) : (
+                  downlines.map((item, index) => (
+                    <tr key={item.id} className="hover:bg-violet-50 transition">
+                      <td className="p-4 text-center">
+                        <span className="bg-violet-100 text-violet-700 px-3 py-1 rounded-full font-semibold text-xs">
+                          {(page - 1) * perPage + index + 1}
+                        </span>
+                      </td>
+                      <td className="p-4">
+                        <span className="font-mono bg-purple-100 text-purple-700 px-3 py-1 rounded-lg font-bold">
+                          {item.kodeDownline}
+                        </span>
+                      </td>
+                      <td className="p-4 font-medium text-gray-800">
+                        {item.nama}
+                      </td>
+                      <td className="p-4 text-gray-600">
+                        {formatDate(item.createdAt)}
+                      </td>
+                      <td className="p-4">
+                        <div className="flex justify-center gap-2">
+                          <button
+                            onClick={() => {
+                              resetForm({
+                                kodeDownline: item.kodeDownline,
+                                namaDownline: item.nama,
+                              });
+                              setOpenEdit(item);
+                            }}
+                            className="p-2 bg-amber-500 hover:bg-amber-600 text-white rounded-lg transition shadow-md hover:shadow-lg"
+                            title="Edit"
+                          >
+                            <Edit className="w-4 h-4" />
+                          </button>
+                          <button
+                            onClick={() => handleDelete(item.id)}
+                            className="p-2 bg-red-600 hover:bg-red-700 text-white rounded-lg transition shadow-md hover:shadow-lg"
+                            title="Hapus"
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  ))
+                )}
+              </tbody>
+            </table>
+          </div>
 
-      {/* Pagination */}
-      <div className="flex justify-center items-center gap-2 mt-6">
-        <button
-          disabled={page === 1}
-          onClick={() => setPage(page - 1)}
-          className="px-3 py-1.5 border rounded text-sm disabled:text-gray-400 disabled:cursor-not-allowed hover:bg-gray-100"
-        >
-          Sebelumnya
-        </button>
-        <span className="text-sm font-medium">
-          Halaman {page} dari {Math.max(1, totalPages)}
-        </span>
-        <button
-          disabled={page >= totalPages}
-          onClick={() => setPage(page + 1)}
-          className="px-3 py-1.5 border rounded text-sm disabled:text-gray-400 disabled:cursor-not-allowed hover:bg-gray-100"
-        >
-          Berikutnya
-        </button>
+          {/* Pagination */}
+          <div className="bg-gray-50 border-t-2 border-gray-200 p-4">
+            <div className="flex flex-col sm:flex-row justify-between items-center gap-4">
+              <div className="text-sm text-gray-600">
+                Menampilkan{" "}
+                <span className="font-semibold">{downlines.length}</span> dari{" "}
+                <span className="font-semibold">{perPage}</span> data
+              </div>
+              <div className="flex items-center gap-2">
+                <button
+                  disabled={page === 1}
+                  onClick={() => setPage(page - 1)}
+                  className="px-4 py-2 border-2 border-gray-300 rounded-lg text-sm font-medium disabled:text-gray-400 disabled:cursor-not-allowed hover:bg-gray-100 transition flex items-center gap-2"
+                >
+                  <ChevronLeft className="w-4 h-4" />
+                  Sebelumnya
+                </button>
+                <div className="px-4 py-2 bg-violet-600 text-white rounded-lg font-semibold text-sm">
+                  {page} / {totalPages}
+                </div>
+                <button
+                  disabled={page >= totalPages}
+                  onClick={() => setPage(page + 1)}
+                  className="px-4 py-2 border-2 border-gray-300 rounded-lg text-sm font-medium disabled:text-gray-400 disabled:cursor-not-allowed hover:bg-gray-100 transition flex items-center gap-2"
+                >
+                  Berikutnya
+                  <ChevronRight className="w-4 h-4" />
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
       </div>
-
       {/* MODAL TAMBAH */}
       {openAdd && (
         <DownlineModal

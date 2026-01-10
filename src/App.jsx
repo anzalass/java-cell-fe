@@ -24,6 +24,8 @@ import UserManagementPage from "./pages/user";
 import ListMemberPage from "./pages/list-member";
 import Home from "./pages/home";
 import JualanVoucher from "./pages/jualan-voucher";
+import TransaksiVoucherHarianPage from "./pages/voucher-harian-page";
+import VoucherTerlarisPage from "./pages/item-voucher-harian";
 
 function App() {
   const { user, isLoading, isCheckingAuth, fetchUser } = useAuthStore();
@@ -62,12 +64,20 @@ function App() {
         <Route path="transaksi/sparepart" element={<TableSectionSparepart />} />
         <Route path="transaksi/service" element={<TableSectionService />} />
         <Route
+          path="transaksi/voucher-harian"
+          element={<TransaksiVoucherHarianPage />}
+        />
+        <Route
           path="transaksi/voucher"
           element={<TableSectionVoucherGrosir />}
         />{" "}
         <Route
           path="transaksi/item-voucher"
           element={<LaporanBarangKeluarVoucherPage />}
+        />
+        <Route
+          path="transaksi/item-voucher-harian"
+          element={<VoucherTerlarisPage />}
         />
         <Route
           path="transaksi/item-sparepart"

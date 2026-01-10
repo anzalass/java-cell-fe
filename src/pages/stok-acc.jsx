@@ -1,11 +1,43 @@
 // src/pages/StokBarangAksesorisPage.jsx
-import { useState, useMemo, useEffect } from "react";
+import { useState, useMemo, useEffect, useCallback } from "react";
 import { useForm } from "react-hook-form";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import Swal from "sweetalert2";
 import UpdateStokModal from "../components/update-stok";
 import api from "../api/client";
 import { useAuthStore } from "../store/useAuthStore";
+import {
+  Plus,
+  Search,
+  Filter,
+  Edit,
+  Trash2,
+  Smartphone,
+  Calendar,
+  TrendingUp,
+  ChevronLeft,
+  ChevronRight,
+  ArrowUpDown,
+  Barcode,
+  Tag,
+} from "lucide-react";
+
+// ✅ Custom Hook: useDebounce
+function useDebounce(value, delay) {
+  const [debouncedValue, setDebouncedValue] = useState(value);
+
+  useEffect(() => {
+    const handler = setTimeout(() => {
+      setDebouncedValue(value);
+    }, delay);
+
+    return () => {
+      clearTimeout(handler);
+    };
+  }, [value, delay]);
+
+  return debouncedValue;
+}
 
 export default function StokBarangAksesorisPage() {
   const { user } = useAuthStore();
@@ -32,6 +64,10 @@ export default function StokBarangAksesorisPage() {
 
   const resetPage = () => setPage(1);
 
+  // ✅ Debounced values
+  const debouncedSearchNama = useDebounce(searchNama, 500);
+  const debouncedFilterBrand = useDebounce(filterBrand, 500);
+
   // === QUERY: Fetch Data ===
   const {
     data: queryData,
@@ -42,8 +78,8 @@ export default function StokBarangAksesorisPage() {
   } = useQuery({
     queryKey: [
       "acc",
-      searchNama,
-      filterBrand,
+      debouncedSearchNama, // ✅ gunakan debounced
+      debouncedFilterBrand, // ✅ gunakan debounced
       filterBarcode,
       filterDibuat,
       filterDiupdate,
@@ -53,8 +89,8 @@ export default function StokBarangAksesorisPage() {
     ],
     queryFn: async () => {
       const params = new URLSearchParams();
-      if (searchNama) params.append("search", searchNama);
-      if (filterBrand) params.append("brand", filterBrand);
+      if (debouncedSearchNama) params.append("search", debouncedSearchNama);
+      if (debouncedFilterBrand) params.append("brand", debouncedFilterBrand);
       params.append("filterBarcode", filterBarcode);
       if (filterDibuat) params.append("createdAt", filterDibuat);
       if (filterDiupdate) params.append("updatedAt", filterDiupdate);
@@ -149,6 +185,15 @@ export default function StokBarangAksesorisPage() {
       });
     },
   });
+
+  const clearFilters = () => {
+    setSearchNama("");
+    setFilterBrand("");
+    setFilterBarcode("all");
+    setFilterDibuat("");
+    setFilterDiupdate("");
+    setPage(1);
+  };
 
   const updateStokMutation = useMutation({
     mutationFn: ({ id, tipe, stok }) =>
@@ -296,307 +341,338 @@ export default function StokBarangAksesorisPage() {
   }
 
   return (
-    <div className="p-4 sm:p-6 w-full mx-auto">
-      <h1 className="text-2xl font-bold text-gray-800 mb-6">
-        Manajemen Stok Aksesoris
-      </h1>
-
-      {/* Filter Section */}
-      <div className="mb-6 p-4 bg-white rounded-lg shadow-sm border space-y-4">
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Cari Nama
-            </label>
-            <input
-              type="text"
-              value={searchNama}
-              onChange={(e) => {
-                setSearchNama(e.target.value);
-                resetPage();
-              }}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-              placeholder="Charger..."
-            />
-          </div>
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Cari Brand
-            </label>
-            <input
-              type="text"
-              value={filterBrand}
-              onChange={(e) => {
-                setFilterBrand(e.target.value);
-                resetPage();
-              }}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-              placeholder="Vivan, Baseus..."
-            />
-          </div>
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Barcode
-            </label>
-            <select
-              value={filterBarcode}
-              onChange={(e) => {
-                setFilterBarcode(e.target.value);
-                resetPage();
-              }}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-            >
-              <option value="all">Semua</option>
-              <option value="with">Dengan Barcode</option>
-              <option value="without">Tanpa Barcode</option>
-            </select>
-          </div>
-          <div className="flex flex-col justify-end gap-2">
+    <div className="min-h-screen bg-gradient-to-br from-emerald-50 via-teal-50 to-cyan-50 p-4 md:p-6">
+      <div className="w-full mx-auto">
+        {/* Header */}
+        <div className="bg-white rounded-2xl shadow-xl p-6 mb-6">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+            <div className="flex items-center gap-4">
+              <div className="bg-gradient-to-r from-emerald-600 to-teal-600 p-4 rounded-xl">
+                <Smartphone className="w-8 h-8 text-white" />
+              </div>
+              <div>
+                <h1 className="md:text-2xl text-lg lg:text-3xl font-bold text-gray-800">
+                  Manajemen Stok Aksesoris
+                </h1>
+                <p className="text-gray-600 text-sm mt-1">
+                  Kelola inventori aksesoris handphone
+                </p>
+              </div>
+            </div>
             <button
               onClick={openAddModal}
-              className="w-full px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors"
+              className="px-6 py-3 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 text-white rounded-lg font-semibold shadow-md hover:shadow-lg transition-all flex items-center gap-2 justify-center"
             >
-              + Tambah Barang
+              <Plus className="w-5 h-5" />
+              Tambah Barang
             </button>
           </div>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Tanggal Dibuat
-            </label>
-            <input
-              type="date"
-              value={filterDibuat}
-              onChange={(e) => {
-                setFilterDibuat(e.target.value);
-                resetPage();
-              }}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md"
-            />
+        {/* Filters */}
+        <div className="bg-white rounded-2xl shadow-xl p-6 mb-6">
+          <div className="flex items-center gap-2 mb-4">
+            <Filter className="w-5 h-5 text-emerald-600" />
+            <h2 className="font-bold text-lg text-gray-800">
+              Filter & Pencarian
+            </h2>
           </div>
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Tanggal Diupdate
-            </label>
-            <input
-              type="date"
-              value={filterDiupdate}
-              onChange={(e) => {
-                setFilterDiupdate(e.target.value);
-                resetPage();
-              }}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md"
-            />
+
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
+            {/* Search Nama */}
+            <div>
+              <label className="block text-sm font-semibold text-gray-700 mb-2">
+                Cari Nama Barang
+              </label>
+              <div className="relative">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+                <input
+                  type="text"
+                  value={searchNama}
+                  onChange={(e) => setSearchNama(e.target.value)}
+                  className="w-full pl-10 pr-4 py-3 border-2 border-gray-200 rounded-lg focus:border-emerald-500 focus:outline-none transition"
+                  placeholder="Headset, Charger..."
+                />
+              </div>
+            </div>
+
+            {/* Search Brand */}
+            <div>
+              <label className="block text-sm font-semibold text-gray-700 mb-2">
+                Cari Brand
+              </label>
+              <div className="relative">
+                <Tag className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+                <input
+                  type="text"
+                  value={filterBrand}
+                  onChange={(e) => setFilterBrand(e.target.value)}
+                  className="w-full pl-10 pr-4 py-3 border-2 border-gray-200 rounded-lg focus:border-emerald-500 focus:outline-none transition"
+                  placeholder="Samsung, Xiaomi..."
+                />
+              </div>
+            </div>
+
+            {/* Barcode Filter */}
+            <div>
+              <label className="block text-sm font-semibold text-gray-700 mb-2">
+                Filter Barcode
+              </label>
+              <div className="relative">
+                <Barcode className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+                <select
+                  value={filterBarcode}
+                  onChange={(e) => setFilterBarcode(e.target.value)}
+                  className="w-full pl-10 pr-4 py-3 border-2 border-gray-200 rounded-lg focus:border-emerald-500 focus:outline-none appearance-none"
+                >
+                  <option value="all">Semua</option>
+                  <option value="with">Dengan Barcode</option>
+                  <option value="without">Tanpa Barcode</option>
+                </select>
+              </div>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {/* Date Created */}
+            <div>
+              <label className="block text-sm font-semibold text-gray-700 mb-2">
+                Tanggal Dibuat
+              </label>
+              <div className="relative">
+                <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+                <input
+                  type="date"
+                  value={filterDibuat}
+                  onChange={(e) => setFilterDibuat(e.target.value)}
+                  className="w-full pl-10 pr-4 py-3 border-2 border-gray-200 rounded-lg focus:border-emerald-500 focus:outline-none"
+                />
+              </div>
+            </div>
+
+            {/* Date Updated */}
+            <div>
+              <label className="block text-sm font-semibold text-gray-700 mb-2">
+                Tanggal Diupdate
+              </label>
+              <div className="relative">
+                <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+                <input
+                  type="date"
+                  value={filterDiupdate}
+                  onChange={(e) => setFilterDiupdate(e.target.value)}
+                  className="w-full pl-10 pr-4 py-3 border-2 border-gray-200 rounded-lg focus:border-emerald-500 focus:outline-none"
+                />
+              </div>
+            </div>
+          </div>
+
+          {/* Reset Button */}
+          <div className="mt-4 flex justify-end">
+            <button
+              onClick={clearFilters}
+              className="px-4 py-2 text-sm text-gray-600 hover:text-gray-800 border-2 border-gray-300 rounded-lg hover:bg-gray-50 transition"
+            >
+              Reset Filter
+            </button>
           </div>
         </div>
-      </div>
 
-      {/* Table */}
-      <div className="w-full overflow-x-auto bg-white rounded-lg shadow-sm border">
-        <table className="w-full text-sm">
-          <thead className="bg-gray-50 text-gray-600">
-            <tr>
-              <th
-                className="p-4 text-left cursor-pointer hover:text-blue-600"
-                onClick={() => handleSort("barcode")}
-              >
-                Barcode
-                {sortConfig.key === "barcode" && (
-                  <span className="ml-1">
-                    {sortConfig.direction === "asc" ? "↑" : "↓"}
-                  </span>
-                )}
-              </th>
-              <th
-                className="p-4 text-left cursor-pointer hover:text-blue-600"
-                onClick={() => handleSort("brand")}
-              >
-                Brand
-                {sortConfig.key === "brand" && (
-                  <span className="ml-1">
-                    {sortConfig.direction === "asc" ? "↑" : "↓"}
-                  </span>
-                )}
-              </th>
-              <th
-                className="p-4 text-left cursor-pointer hover:text-blue-600"
-                onClick={() => handleSort("nama")}
-              >
-                Nama Barang
-                {sortConfig.key === "nama" && (
-                  <span className="ml-1">
-                    {sortConfig.direction === "asc" ? "↑" : "↓"}
-                  </span>
-                )}
-              </th>
-              <th
-                className="p-4 text-center cursor-pointer hover:text-blue-600"
-                onClick={() => handleSort("stok")}
-              >
-                Stok
-                {sortConfig.key === "stok" && (
-                  <span className="ml-1">
-                    {sortConfig.direction === "asc" ? "↑" : "↓"}
-                  </span>
-                )}
-              </th>
-              <th
-                className="p-4 text-center cursor-pointer hover:text-blue-600"
-                onClick={() => handleSort("penempatan")}
-              >
-                Penempatan
-                {sortConfig.key === "penempatan" && (
-                  <span className="ml-1">
-                    {sortConfig.direction === "asc" ? "↑" : "↓"}
-                  </span>
-                )}
-              </th>
-              <th className="p-4 text-right">Modal</th>
-              <th
-                className="p-4 text-right cursor-pointer hover:text-blue-600"
-                onClick={() => handleSort("hargaJual")}
-              >
-                Harga Jual
-                {sortConfig.key === "hargaJual" && (
-                  <span className="ml-1">
-                    {sortConfig.direction === "asc" ? "↑" : "↓"}
-                  </span>
-                )}
-              </th>
-              <th
-                className="p-4 text-left cursor-pointer hover:text-blue-600"
-                onClick={() => handleSort("dibuat")}
-              >
-                Dibuat
-                {sortConfig.key === "createdAt" && (
-                  <span className="ml-1">
-                    {sortConfig.direction === "asc" ? "↑" : "↓"}
-                  </span>
-                )}
-              </th>
-              <th
-                className="p-4 text-left cursor-pointer hover:text-blue-600"
-                onClick={() => handleSort("diupdate")}
-              >
-                Diupdate
-                {sortConfig.key === "updatedAt" && (
-                  <span className="ml-1">
-                    {sortConfig.direction === "asc" ? "↑" : "↓"}
-                  </span>
-                )}
-              </th>
-              <th className="p-4 text-center">Aksi</th>
-            </tr>
-          </thead>
-          <tbody className="divide-y divide-gray-100">
-            {data.length === 0 ? (
-              <tr>
-                <td colSpan={10} className="text-center py-8 text-gray-500">
-                  Tidak ada data
-                </td>
-              </tr>
-            ) : (
-              data.map((item) => (
-                <tr key={item.id} className="hover:bg-gray-50">
-                  <td className="p-4 font-mono text-gray-800">
-                    {item.barcode || (
-                      <span className="text-gray-400 italic">—</span>
-                    )}
-                  </td>
-                  <td className="p-4 font-medium text-gray-800">
-                    {item.brand}
-                  </td>
-                  <td className="p-4">{item.nama}</td>
-                  <td className="p-4 text-center font-medium">{item.stok}</td>
-                  <td className="p-4 text-center font-medium">
-                    {item.penempatan}
-                  </td>
-                  <td className="p-4 text-right text-green-700">
-                    Rp {item.hargaModal.toLocaleString("id-ID")}
-                  </td>
-                  <td className="p-4 text-right font-medium text-blue-700">
-                    Rp {item.hargaJual.toLocaleString("id-ID")}
-                  </td>
-                  <td className="p-4 text-gray-600">
-                    {formatDate(item.createdAt)}
-                  </td>
-                  <td className="p-4 text-gray-600">
-                    {formatDate(item.updatedAt)}
-                  </td>
-                  <td className="p-4 text-center">
-                    <div className="flex justify-center gap-2">
-                      <button
-                        onClick={() => {
-                          reset(item);
-                          setOpenEdit(item);
-                        }}
-                        className="px-3 py-1.5 bg-amber-500 text-white text-xs rounded hover:bg-amber-600"
-                      >
-                        Edit
-                      </button>
-                      <button
-                        onClick={() => handleDelete(item.id)}
-                        className="px-3 py-1.5 bg-rose-600 text-white text-xs rounded hover:bg-rose-700"
-                      >
-                        Hapus
-                      </button>
-                      <button
-                        onClick={() => handleUpdateStok(item)}
-                        className="px-3 py-1 bg-green-600 text-white text-xs rounded hover:bg-green-700"
-                      >
-                        Update Stok
-                      </button>
+        {/* Table */}
+        <div className="bg-white rounded-2xl shadow-xl overflow-hidden">
+          <div className="overflow-x-auto">
+            <table className="w-full text-sm">
+              <thead>
+                <tr className="bg-gradient-to-r from-emerald-600 to-teal-600 text-white">
+                  <th
+                    className="p-4 text-left font-semibold cursor-pointer hover:bg-emerald-700 transition"
+                    onClick={() => handleSort("barcode")}
+                  >
+                    <div className="flex items-center gap-2">
+                      <Barcode className="w-4 h-4" />
+                      Barcode
+                      <ArrowUpDown className="w-4 h-4" />
                     </div>
-                  </td>
+                  </th>
+                  <th
+                    className="p-4 text-left font-semibold cursor-pointer hover:bg-emerald-700 transition"
+                    onClick={() => handleSort("brand")}
+                  >
+                    <div className="flex items-center gap-2">
+                      Brand
+                      <ArrowUpDown className="w-4 h-4" />
+                    </div>
+                  </th>
+                  <th
+                    className="p-4 text-left font-semibold cursor-pointer hover:bg-emerald-700 transition"
+                    onClick={() => handleSort("nama")}
+                  >
+                    <div className="flex items-center gap-2">
+                      Nama Barang
+                      <ArrowUpDown className="w-4 h-4" />
+                    </div>
+                  </th>
+                  <th
+                    className="p-4 text-center font-semibold cursor-pointer hover:bg-emerald-700 transition"
+                    onClick={() => handleSort("stok")}
+                  >
+                    <div className="flex items-center justify-center gap-2">
+                      Stok
+                      <ArrowUpDown className="w-4 h-4" />
+                    </div>
+                  </th>
+                  <th className="p-4 text-center font-semibold">Penempatan</th>
+                  <th className="p-4 text-right font-semibold">Modal</th>
+                  <th className="p-4 text-right font-semibold">Harga Jual</th>
+                  <th className="p-4 text-left font-semibold">Dibuat</th>
+                  <th className="p-4 text-left font-semibold">Diupdate</th>
+                  <th className="p-4 text-center font-semibold">Aksi</th>
                 </tr>
-              ))
-            )}
-          </tbody>
-        </table>
-      </div>
+              </thead>
+              <tbody className="divide-y divide-gray-100">
+                {data.length === 0 ? (
+                  <tr>
+                    <td
+                      colSpan={10}
+                      className="text-center py-12 text-gray-500"
+                    >
+                      <Smartphone className="w-12 h-12 mx-auto mb-2 opacity-50" />
+                      <p>Tidak ada data aksesoris</p>
+                    </td>
+                  </tr>
+                ) : (
+                  data.map((item) => (
+                    <tr
+                      key={item.id}
+                      className="hover:bg-emerald-50 transition"
+                    >
+                      <td className="p-4">
+                        {item.barcode ? (
+                          <span className="font-mono bg-gray-100 px-2 py-1 rounded text-xs font-semibold">
+                            {item.barcode}
+                          </span>
+                        ) : (
+                          <span className="text-gray-400 italic text-xs">
+                            Tidak ada
+                          </span>
+                        )}
+                      </td>
+                      <td className="p-4">
+                        <span className="font-bold text-gray-800">
+                          {item.brand}
+                        </span>
+                      </td>
+                      <td className="p-4 font-medium text-gray-700">
+                        {item.nama}
+                      </td>
+                      <td className="p-4 text-center">
+                        <span
+                          className={`px-3 py-1 rounded-full text-xs font-semibold ${
+                            item.stok > 15
+                              ? "bg-green-100 text-green-700"
+                              : item.stok > 5
+                                ? "bg-yellow-100 text-yellow-700"
+                                : "bg-red-100 text-red-700"
+                          }`}
+                        >
+                          {item.stok}
+                        </span>
+                      </td>
+                      <td className="p-4 text-center text-gray-600">
+                        {item.penempatan}
+                      </td>
+                      <td className="p-4 text-right text-gray-600">
+                        Rp {item.hargaModal.toLocaleString("id-ID")}
+                      </td>
+                      <td className="p-4 text-right font-semibold text-emerald-600">
+                        Rp {item.hargaJual.toLocaleString("id-ID")}
+                      </td>
+                      <td className="p-4 text-gray-600 text-xs">
+                        {formatDate(item.createdAt)}
+                      </td>
+                      <td className="p-4 text-gray-600 text-xs">
+                        {formatDate(item.updatedAt)}
+                      </td>
+                      <td className="p-4">
+                        <div className="flex justify-center gap-2">
+                          <button
+                            onClick={() => {
+                              reset(item);
+                              setOpenEdit(item);
+                            }}
+                            className="p-2 bg-amber-500 hover:bg-amber-600 text-white rounded-lg transition shadow-md hover:shadow-lg"
+                            title="Edit"
+                          >
+                            <Edit className="w-4 h-4" />
+                          </button>
+                          <button
+                            onClick={() => handleDelete(item.id)}
+                            className="p-2 bg-red-600 hover:bg-red-700 text-white rounded-lg transition shadow-md hover:shadow-lg"
+                            title="Hapus"
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </button>
+                          <button
+                            onClick={() => handleUpdateStok(item)}
+                            className="p-2 bg-green-600 hover:bg-green-700 text-white rounded-lg transition shadow-md hover:shadow-lg"
+                            title="Update Stok"
+                          >
+                            <TrendingUp className="w-4 h-4" />
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  ))
+                )}
+              </tbody>
+            </table>
+          </div>
 
-      {/* Pagination */}
-      <div className="flex flex-col sm:flex-row justify-between items-center mt-6 gap-4">
-        <div className="text-sm text-gray-600">
-          Menampilkan {data.length} data
-        </div>
-        <div className="flex items-center gap-2">
-          <span className="text-sm text-gray-700">Baris/halaman:</span>
-          <select
-            value={perPage}
-            onChange={(e) => {
-              setPerPage(Number(e.target.value));
-              setPage(1);
-            }}
-            className="border rounded px-2 py-1 text-sm"
-          >
-            {[5, 10, 20, 50].map((n) => (
-              <option key={n} value={n}>
-                {n}
-              </option>
-            ))}
-          </select>
-        </div>
-        <div className="flex items-center gap-2">
-          <button
-            disabled={page === 1}
-            onClick={() => setPage(page - 1)}
-            className="px-3 py-1.5 border rounded text-sm disabled:text-gray-400 disabled:cursor-not-allowed hover:bg-gray-100"
-          >
-            Sebelumnya
-          </button>
-          <span className="text-sm font-medium">
-            {page} / {totalPage}
-          </span>
-          <button
-            disabled={page >= totalPage}
-            onClick={() => setPage(page + 1)}
-            className="px-3 py-1.5 border rounded text-sm disabled:text-gray-400 disabled:cursor-not-allowed hover:bg-gray-100"
-          >
-            Berikutnya
-          </button>
+          {/* Pagination */}
+          <div className="bg-gray-50 border-t-2 border-gray-200 p-4">
+            <div className="flex flex-col sm:flex-row justify-between items-center gap-4">
+              <div className="flex items-center gap-3">
+                <span className="text-sm text-gray-600">Baris/halaman:</span>
+                <select
+                  value={perPage}
+                  onChange={(e) => setPerPage(Number(e.target.value))}
+                  className="border-2 border-gray-300 rounded-lg px-3 py-2 text-sm focus:border-emerald-500 focus:outline-none"
+                >
+                  {[5, 10, 20, 50].map((n) => (
+                    <option key={n} value={n}>
+                      {n}
+                    </option>
+                  ))}
+                </select>
+                <span className="text-sm text-gray-600">
+                  Menampilkan{" "}
+                  <span className="font-semibold">{data.length}</span> data
+                </span>
+              </div>
+
+              <div className="flex items-center gap-2">
+                <button
+                  disabled={page === 1}
+                  onClick={() => setPage(page - 1)}
+                  className="px-4 py-2 border-2 border-gray-300 rounded-lg text-sm font-medium disabled:text-gray-400 disabled:cursor-not-allowed hover:bg-gray-100 transition flex items-center gap-2"
+                >
+                  <ChevronLeft className="w-4 h-4" />
+                  Sebelumnya
+                </button>
+                <div className="px-4 py-2 bg-emerald-600 text-white rounded-lg font-semibold text-sm">
+                  {page} / {totalPage}
+                </div>
+                <button
+                  disabled={page >= totalPage}
+                  onClick={() => setPage(page + 1)}
+                  className="px-4 py-2 border-2 border-gray-300 rounded-lg text-sm font-medium disabled:text-gray-400 disabled:cursor-not-allowed hover:bg-gray-100 transition flex items-center gap-2"
+                >
+                  Berikutnya
+                  <ChevronRight className="w-4 h-4" />
+                </button>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
 

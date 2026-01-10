@@ -108,6 +108,12 @@ export const navItems = [
         icon: "userPen",
         shortcut: ["n", "n"],
       },
+      {
+        title: "Voucher Harian",
+        url: "/dashboard/transaksi/voucher-harian",
+        icon: "userPen",
+        shortcut: ["n", "n"],
+      },
     ],
   },
   {
@@ -133,6 +139,13 @@ export const navItems = [
       {
         title: "Aksesoris",
         url: "/dashboard/transaksi/item-acc",
+        icon: "userPen",
+        shortcut: ["n", "n"],
+      },
+
+      {
+        title: "Voucher Harian",
+        url: "/dashboard/transaksi/item-voucher-harian",
         icon: "userPen",
         shortcut: ["n", "n"],
       },
