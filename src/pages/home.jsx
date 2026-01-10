@@ -385,7 +385,7 @@ export default function Home({ isOpen, onClose, onSuccess }) {
                         </div>
                       </div>
 
-                      <div className="flex gap-2">
+                      <div className="flex md:flex-row flex-col gap-2">
                         <input
                           type="number"
                           min="0"
@@ -396,7 +396,7 @@ export default function Home({ isOpen, onClose, onSuccess }) {
                         />
                         <button
                           onClick={() => tambahKeranjang(d, i)}
-                          className="bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white px-4 rounded-lg font-medium transition shadow-md hover:shadow-lg"
+                          className="bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white px-4 py-2 sm:py-0 rounded-lg font-medium transition shadow-md hover:shadow-lg"
                         >
                           Tambah
                         </button>
