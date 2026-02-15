@@ -27,6 +27,7 @@ import JualanVoucher from "./pages/jualan-voucher";
 import TransaksiVoucherHarianPage from "./pages/voucher-harian-page";
 import VoucherTerlarisPage from "./pages/item-voucher-harian";
 import Penggabungan from "./pages/penggabungan";
+import PrintVoucherGrosir from "./pages/print-voucher";
 
 function App() {
   const { user, isLoading, isCheckingAuth, fetchUser } = useAuthStore();
@@ -40,6 +41,7 @@ function App() {
     <Routes>
       <Route path="/" element={<Home />} />
       <Route path="/login" element={<LoginPage />} />
+      <Route path="/print/grosir/:id" element={<PrintVoucherGrosir />} />
 
       <Route path="/dashboard" element={<DashboardLayout />}>
         <Route path="jualan-voucher" element={<JualanVoucher />} />

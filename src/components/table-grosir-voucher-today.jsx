@@ -2,6 +2,7 @@ import { ChevronLeft, ChevronRight, Eye, Pencil, Trash2 } from "lucide-react";
 import { useState, useMemo } from "react";
 import api from "../api/client";
 import { useAuthStore } from "../store/useAuthStore";
+import { useNavigate } from "react-router-dom";
 
 export default function TableSectionVoucherGrosirToday({
   title,
@@ -9,6 +10,7 @@ export default function TableSectionVoucherGrosirToday({
   onSuccess,
 }) {
   const { user, isLoading, isCheckingAuth, fetchUser } = useAuthStore();
+  const navigate = useNavigate();
 
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage, setItemsPerPage] = useState(5);
@@ -427,10 +429,10 @@ body {
 
             <div className="mt-5 flex gap-x-3 justify-end">
               <button
-                onClick={() => handlePrintThermal(openDetail)}
+                onClick={() => navigate(`/print/grosir/${openDetail.id}`)}
                 className="px-4 py-2 bg-gray-700 text-white rounded-lg hover:bg-gray-800"
               >
-                Print
+                Printt
               </button>
 
               <button
