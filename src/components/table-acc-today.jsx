@@ -1,5 +1,5 @@
 import { Eye, Pencil, Trash2 } from "lucide-react";
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import api from "../api/client";
 import { useAuthStore } from "../store/useAuthStore";
 import Swal from "sweetalert2";
@@ -8,19 +8,27 @@ export default function TableSectionAccToday({ title, data = [], onSuccess }) {
   console.log("dtt", data);
 
   const { user, isLoading, isCheckingAuth, fetchUser } = useAuthStore();
+  const [search, setSearch] = useState("");
+
+  const filteredData = useMemo(() => {
+    return data.filter((item) =>
+      item?.namaPembeli?.toLowerCase().includes(search.toLowerCase())
+    );
+  }, [data, search]);
 
   const [page, setPage] = useState(1);
   const [itemPerPage, setItemPerPage] = useState(5);
 
   // Hitung pagination
-  const totalItem = data.length;
-  const totalPage = Math.ceil(totalItem / itemPerPage);
+  const totalItem = filteredData?.length;
+  const totalPage = Math.ceil(filteredData?.length / itemPerPage);
   const startIndex = (page - 1) * itemPerPage;
-  const paginatedItems = data.slice(startIndex, startIndex + itemPerPage);
+  const paginatedItems = filteredData?.slice(
+    startIndex,
+    startIndex + itemPerPage
+  );
 
   const [openDetail, setOpenDetail] = useState(null);
-  const [openEdit, setOpenEdit] = useState(null);
-  const [newStatus, setNewStatus] = useState("");
 
   const handleDelete = async (id) => {
     const result = await Swal.fire({
@@ -81,84 +89,73 @@ export default function TableSectionAccToday({ title, data = [], onSuccess }) {
     }
   };
 
-  const handleSaveStatus = () => {
-    // setdata((prev) =>
-    //   prev.map((item) =>
-    //     item.id === openEdit.id ? { ...item, status: newStatus } : item
-    //   )
-    // );
-    // setOpenEdit(null);
-    // setNewStatus("");
-  };
-
   return (
     <>
-      <div className="bg-white border border-gray-200 shadow-sm rounded-xl overflow-hidden">
+      <div className="bg-white text-xs md:text-sm border border-gray-200 shadow-sm rounded-xl overflow-hidden">
         {/* HEADER */}
-        <div className="px-4 py-3 bg-gray-50 border-b text-gray-700 font-medium flex justify-between">
-          {title}
+        <div className="bg-white border rounded-xl shadow-sm overflow-hidden">
+          {/* HEADER */}
+          <div className="px-4 py-3 bg-gray-50 border-b text-gray-700 font-medium flex justify-between items-center">
+            <div className="">
+              <div className="relative">
+                <input
+                  type="text"
+                  value={search}
+                  onChange={(e) => {
+                    setSearch(e.target.value);
+                    setPage(1); // reset ke halaman 1 saat search
+                  }}
+                  placeholder="Masukkan nama pembeli..."
+                  className="
+    w-full rounded-xl border border-gray-200 bg-gray-50
+    px-4 py-3 text-sm text-gray-800 placeholder-gray-400
+    transition-all
+    focus:border-blue-500 focus:bg-white focus:outline-none
+    focus:ring-2 focus:ring-blue-500/20
+  "
+                />
+              </div>
+            </div>
+            <select
+              className="border px-2 py-1 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/30"
+              value={itemPerPage}
+              onChange={(e) => {
+                setItemPerPage(Number(e.target.value));
+                setPage(1);
+              }}
+            >
+              <option value={5}>5 / hal</option>
+              <option value={10}>10 / hal</option>
+              <option value={20}>20 / hal</option>
+            </select>
+          </div>
 
-          <select
-            className="border px-2 py-1 rounded text-sm"
-            value={itemPerPage}
-            onChange={(e) => {
-              setItemPerPage(Number(e.target.value));
-              setPage(1); // reset page
-            }}
-          >
-            <option value={5}>5 / page</option>
-            <option value={10}>10 / page</option>
-            <option value={20}>20 / page</option>
-          </select>
-        </div>
+          {/* CONTENT */}
+          <div className="p-4 gap-3 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 xl:grid-cols-5">
+            {paginatedItems.length === 0 ? (
+              <div className="text-center text-gray-500 py-10 border rounded-lg bg-gray-50">
+                Tidak ada data
+              </div>
+            ) : (
+              paginatedItems.map((item, i) => (
+                <div
+                  key={item.id}
+                  className="border rounded-xl p-4 bg-white shadow-sm hover:shadow-md transition"
+                >
+                  {/* HEADER CARD */}
+                  <div className="flex justify-between items-start mb-3">
+                    <div>
+                      <p className="text-xs text-gray-400">No</p>
+                      <p className="font-semibold text-gray-800">
+                        {(page - 1) * itemPerPage + (i + 1)}
+                      </p>
+                    </div>
 
-        {/* TABLE */}
-        <div className="w-full overflow-x-auto">
-          <table className="w-[180vw] md:w-full text-sm ">
-            <thead>
-              <tr className="text-gray-600 bg-gray-100">
-                <th className="px-4 py-3 text-left">No</th>
-                <th className="px-4 py-3 text-left">Nama Pembeli</th>
-                <th className="px-4 py-3 text-left">Total Harga</th>
-                <th className="px-4 py-3 text-left">Tanggal</th>
-                <th className="px-4 py-3 text-left">Keuntungan</th>
-                <th className="px-4 py-3 text-left">Aksi</th>
-              </tr>
-            </thead>
-
-            <tbody>
-              {paginatedItems.length === 0 ? (
-                <tr className="border-t">
-                  <td className="px-4 py-3 text-gray-500" colSpan={6}>
-                    Tidak ada data
-                  </td>
-                </tr>
-              ) : (
-                paginatedItems.map((item, i) => (
-                  <tr key={item.id} className="border-t">
-                    <td className="px-4 py-3">
-                      {(page - 1) * itemPerPage + (i + 1)}
-                    </td>
-                    <td className="px-4 py-3">{item.namaPembeli}</td>
-                    <td className="px-4 py-3">
-                      Rp {item.totalHarga.toLocaleString()}
-                    </td>
-                    <td className="px-4 py-3">
-                      {new Date(item.tanggal).toLocaleString("id-ID", {
-                        day: "numeric",
-                        month: "long",
-                        year: "numeric",
-                      })}
-                    </td>
-                    <td className="px-4 py-3">
-                      Rp {item.keuntungan.toLocaleString()}
-                    </td>
-
-                    <td className="px-4 py-3 flex gap-2">
+                    <div className="flex gap-2">
                       <button
                         title="Detail"
-                        className="p-2 bg-blue-500 text-white rounded hover:bg-blue-600"
                         onClick={() => setOpenDetail(item)}
+                        className="p-2 rounded-lg bg-blue-50 text-blue-600 hover:bg-blue-100 transition"
                       >
                         <Eye className="w-4 h-4" />
                       </button>
@@ -166,29 +163,64 @@ export default function TableSectionAccToday({ title, data = [], onSuccess }) {
                       {item.status !== "Sukses" && (
                         <button
                           title="Delete"
-                          className="p-2 bg-red-500 text-white rounded hover:bg-red-600"
                           onClick={() => handleDelete(item.id)}
+                          className="p-2 rounded-lg bg-red-50 text-red-600 hover:bg-red-100 transition"
                         >
                           <Trash2 className="w-4 h-4" />
                         </button>
                       )}
-                    </td>
-                  </tr>
-                ))
-              )}
-            </tbody>
-          </table>
+                    </div>
+                  </div>
+
+                  {/* BODY */}
+                  <div className="grid grid-cols-2 gap-3 text-sm">
+                    <div className="col-span-2">
+                      <p className="text-xs text-gray-500">Nama Pembeli</p>
+                      <p className="font-semibold text-gray-800">
+                        {item.namaPembeli}
+                      </p>
+                    </div>
+
+                    <div>
+                      <p className="text-xs text-gray-500">Total Harga</p>
+                      <p className="font-semibold text-gray-800">
+                        Rp {item.totalHarga.toLocaleString()}
+                      </p>
+                    </div>
+
+                    <div>
+                      <p className="text-xs text-gray-500">Keuntungan</p>
+                      <p className="font-semibold text-green-600">
+                        Rp {item.keuntungan.toLocaleString()}
+                      </p>
+                    </div>
+
+                    <div className="col-span-2">
+                      <p className="text-xs text-gray-500">Tanggal</p>
+                      <p className="text-gray-700">
+                        {new Date(item.tanggal).toLocaleDateString("id-ID", {
+                          day: "numeric",
+                          month: "long",
+                          year: "numeric",
+                        })}
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              ))
+            )}
+          </div>
         </div>
 
         {/* PAGINATION */}
         <div className="flex justify-between items-center px-4 py-3 border-t bg-gray-50">
-          <span className="text-sm text-gray-600">
+          <span className=" text-gray-600">
             Page {page} / {totalPage} — Total {totalItem} data
           </span>
 
           <div className="space-x-2">
             <button
-              className="px-3 py-1 border rounded text-sm bg-white hover:bg-gray-100 disabled:opacity-40"
+              className="px-3 py-1 border rounded  bg-white hover:bg-gray-100 disabled:opacity-40"
               onClick={() => setPage(page - 1)}
               disabled={page <= 1}
             >
@@ -196,7 +228,7 @@ export default function TableSectionAccToday({ title, data = [], onSuccess }) {
             </button>
 
             <button
-              className="px-3 py-1 border rounded text-sm bg-white hover:bg-gray-100 disabled:opacity-40"
+              className="px-3 py-1 border rounded  bg-white hover:bg-gray-100 disabled:opacity-40"
               onClick={() => setPage(page + 1)}
               disabled={page >= totalPage}
             >
@@ -275,7 +307,7 @@ export default function TableSectionAccToday({ title, data = [], onSuccess }) {
             <h3 className="font-semibold text-gray-800 mb-3">Item Transaksi</h3>
 
             <div className="overflow-x-auto rounded-lg border border-gray-200">
-              <table className="lg:w-full w-[150%] text-sm">
+              <table className="lg:w-full w-[150%] ">
                 <thead className="bg-gray-50 text-gray-700">
                   <tr>
                     <th className="px-4 py-3 text-left font-medium">Produk</th>
@@ -329,43 +361,6 @@ export default function TableSectionAccToday({ title, data = [], onSuccess }) {
       )}
 
       {/* MODAL EDIT STATUS */}
-      {openEdit && (
-        <div className="fixed inset-0 bg-black/40 flex items-center justify-center p-4">
-          <div className="bg-white rounded-xl shadow-lg p-5 w-full max-w-sm">
-            <h2 className="text-lg font-semibold mb-3">Edit Status</h2>
-
-            <label className="block mb-2 text-sm font-medium">
-              Pilih Status Baru
-            </label>
-            <select
-              className="w-full border px-3 py-2 rounded"
-              value={newStatus}
-              onChange={(e) => setNewStatus(e.target.value)}
-            >
-              <option value="Pending">Pending</option>
-              <option value="Proses">Proses</option>
-              <option value="Sukses">Sukses</option>
-              <option value="Gagal">Gagal</option>
-            </select>
-
-            <div className="flex justify-end gap-2 mt-4">
-              <button
-                className="px-3 py-1 bg-gray-500 text-white rounded"
-                onClick={() => setOpenEdit(null)}
-              >
-                Batal
-              </button>
-
-              <button
-                className="px-3 py-1 bg-green-600 text-white rounded"
-                onClick={handleSaveStatus}
-              >
-                Simpan
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
     </>
   );
 }

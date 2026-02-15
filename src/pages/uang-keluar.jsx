@@ -20,6 +20,13 @@ export default function UangModalPage() {
   const { user } = useAuthStore();
   const queryClient = useQueryClient();
 
+  const {
+    register,
+    handleSubmit,
+    reset: resetForm,
+    formState: { errors },
+  } = useForm();
+
   // Filter state
   const [searchKeterangan, setSearchKeterangan] = useState("");
   const [filterPeriod, setFilterPeriod] = useState("all");
@@ -28,6 +35,7 @@ export default function UangModalPage() {
 
   // Modal state
   const [openModal, setOpenModal] = useState(false);
+  const [openModalEdit, setOpenModalEdit] = useState(null);
   const [editId, setEditId] = useState(null);
 
   // Pagination
@@ -48,7 +56,7 @@ export default function UangModalPage() {
       .slice(0, 10);
   };
 
-  // === QUERY: Fetch Uang Modal Data ===
+  // === QUERY: Fetch Uang Keluar Data ===
   const {
     data: queryData,
     isLoading,
@@ -119,7 +127,7 @@ export default function UangModalPage() {
       setOpenModal(false);
       Swal.fire({
         title: "Berhasil!",
-        text: "Uang modal berhasil ditambahkan.",
+        text: "Uang Keluar berhasil ditambahkan.",
         icon: "success",
         timer: 1500,
         showConfirmButton: false,
@@ -128,7 +136,7 @@ export default function UangModalPage() {
     onError: (err) => {
       Swal.fire({
         title: "Gagal!",
-        text: err.response?.data?.error || "Gagal menambah uang modal.",
+        text: err.response?.data?.error || "Gagal menambah Uang Keluar.",
         icon: "error",
       });
     },
@@ -141,10 +149,10 @@ export default function UangModalPage() {
       }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["uangModal"] });
-      setOpenModal(false);
+      setOpenModalEdit(null);
       Swal.fire({
         title: "Berhasil!",
-        text: "Uang modal berhasil diperbarui.",
+        text: "Uang Keluar berhasil diperbarui.",
         icon: "success",
         timer: 1500,
         showConfirmButton: false,
@@ -153,7 +161,7 @@ export default function UangModalPage() {
     onError: (err) => {
       Swal.fire({
         title: "Gagal!",
-        text: err.response?.data?.error || "Gagal memperbarui uang modal.",
+        text: err.response?.data?.error || "Gagal memperbarui Uang Keluar.",
         icon: "error",
       });
     },
@@ -168,7 +176,7 @@ export default function UangModalPage() {
       queryClient.invalidateQueries({ queryKey: ["uangModal"] });
       Swal.fire({
         title: "Dihapus!",
-        text: "Uang modal berhasil dihapus.",
+        text: "Uang Keluar berhasil dihapus.",
         icon: "success",
         timer: 1500,
         showConfirmButton: false,
@@ -177,17 +185,36 @@ export default function UangModalPage() {
     onError: (err) => {
       Swal.fire({
         title: "Gagal!",
-        text: err.response?.data?.error || "Gagal menghapus uang modal.",
+        text: err.response?.data?.error || "Gagal menghapus Uang Keluar.",
         icon: "error",
       });
     },
   });
 
+  const saveAdd = (data) => {
+    createUangModalMutation.mutate({
+      keterangan: data.keterangan,
+      tanggal: data.tanggal,
+      jumlah: data.jumlah,
+    });
+  };
+
+  const saveEdit = (data) => {
+    updateUangModalMutation.mutate({
+      id: openModalEdit.id,
+      payload: {
+        keterangan: data.keterangan,
+        tanggal: data.tanggal,
+        jumlah: data.jumlah,
+      },
+    });
+  };
+
   // Handlers
   const handleDelete = async (id) => {
     const result = await Swal.fire({
       title: "Yakin hapus?",
-      text: "Data uang modal ini akan dihapus permanen!",
+      text: "Data Uang Keluar ini akan dihapus permanen!",
       icon: "warning",
       showCancelButton: true,
       confirmButtonText: "Ya, hapus!",
@@ -200,8 +227,13 @@ export default function UangModalPage() {
   };
 
   const handleEdit = (item) => {
-    setEditId(item.id);
-    setOpenModal(true);
+    resetForm({
+      keterangan: item.keterangan,
+      tanggal: item.tanggal,
+      jumlah: item.jumlah,
+    });
+
+    setOpenModalEdit(item);
   };
 
   const handleReset = () => {
@@ -212,405 +244,424 @@ export default function UangModalPage() {
     setPage(1);
   };
 
+  const isRangeInvalid =
+    dateFrom && dateTo && new Date(dateTo) < new Date(dateFrom);
+
   // === RENDER ===
-  if (isLoading) return <div className="p-6 text-center">Memuat data...</div>;
   if (isError)
     return (
       <div className="p-6 text-center text-red-500">
-        {error?.message || "Gagal memuat data uang modal"}
+        {error?.message || "Gagal memuat data Uang Keluar"}
       </div>
     );
 
   return (
-    <div className="p-4 sm:p-6 w-full mx-auto">
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
-        <h1 className="text-2xl font-bold text-gray-800 flex items-center gap-2">
-          <Wallet className="w-6 h-6" />
-          Uang Modal
-        </h1>
-        <button
-          onClick={() => {
-            setEditId(null);
-            setOpenModal(true);
-          }}
-          className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 flex items-center gap-1 whitespace-nowrap"
-        >
-          <Plus className="w-4 h-4" />
-          Tambah Uang Modal
-        </button>
-      </div>
+    <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 p-4 sm:p-2 lg:p-8">
+      <div className=" mx-auto">
+        {/* Header */}
+        <div className="bg-white rounded-2xl shadow-xl p-6 mb-6">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+            <div className="flex items-center gap-4">
+              <div className="bg-gradient-to-r from-blue-600 to-blue-700 p-4 rounded-xl">
+                <Wallet className="w-8 h-8 text-white" />
+              </div>
 
-      {/* STATS */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
-        <StatCard
-          title="Total Transaksi"
-          value={stats.totalTransaksi}
-          icon={<Calendar className="w-5 h-5" />}
-          color="text-blue-600"
-        />
-        <StatCard
-          title="Total Jumlah"
-          value={`Rp ${stats.totalJumlah.toLocaleString("id-ID")}`}
-          icon={<TrendingUp className="w-5 h-5" />}
-          color="text-green-600"
-        />
-        <StatCard
-          title="Rata-rata/Transaksi"
-          value={`Rp ${stats.totalTransaksi > 0 ? Math.round(stats.totalJumlah / stats.totalTransaksi).toLocaleString("id-ID") : 0}`}
-          icon={<Wallet className="w-5 h-5" />}
-          color="text-purple-600"
-        />
-      </div>
-
-      {/* FILTER SECTION */}
-      <div className="bg-white p-4 rounded-lg shadow-sm border mb-6">
-        <div className="grid grid-cols-1 md:grid-cols-12 gap-3">
-          {/* 🔍 Cari Keterangan */}
-          <div className="md:col-span-4">
-            <label className="block text-xs font-medium text-gray-700 mb-1">
-              Cari Keterangan
-            </label>
-            <div className="relative">
-              <Search className="absolute left-3 top-2.5 h-4 w-4 text-gray-400" />
-              <input
-                type="text"
-                value={searchKeterangan}
-                onChange={(e) => setSearchKeterangan(e.target.value)}
-                className="w-full pl-10 pr-4 py-1.5 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                placeholder="Modal awal, Penambahan, dll..."
-              />
+              <div>
+                <h1 className="md:text-2xl text-lg lg:text-3xl font-bold text-gray-800">
+                  Uang Keluar
+                </h1>
+                <p className="text-gray-600 text-sm mt-1">
+                  Kelola transaksi uang keluar Anda
+                </p>
+              </div>
             </div>
-          </div>
 
-          {/* 🗓️ Periode */}
-          <div className="md:col-span-5">
-            <label className="block text-xs font-medium text-gray-700 mb-1">
-              Periode
-            </label>
-            <div className="flex flex-wrap gap-1">
-              {[
-                { key: "all", label: "Semua" },
-                { key: "today", label: "Hari Ini" },
-                { key: "week", label: "Minggu Ini" },
-                { key: "month", label: "Bulan Ini" },
-                { key: "custom", label: "Custom" },
-              ].map((opt) => (
-                <button
-                  key={opt.key}
-                  onClick={() => {
-                    setFilterPeriod(opt.key);
-                    if (opt.key !== "custom") {
-                      setDateFrom("");
-                      setDateTo("");
-                    }
-                  }}
-                  className={`px-2 py-1 text-xs rounded ${
-                    filterPeriod === opt.key
-                      ? "bg-blue-600 text-white"
-                      : "bg-gray-100 text-gray-700 border border-gray-300 hover:bg-gray-200"
-                  }`}
-                >
-                  {opt.label}
-                </button>
-              ))}
-            </div>
-          </div>
-
-          {/* 🔄 Action Buttons */}
-          <div className="md:col-span-3 flex gap-2">
             <button
-              onClick={() => setPage(1)}
-              className="px-3 py-1.5 bg-blue-600 text-white rounded whitespace-nowrap flex items-center gap-1"
+              onClick={() => {
+                setEditId(null);
+                setOpenModal(true);
+              }}
+              className="px-6 py-3 bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white rounded-lg font-semibold shadow-md hover:shadow-lg transition-all flex items-center gap-2 justify-center"
             >
-              <Search className="w-4 h-4" />
-              Cari
-            </button>
-            <button
-              onClick={handleReset}
-              className="px-3 py-1.5 text-gray-600 border border-gray-300 rounded whitespace-nowrap"
-            >
-              Reset
+              <Plus className="w-5 h-5" />
+              Tambah Transaksi
             </button>
           </div>
         </div>
 
-        {/* 📅 Custom Date Range */}
-        {filterPeriod === "custom" && (
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mt-3">
-            <div>
-              <label className="block text-xs text-gray-600 mb-1">Dari</label>
-              <input
-                type="date"
-                value={dateFrom}
-                onChange={(e) => setDateFrom(e.target.value)}
-                className="w-full px-2.5 py-1.5 border border-gray-300 rounded text-sm"
-              />
-            </div>
-            <div>
-              <label className="block text-xs text-gray-600 mb-1">Sampai</label>
-              <input
-                type="date"
-                value={dateTo}
-                onChange={(e) => setDateTo(e.target.value)}
-                className="w-full px-2.5 py-1.5 border border-gray-300 rounded text-sm"
-              />
+        {/* STATS */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+          <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100 hover:shadow-md transition-shadow duration-200">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm font-medium text-gray-500 mb-1">
+                  Total Transaksi
+                </p>
+                <p className="text-2xl font-bold text-gray-900">
+                  {stats.totalTransaksi}
+                </p>
+              </div>
+              <div className="p-3 bg-blue-50 rounded-xl">
+                <Calendar className="w-6 h-6 text-blue-600" />
+              </div>
             </div>
           </div>
-        )}
 
-        {/* Per Page */}
-        <div className="mt-3 flex justify-end">
-          <select
-            className="border px-2 py-1.5 rounded text-sm"
-            value={pageSize}
-            onChange={(e) => {
-              setPageSize(Number(e.target.value));
-              setPage(1);
-            }}
-          >
-            <option value={5}>5/hal</option>
-            <option value={10}>10/hal</option>
-            <option value={20}>20/hal</option>
-          </select>
+          <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100 hover:shadow-md transition-shadow duration-200">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm font-medium text-gray-500 mb-1">
+                  Total Jumlah
+                </p>
+                <p className="text-2xl font-bold text-gray-900">
+                  Rp {stats.totalJumlah.toLocaleString("id-ID")}
+                </p>
+              </div>
+              <div className="p-3 bg-green-50 rounded-xl">
+                <TrendingUp className="w-6 h-6 text-green-600" />
+              </div>
+            </div>
+          </div>
+
+          <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100 hover:shadow-md transition-shadow duration-200">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm font-medium text-gray-500 mb-1">
+                  Rata-rata/Transaksi
+                </p>
+                <p className="text-2xl font-bold text-gray-900">
+                  Rp{" "}
+                  {stats.totalTransaksi > 0
+                    ? Math.round(
+                        stats.totalJumlah / stats.totalTransaksi
+                      ).toLocaleString("id-ID")
+                    : 0}
+                </p>
+              </div>
+              <div className="p-3 bg-purple-50 rounded-xl">
+                <Wallet className="w-6 h-6 text-purple-600" />
+              </div>
+            </div>
+          </div>
         </div>
-      </div>
 
-      {/* TABLE */}
-      <div className="bg-white rounded-lg shadow-sm border overflow-hidden">
-        <div className="overflow-x-auto">
-          <table className="w-full text-sm">
-            <thead className="bg-gray-50 text-gray-700">
-              <tr>
-                <th className="px-4 py-3 text-left">No</th>
-                <th className="px-4 py-3 text-left">Keterangan</th>
-                <th className="px-4 py-3 text-left">Penempatan</th>
-                <th className="px-4 py-3 text-left">Tanggal</th>
-                <th className="px-4 py-3 text-left">Jumlah</th>
-                <th className="px-4 py-3 text-left">Aksi</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-gray-200">
-              {data.data?.length === 0 ? (
+        {/* FILTER SECTION */}
+        <div className="mb-6 rounded-2xl border border-gray-100 bg-white p-6 shadow-sm">
+          {/* Header */}
+          <div className="mb-5 flex items-center gap-3">
+            <div className="rounded-lg bg-gray-100 p-2">
+              <Search className="h-4 w-4 text-gray-600" />
+            </div>
+            <h2 className="text-lg font-semibold text-gray-900">
+              Filter & Pencarian
+            </h2>
+          </div>
+
+          {/* Filter Area */}
+          <div className="grid grid-cols-1 gap-4 md:grid-cols-12">
+            {/* 🔍 Cari Keterangan */}
+            <div className="md:col-span-5">
+              <label className="mb-2 block text-sm font-semibold text-gray-700">
+                Cari Keterangan
+              </label>
+              <div className="relative">
+                <Search className="absolute left-3.5 top-1/2 h-5 w-5 -translate-y-1/2 text-gray-400" />
+                <input
+                  type="text"
+                  value={searchKeterangan}
+                  onChange={(e) => setSearchKeterangan(e.target.value)}
+                  placeholder="Cari transaksi..."
+                  className="w-full rounded-xl border border-gray-200 bg-gray-50 py-2.5 pl-11 pr-4 transition-all focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+                />
+              </div>
+            </div>
+
+            {/* 📅 Periode */}
+            <div className="md:col-span-7">
+              <label className="mb-2 block text-sm font-semibold text-gray-700">
+                Periode
+              </label>
+              <select
+                value={filterPeriod}
+                onChange={(e) => {
+                  const value = e.target.value;
+                  setFilterPeriod(value);
+                  if (value !== "custom") {
+                    setDateFrom("");
+                    setDateTo("");
+                  }
+                }}
+                className="w-full rounded-xl border border-gray-200 bg-white px-4 py-2.5 text-sm font-medium focus:outline-none focus:ring-2 focus:ring-blue-500"
+              >
+                <option value="all">Semua</option>
+                <option value="today">Hari Ini</option>
+                <option value="week">Minggu Ini</option>
+                <option value="month">Bulan Ini</option>
+                <option value="custom">Custom</option>
+              </select>
+            </div>
+          </div>
+
+          {/* 📆 Custom Date */}
+          {filterPeriod === "custom" && (
+            <div className="mt-4 grid grid-cols-1 gap-4 rounded-xl bg-gray-50 p-4 sm:grid-cols-2">
+              <div>
+                <label className="mb-2 block text-sm font-semibold text-gray-700">
+                  Dari Tanggal
+                </label>
+                <input
+                  type="date"
+                  value={dateFrom}
+                  onChange={(e) => setDateFrom(e.target.value)}
+                  className="w-full rounded-xl border border-gray-200 bg-white px-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                />
+              </div>
+
+              <div>
+                <label className="mb-2 block text-sm font-semibold text-gray-700">
+                  Sampai Tanggal
+                </label>
+                <input
+                  type="date"
+                  value={dateTo}
+                  min={dateFrom}
+                  onChange={(e) => setDateTo(e.target.value)}
+                  className="w-full rounded-xl border border-gray-200 bg-white px-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                />
+              </div>
+
+              {isRangeInvalid && (
+                <p className="text-red-500 text-sm mt-1">
+                  Tanggal awal tidak boleh lebih besar dari tanggal akhir
+                </p>
+              )}
+            </div>
+          )}
+
+          {/* Action */}
+          <div className="mt-5 flex flex-col gap-3 border-t border-gray-100 pt-5 sm:flex-row sm:items-center sm:justify-between">
+            <div className="flex gap-2">
+              <button
+                onClick={() => setPage(1)}
+                className="flex items-center gap-2 rounded-xl bg-gradient-to-r from-blue-600 to-blue-700 px-5 py-2.5 font-medium text-white shadow-lg shadow-blue-500/30 transition-all hover:scale-[1.02]"
+              >
+                <Search className="h-4 w-4" />
+                Terapkan
+              </button>
+
+              <button
+                onClick={handleReset}
+                className="rounded-xl bg-gray-100 px-5 py-2.5 font-medium text-gray-700 transition-all hover:bg-gray-200"
+              >
+                Reset
+              </button>
+            </div>
+
+            {/* Per Page */}
+            <div className="flex items-center gap-2">
+              <span className="text-sm text-gray-600">Tampilkan:</span>
+              <select
+                value={pageSize}
+                onChange={(e) => {
+                  setPageSize(Number(e.target.value));
+                  setPage(1);
+                }}
+                className="rounded-xl border border-gray-200 bg-white px-3 py-2 text-sm font-medium focus:outline-none focus:ring-2 focus:ring-blue-500"
+              >
+                <option value={5}>5 / halaman</option>
+                <option value={10}>10 / halaman</option>
+                <option value={20}>20 / halaman</option>
+              </select>
+            </div>
+          </div>
+        </div>
+
+        {/* TABLE */}
+        <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+          <div className="overflow-x-auto">
+            <table className="w-full">
+              <thead className="bg-gradient-to-r from-gray-50 to-gray-100 border-b border-gray-200">
                 <tr>
-                  <td
-                    colSpan="6"
-                    className="px-4 py-6 text-center text-gray-500"
-                  >
-                    Tidak ada data uang modal
-                  </td>
+                  <th className="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">
+                    No
+                  </th>
+                  <th className="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">
+                    Keterangan
+                  </th>
+                  <th className="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">
+                    Penempatan
+                  </th>
+                  <th className="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">
+                    Tanggal
+                  </th>
+                  <th className="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">
+                    Jumlah
+                  </th>
+                  <th className="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">
+                    Aksi
+                  </th>
                 </tr>
-              ) : (
-                data.data.map((item, i) => (
-                  <tr key={item.id} className="hover:bg-gray-50">
-                    <td className="px-4 py-3">
-                      {(page - 1) * pageSize + i + 1}
-                    </td>
-                    <td className="px-4 py-3 font-medium text-gray-800">
-                      {item.keterangan}
-                    </td>
-                    <td className="px-4 py-3 font-medium text-gray-800">
-                      {item.penempatan}
-                    </td>
-                    <td className="px-4 py-3 text-gray-600">
-                      {new Date(item.tanggal).toLocaleDateString("id-ID")}
-                    </td>
-                    <td className="px-4 py-3 text-green-700 font-medium">
-                      Rp {item.jumlah.toLocaleString("id-ID")}
-                    </td>
-                    <td className="px-4 py-3">
-                      <div className="flex gap-2">
-                        <button
-                          onClick={() => handleEdit(item)}
-                          className="p-2 bg-yellow-500 text-white rounded hover:bg-yellow-600"
-                          title="Edit"
-                        >
-                          <Edit3 className="w-4 h-4" />
-                        </button>
-                        <button
-                          onClick={() => handleDelete(item.id)}
-                          className="p-2 bg-red-500 text-white rounded hover:bg-red-600"
-                          title="Hapus"
-                        >
-                          <Trash2 className="w-4 h-4" />
-                        </button>
+              </thead>
+              <tbody className="divide-y divide-gray-100">
+                {data.data?.length === 0 ? (
+                  <tr>
+                    <td colSpan="6" className="px-6 py-12 text-center">
+                      <div className="flex flex-col items-center justify-center">
+                        <div className="p-4 bg-gray-100 rounded-full mb-3">
+                          <Wallet className="w-8 h-8 text-gray-400" />
+                        </div>
+                        <p className="text-gray-500 font-medium">
+                          Tidak ada data transaksi
+                        </p>
+                        <p className="text-sm text-gray-400 mt-1">
+                          Mulai tambahkan transaksi uang keluar
+                        </p>
                       </div>
                     </td>
                   </tr>
-                ))
-              )}
-            </tbody>
-          </table>
+                ) : (
+                  data.data.map((item, i) => (
+                    <tr
+                      key={item.id}
+                      className="hover:bg-gray-50 transition-colors duration-150"
+                    >
+                      <td className="px-6 py-4 text-sm text-gray-600">
+                        {(page - 1) * pageSize + i + 1}
+                      </td>
+                      <td className="px-6 py-4">
+                        <span className="text-sm font-semibold text-gray-900">
+                          {item.keterangan}
+                        </span>
+                      </td>
+                      <td className="px-6 py-4">
+                        <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-blue-50 text-blue-700">
+                          {item.penempatan}
+                        </span>
+                      </td>
+                      <td className="px-6 py-4 text-sm text-gray-600">
+                        {new Date(item.tanggal).toLocaleDateString("id-ID", {
+                          day: "numeric",
+                          month: "short",
+                          year: "numeric",
+                        })}
+                      </td>
+                      <td className="px-6 py-4">
+                        <span className="text-sm font-bold text-green-600">
+                          Rp {item.jumlah.toLocaleString("id-ID")}
+                        </span>
+                      </td>
+                      <td className="px-6 py-4">
+                        <div className="flex gap-2">
+                          <button
+                            onClick={() => handleEdit(item)}
+                            className="p-2 bg-amber-500 text-white rounded-lg hover:bg-amber-600 transition-all duration-200 hover:scale-110 active:scale-95 shadow-sm"
+                            title="Edit"
+                          >
+                            <Edit3 className="w-4 h-4" />
+                          </button>
+                          <button
+                            onClick={() => handleDelete(item.id)}
+                            className="p-2 bg-red-500 text-white rounded-lg hover:bg-red-600 transition-all duration-200 hover:scale-110 active:scale-95 shadow-sm"
+                            title="Hapus"
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  ))
+                )}
+              </tbody>
+            </table>
+          </div>
+
+          {/* PAGINATION */}
+          {data.meta && data.meta.totalPages > 1 && (
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between px-6 py-4 border-t border-gray-100 bg-gray-50">
+              <span className="text-sm text-gray-600 mb-3 sm:mb-0">
+                Menampilkan{" "}
+                <span className="font-semibold text-gray-900">
+                  {(page - 1) * pageSize + 1}
+                </span>{" "}
+                -{" "}
+                <span className="font-semibold text-gray-900">
+                  {Math.min(page * pageSize, data.meta.total)}
+                </span>{" "}
+                dari{" "}
+                <span className="font-semibold text-gray-900">
+                  {data.meta.total}
+                </span>{" "}
+                data
+              </span>
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={() => setPage(page - 1)}
+                  disabled={page <= 1}
+                  className="px-4 py-2 border border-gray-200 rounded-lg text-sm font-medium bg-white hover:bg-gray-50 disabled:opacity-40 disabled:cursor-not-allowed transition-all duration-200 hover:scale-[1.02] active:scale-[0.98]"
+                >
+                  Sebelumnya
+                </button>
+                <div className="px-4 py-2 bg-blue-600 text-white rounded-lg text-sm font-semibold">
+                  {page} / {data.meta.totalPages}
+                </div>
+                <button
+                  onClick={() => setPage(page + 1)}
+                  disabled={page >= data.meta.totalPages}
+                  className="px-4 py-2 border border-gray-200 rounded-lg text-sm font-medium bg-white hover:bg-gray-50 disabled:opacity-40 disabled:cursor-not-allowed transition-all duration-200 hover:scale-[1.02] active:scale-[0.98]"
+                >
+                  Berikutnya
+                </button>
+              </div>
+            </div>
+          )}
         </div>
 
-        {/* PAGINATION */}
-        {data.meta && data.meta.totalPages > 1 && (
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between px-4 py-3 border-t bg-gray-50">
-            <span className="text-sm text-gray-600">
-              Menampilkan {(page - 1) * pageSize + 1} -{" "}
-              {Math.min(page * pageSize, data.meta.total)} dari{" "}
-              {data.meta.total} data
-            </span>
-            <div className="flex items-center gap-2 mt-2 sm:mt-0">
-              <button
-                onClick={() => setPage(page - 1)}
-                disabled={page <= 1}
-                className="px-3 py-1.5 border rounded text-sm disabled:opacity-40"
-              >
-                Sebelumnya
-              </button>
-              <span className="text-sm">
-                Halaman {page} dari {data.meta.totalPages}
-              </span>
-              <button
-                onClick={() => setPage(page + 1)}
-                disabled={page >= data.meta.totalPages}
-                className="px-3 py-1.5 border rounded text-sm disabled:opacity-40"
-              >
-                Berikutnya
-              </button>
-            </div>
-          </div>
+        {/* MODAL */}
+        {openModal && (
+          <UangModalForm
+            isOpen={openModal}
+            onClose={() => setOpenModal(false)}
+            isEdit={true}
+            register={register}
+            onSubmit={handleSubmit(saveAdd)}
+            errors={errors}
+            isLoading={createUangModalMutation.isPending}
+          />
+        )}
+
+        {openModalEdit && (
+          <UangModalForm
+            title={"Edit Uang Keluar"}
+            onClose={() => setOpenModal(null)}
+            isEdit={true}
+            onSubmit={handleSubmit(saveEdit)}
+            register={register}
+            errors={errors}
+            defaultValues={{
+              keterangan: openModalEdit.keterangan,
+              tanggal: openModalEdit.tanggal,
+              jumlah: openModalEdit.jumlah,
+            }}
+          />
         )}
       </div>
-
-      {/* MODAL */}
-      {openModal && (
-        <UangModalForm
-          isOpen={openModal}
-          onClose={() => setOpenModal(false)}
-          editId={editId}
-          user={user}
-        />
-      )}
     </div>
   );
 }
 
 // Stat Card Component
-function StatCard({ title, value, icon, color }) {
-  return (
-    <div className="bg-white p-4 rounded-lg shadow-sm border">
-      <div className="flex items-center gap-3">
-        <div
-          className={`p-2 ${color.replace("text", "bg").replace("600", "100")} rounded-lg`}
-        >
-          {icon}
-        </div>
-        <div>
-          <p className="text-xs text-gray-500">{title}</p>
-          <p className={`text-lg font-bold ${color}`}>{value}</p>
-        </div>
-      </div>
-    </div>
-  );
-}
 
 // Modal Form Component
-function UangModalForm({ isOpen, onClose, editId, user }) {
-  const {
-    register,
-    handleSubmit,
-    reset,
-    formState: { errors, isSubmitting },
-  } = useForm();
-
-  const queryClient = useQueryClient();
-
-  // Fetch data untuk edit
-  useEffect(() => {
-    if (editId) {
-      const fetchEditData = async () => {
-        try {
-          const res = await api.get(`/uang-modal/${editId}`, {
-            headers: { Authorization: `Bearer ${user?.token}` },
-          });
-          reset({
-            keterangan: res.data.keterangan,
-            tanggal: res.data.tanggal.split("T")[0],
-            jumlah: res.data.jumlah,
-          });
-        } catch (err) {
-          console.error("Fetch edit error:", err);
-          Swal.fire({
-            title: "Gagal!",
-            text: "Gagal memuat data untuk edit.",
-            icon: "error",
-          });
-          onClose();
-        }
-      };
-      fetchEditData();
-    } else {
-      reset({ keterangan: "", tanggal: "", jumlah: "" });
-    }
-  }, [editId, reset, onClose, user?.token]);
-
-  const createMutation = useMutation({
-    mutationFn: (payload) =>
-      api.post("/uang-modal", payload, {
-        headers: { Authorization: `Bearer ${user?.token}` },
-      }),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["uangModal"] });
-      onClose();
-      Swal.fire({
-        title: "Berhasil!",
-        text: "Uang modal berhasil ditambahkan.",
-        icon: "success",
-        timer: 1500,
-        showConfirmButton: false,
-      });
-    },
-    onError: (err) => {
-      Swal.fire({
-        title: "Gagal!",
-        text: err.response?.data?.error || "Gagal menambah uang modal.",
-        icon: "error",
-      });
-    },
-  });
-
-  const updateMutation = useMutation({
-    mutationFn: (payload) =>
-      api.put(`/uang-modal/${editId}`, payload, {
-        headers: { Authorization: `Bearer ${user?.token}` },
-      }),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["uangModal"] });
-      onClose();
-      Swal.fire({
-        title: "Berhasil!",
-        text: "Uang modal berhasil diperbarui.",
-        icon: "success",
-        timer: 1500,
-        showConfirmButton: false,
-      });
-    },
-    onError: (err) => {
-      Swal.fire({
-        title: "Gagal!",
-        text: err.response?.data?.error || "Gagal memperbarui uang modal.",
-        icon: "error",
-      });
-    },
-  });
-
-  const onSubmit = async (data) => {
-    const payload = {
-      keterangan: data.keterangan,
-      tanggal: data.tanggal,
-      jumlah: Number(data.jumlah),
-    };
-
-    if (editId) {
-      updateMutation.mutate(payload);
-    } else {
-      createMutation.mutate(payload);
-    }
-  };
-
-  if (!isOpen) return null;
-
+function UangModalForm({
+  title,
+  onClose,
+  onSubmit,
+  register,
+  isEdit = false,
+  errors,
+  defaultValues,
+  isLoading = false,
+}) {
   return (
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
       <div className="bg-white rounded-xl w-full max-w-md p-6 relative">
@@ -622,11 +673,9 @@ function UangModalForm({ isOpen, onClose, editId, user }) {
           <X className="w-5 h-5" />
         </button>
 
-        <h2 className="text-xl font-bold text-gray-800 mb-4">
-          {editId ? "Edit Uang Modal" : "Tambah Uang Modal"}
-        </h2>
+        <h2 className="text-xl font-bold text-gray-800 mb-4">{title}</h2>
 
-        <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+        <form onSubmit={(e) => e.preventDefault()} className="space-y-4">
           {/* Keterangan */}
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">
@@ -687,25 +736,39 @@ function UangModalForm({ isOpen, onClose, editId, user }) {
             )}
           </div>
 
-          {/* Buttons */}
           <div className="flex justify-end gap-3 pt-2">
             <button
               type="button"
               onClick={onClose}
-              className="px-4 py-2 text-gray-700 bg-gray-100 rounded-md hover:bg-gray-200"
+              disabled={isLoading}
+              className="
+      px-4 py-2 rounded-md
+      text-gray-700 bg-gray-100
+      hover:bg-gray-200
+      disabled:opacity-50 disabled:cursor-not-allowed
+    "
             >
               Batal
             </button>
+
             <button
-              type="submit"
-              disabled={
-                isSubmitting ||
-                createMutation.isPending ||
-                updateMutation.isPending
-              }
-              className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 disabled:bg-gray-300"
+              type="button"
+              onClick={onSubmit}
+              disabled={isLoading}
+              className="
+      px-4 py-2 rounded-md text-white
+      bg-blue-600 hover:bg-blue-700
+      disabled:opacity-70 disabled:cursor-not-allowed
+      flex items-center gap-2
+    "
             >
-              {isSubmitting ? "Menyimpan..." : "Simpan"}
+              {isLoading
+                ? isEdit
+                  ? "Memperbarui..."
+                  : "Menyimpan..."
+                : isEdit
+                  ? "Perbarui"
+                  : "Simpan"}
             </button>
           </div>
         </form>

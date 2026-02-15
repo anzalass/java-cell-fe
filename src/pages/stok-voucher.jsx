@@ -20,6 +20,22 @@ import {
   TrendingUp,
 } from "lucide-react";
 
+function useDebounce(value, delay) {
+  const [debouncedValue, setDebouncedValue] = useState(value);
+
+  useEffect(() => {
+    const handler = setTimeout(() => {
+      setDebouncedValue(value);
+    }, delay);
+
+    return () => {
+      clearTimeout(handler);
+    };
+  }, [value, delay]);
+
+  return debouncedValue;
+}
+
 export default function StokVoucherPage() {
   const { user } = useAuthStore();
   const queryClient = useQueryClient();
@@ -30,10 +46,11 @@ export default function StokVoucherPage() {
 
   // Filter & Sort
   const [searchNama, setSearchNama] = useState("");
-  const [searchquery, setSearchQuery] = useState("");
   const [brand, setBrand] = useState("");
 
   const [filterDibuat, setFilterDibuat] = useState("");
+  const [penempatan, setPenempatan] = useState("");
+
   const [sortConfig, setSortConfig] = useState({
     key: "createdAt",
     direction: "desc",
@@ -41,12 +58,34 @@ export default function StokVoucherPage() {
   const [page, setPage] = useState(1);
   const [perPage, setPerPage] = useState(10);
 
+  const [createdRange, setCreatedRange] = useState({
+    start: "",
+    end: "",
+  });
+
+  const [updatedRange, setUpdatedRange] = useState({
+    start: "",
+    end: "",
+  });
+
+  const debouncedPenempatan = useDebounce(penempatan, 500);
+  const debouncedSearchNama = useDebounce(searchNama, 500);
+
   const resetPage = () => setPage(1);
   const clearFilters = () => {
     setSearchNama("");
     setFilterDibuat("");
+    setPenempatan("");
     setPage(1);
-    setSearchQuery("");
+    setCreatedRange({
+      start: "",
+      end: "",
+    });
+    setUpdatedRange({
+      start: "",
+      end: "",
+    });
+    setBrand("");
   };
 
   // === QUERY: Fetch Voucher Data ===
@@ -59,8 +98,8 @@ export default function StokVoucherPage() {
   } = useQuery({
     queryKey: [
       "vouchers",
-      searchquery,
-      filterDibuat,
+      debouncedSearchNama,
+      debouncedPenempatan,
       brand,
       sortConfig,
       page,
@@ -68,9 +107,17 @@ export default function StokVoucherPage() {
     ],
     queryFn: async () => {
       const params = new URLSearchParams();
-      if (searchquery) params.append("search", searchquery);
-      if (filterDibuat) params.append("createdAt", filterDibuat);
+      if (debouncedSearchNama) params.append("search", debouncedSearchNama);
+      if (debouncedPenempatan) params.append("penempatan", debouncedPenempatan);
+
       if (brand) params.append("brand", brand);
+      if (createdRange.start) params.append("createdStart", createdRange.start);
+
+      if (createdRange.end) params.append("createdEnd", createdRange.end);
+
+      if (updatedRange.start) params.append("updatedStart", updatedRange.start);
+
+      if (updatedRange.end) params.append("updatedEnd", updatedRange.end);
 
       params.append("sortBy", sortConfig.key);
       params.append("sortOrder", sortConfig.direction);
@@ -267,6 +314,16 @@ export default function StokVoucherPage() {
     });
   };
 
+  const isCreatedInvalid =
+    createdRange.start &&
+    createdRange.end &&
+    new Date(createdRange.end) < new Date(createdRange.start);
+
+  const isUpdatedInvalid =
+    updatedRange.start &&
+    updatedRange.end &&
+    new Date(updatedRange.end) < new Date(updatedRange.start);
+
   // === RENDER ===
   if (isLoading) {
     return (
@@ -325,7 +382,7 @@ export default function StokVoucherPage() {
           </div>
 
           {/* Filter Grid */}
-          <div className="grid grid-cols-1 md:grid-cols-6 gap-4 items-end">
+          <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4 items-end">
             {/* Search */}
             <div className="md:col-span-3">
               <label className="block text-sm font-semibold text-gray-700 mb-2">
@@ -342,12 +399,6 @@ export default function StokVoucherPage() {
                     placeholder="6 GB, Harian, dll..."
                   />
                 </div>
-                <button
-                  onClick={() => setSearchQuery(searchNama)}
-                  className="px-5 py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-semibold transition"
-                >
-                  Cari
-                </button>
               </div>
             </div>
             <div>
@@ -369,6 +420,22 @@ export default function StokVoucherPage() {
               </select>
             </div>
 
+            <div>
+              <label className="block text-sm font-semibold text-gray-700 mb-2">
+                Penempatan
+              </label>
+              <div className="relative">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+                <input
+                  type="text"
+                  value={penempatan}
+                  onChange={(e) => setPenempatan(e.target.value)}
+                  className="w-full pl-10 pr-4 py-3 border-2 border-gray-200 rounded-lg focus:border-emerald-500 focus:outline-none transition"
+                  placeholder="Etalase 1..."
+                />
+              </div>
+            </div>
+
             {/* Date Filter */}
             <div>
               <label className="block text-sm font-semibold text-gray-700 mb-2">
@@ -378,30 +445,101 @@ export default function StokVoucherPage() {
                 <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
                 <input
                   type="date"
-                  value={filterDibuat}
-                  onChange={(e) => setFilterDibuat(e.target.value)}
-                  className="w-full pl-10 pr-4 py-3 border-2 border-gray-200 rounded-lg focus:border-blue-500 focus:outline-none"
+                  value={createdRange.start}
+                  onChange={(e) =>
+                    setCreatedRange((prev) => ({
+                      ...prev,
+                      start: e.target.value,
+                    }))
+                  }
+                  className="w-full pl-10 pr-4 py-3 border-2 border-gray-200 rounded-lg focus:border-emerald-500 focus:outline-none"
+                />
+              </div>
+            </div>
+
+            <div>
+              <label className="block text-sm font-semibold text-gray-700 mb-2">
+                Sampai Tanggal Dibuat
+              </label>
+              <div className="relative">
+                <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+                <input
+                  type="date"
+                  value={createdRange.end}
+                  min={createdRange.start || undefined} // 🔥 Prevent pilih sebelum start
+                  onChange={(e) =>
+                    setCreatedRange((prev) => ({
+                      ...prev,
+                      end: e.target.value,
+                    }))
+                  }
+                  className={`w-full pl-10 pr-4 py-3 border-2 rounded-lg focus:outline-none ${
+                    isCreatedInvalid
+                      ? "border-red-500 focus:border-red-500"
+                      : "border-gray-200 focus:border-emerald-500"
+                  }`}
+                />
+
+                {isCreatedInvalid && (
+                  <p className="text-red-500 text-sm mt-1">
+                    Tanggal awal tidak boleh lebih besar dari tanggal akhir
+                  </p>
+                )}
+              </div>
+            </div>
+
+            <div>
+              <label className="block text-sm font-semibold text-gray-700 mb-2">
+                Tanggal Diupdate
+              </label>
+              <div className="relative">
+                <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+                <input
+                  type="date"
+                  value={updatedRange.start}
+                  onChange={(e) =>
+                    setUpdatedRange((prev) => ({
+                      ...prev,
+                      start: e.target.value,
+                    }))
+                  }
+                  className="w-full pl-10 pr-4 py-3 border-2 border-gray-200 rounded-lg focus:border-emerald-500 focus:outline-none"
+                />
+
+                {isUpdatedInvalid && (
+                  <p className="text-red-500 text-sm mt-1">
+                    Tanggal akhir tidak boleh lebih kecil dari tanggal awal
+                  </p>
+                )}
+              </div>
+            </div>
+
+            <div>
+              <label className="block text-sm font-semibold text-gray-700 mb-2">
+                Sampai Tanggal Diupdate
+              </label>
+              <div className="relative">
+                <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+                <input
+                  type="date"
+                  value={updatedRange.end}
+                  min={updatedRange.start || undefined}
+                  onChange={(e) =>
+                    setUpdatedRange((prev) => ({
+                      ...prev,
+                      end: e.target.value,
+                    }))
+                  }
+                  className={`w-full pl-10 pr-4 py-3 border-2 rounded-lg focus:outline-none ${
+                    isUpdatedInvalid
+                      ? "border-red-500 focus:border-red-500"
+                      : "border-gray-200 focus:border-emerald-500"
+                  }`}
                 />
               </div>
             </div>
 
             {/* Per Page */}
-            <div>
-              <label className="block text-sm font-semibold text-gray-700 mb-2">
-                Item per Halaman
-              </label>
-              <select
-                value={perPage}
-                onChange={(e) => setPerPage(Number(e.target.value))}
-                className="w-full px-4 py-3 border-2 border-gray-200 rounded-lg focus:border-blue-500 focus:outline-none"
-              >
-                <option value={5}>5</option>
-                <option value={10}>10</option>
-                <option value={20}>20</option>
-                <option value={50}>50</option>
-                <option value={100}>100</option>
-              </select>
-            </div>
           </div>
 
           {/* Footer Actions */}
@@ -448,12 +586,66 @@ export default function StokVoucherPage() {
                       <ArrowUpDown className="w-4 h-4" />
                     </div>
                   </th>
-                  <th className="p-4 text-center font-semibold">Penempatan</th>
-                  <th className="p-4 text-right font-semibold">Modal</th>
-                  <th className="p-4 text-right font-semibold">Harga Grosir</th>
-                  <th className="p-4 text-right font-semibold">Harga Eceran</th>
-                  <th className="p-4 text-left font-semibold">Dibuat</th>
-                  <th className="p-4 text-center font-semibold">Aksi</th>
+                  <th
+                    className="p-4 text-center font-semibold cursor-pointer hover:bg-blue-700 transition"
+                    onClick={() => handleSort("penempatan")}
+                  >
+                    <div className="flex items-center justify-center gap-2">
+                      Penempatan
+                      <ArrowUpDown className="w-4 h-4" />
+                    </div>
+                  </th>
+                  <th
+                    className="p-4 text-center font-semibold cursor-pointer hover:bg-blue-700 transition"
+                    onClick={() => handleSort("hargaPokok")}
+                  >
+                    <div className="flex items-center justify-center gap-2">
+                      Harga Modal
+                      <ArrowUpDown className="w-4 h-4" />
+                    </div>
+                  </th>
+                  <th
+                    className="p-4 text-center font-semibold cursor-pointer hover:bg-blue-700 transition"
+                    onClick={() => handleSort("hargaJual")}
+                  >
+                    <div className="flex items-center justify-center gap-2">
+                      Harga Grosir
+                      <ArrowUpDown className="w-4 h-4" />
+                    </div>
+                  </th>
+                  <th
+                    className="p-4 text-center font-semibold cursor-pointer hover:bg-blue-700 transition"
+                    onClick={() => handleSort("hargaEceran")}
+                  >
+                    {" "}
+                    <div className="flex items-center justify-center gap-2">
+                      Harga Eceran
+                      <ArrowUpDown className="w-4 h-4" />
+                    </div>
+                  </th>
+                  <th
+                    className="p-4 text-center font-semibold cursor-pointer hover:bg-blue-700 transition"
+                    onClick={() => handleSort("createdAt")}
+                  >
+                    <div className="flex items-center justify-center gap-2">
+                      Dibuat
+                      <ArrowUpDown className="w-4 h-4" />
+                    </div>
+                  </th>
+                  <th
+                    className="p-4 text-center font-semibold cursor-pointer hover:bg-blue-700 transition"
+                    onClick={() => handleSort("updatedAt")}
+                  >
+                    <div className="flex items-center justify-center gap-2">
+                      Diupdate
+                      <ArrowUpDown className="w-4 h-4" />
+                    </div>
+                  </th>
+                  <th className="p-4 text-center font-semibold cursor-pointer hover:bg-blue-700 transition">
+                    <div className="flex items-center justify-center gap-2">
+                      Aksi
+                    </div>
+                  </th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-100">
@@ -503,6 +695,9 @@ export default function StokVoucherPage() {
                       <td className="p-4 text-gray-600 text-sm">
                         {formatDate(v.createdAt)}
                       </td>
+                      <td className="p-4 text-gray-600 text-sm">
+                        {formatDate(v.updatedAt)}
+                      </td>
                       <td className="p-4">
                         <div className="flex justify-center gap-2">
                           <button
@@ -545,6 +740,20 @@ export default function StokVoucherPage() {
                 Menampilkan <span className="font-semibold">{data.length}</span>{" "}
                 dari <span className="font-semibold">{perPage}</span> data
               </div>
+
+              <div>
+                <select
+                  value={perPage}
+                  onChange={(e) => setPerPage(Number(e.target.value))}
+                  className="w-full px-4 py-3 border-2 border-gray-200 rounded-lg focus:border-blue-500 focus:outline-none"
+                >
+                  <option value={5}>5</option>
+                  <option value={10}>10</option>
+                  <option value={20}>20</option>
+                  <option value={50}>50</option>
+                  <option value={100}>100</option>
+                </select>
+              </div>
               <div className="flex items-center gap-2">
                 <button
                   disabled={page === 1}
@@ -552,7 +761,6 @@ export default function StokVoucherPage() {
                   className="px-4 py-2 border-2 border-gray-300 rounded-lg text-sm font-medium disabled:text-gray-400 disabled:cursor-not-allowed hover:bg-gray-100 transition flex items-center gap-2"
                 >
                   <ChevronLeft className="w-4 h-4" />
-                  Sebelumnya
                 </button>
                 <div className="px-4 py-2 bg-blue-600 text-white rounded-lg font-semibold text-sm">
                   {page} / {totalPage}
@@ -562,7 +770,6 @@ export default function StokVoucherPage() {
                   onClick={() => setPage(page + 1)}
                   className="px-4 py-2 border-2 border-gray-300 rounded-lg text-sm font-medium disabled:text-gray-400 disabled:cursor-not-allowed hover:bg-gray-100 transition flex items-center gap-2"
                 >
-                  Berikutnya
                   <ChevronRight className="w-4 h-4" />
                 </button>
               </div>
@@ -580,6 +787,7 @@ export default function StokVoucherPage() {
           currentNama={updateStokItem.nama}
           currentStok={updateStokItem.stok}
           onSubmit={handleSimpanStok}
+          isLoading={updateStokMutation.isPending}
         />
       )}
 
@@ -590,6 +798,7 @@ export default function StokVoucherPage() {
           onSubmit={handleSubmit(saveAdd)}
           register={register}
           errors={errors}
+          isLoading={createVoucherMutation.isPending}
         />
       )}
 
@@ -601,6 +810,7 @@ export default function StokVoucherPage() {
           register={register}
           errors={errors}
           isEdit={true}
+          isLoading={updateVoucherMutation.isPending}
         />
       )}
     </div>
@@ -615,6 +825,7 @@ function ModalForm({
   register,
   errors,
   isEdit = false,
+  isLoading = false, // ⬅️ baru
 }) {
   // Validasi custom untuk harga
   const validateHargaJual = (value, formValues) => {
@@ -681,6 +892,21 @@ function ModalForm({
             />
             {errors.nama && (
               <p className="text-xs text-red-500 mt-1">Wajib diisi</p>
+            )}
+          </div>
+          <div className="mb-4">
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Penempatan Barang *
+            </label>
+            <input
+              {...register("penempatan", { required: true })}
+              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+              placeholder="Etalase no 1"
+            />
+            {errors.penempatan && (
+              <p className="text-xs text-red-500 mt-1">
+                Penempatan wajib diisi
+              </p>
             )}
           </div>
           <div className="mb-4">
@@ -784,20 +1010,39 @@ function ModalForm({
               )}
             </div>
           </div>
-          <div className="flex justify-end gap-3">
+          <div className="flex justify-end gap-3 pt-2">
             <button
               type="button"
               onClick={onClose}
-              className="px-4 py-2 text-gray-700 bg-gray-100 rounded-md hover:bg-gray-200"
+              disabled={isLoading}
+              className="
+      px-4 py-2 rounded-md
+      text-gray-700 bg-gray-100
+      hover:bg-gray-200
+      disabled:opacity-50 disabled:cursor-not-allowed
+    "
             >
               Batal
             </button>
+
             <button
               type="button"
               onClick={onSubmit}
-              className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700"
+              disabled={isLoading}
+              className="
+      px-4 py-2 rounded-md text-white
+      bg-blue-600 hover:bg-blue-700
+      disabled:opacity-70 disabled:cursor-not-allowed
+      flex items-center gap-2
+    "
             >
-              {isEdit ? "Perbarui" : "Simpan"}
+              {isLoading
+                ? isEdit
+                  ? "Memperbarui..."
+                  : "Menyimpan..."
+                : isEdit
+                  ? "Perbarui"
+                  : "Simpan"}
             </button>
           </div>
         </form>

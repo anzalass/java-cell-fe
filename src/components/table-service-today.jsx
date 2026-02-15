@@ -1,5 +1,5 @@
 import { Eye, Pencil, Trash2 } from "lucide-react";
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { useAuthStore } from "../store/useAuthStore";
 import api from "../api/client";
 import Swal from "sweetalert2";
@@ -11,11 +11,21 @@ export default function TableSectionServiceToday({ title, data, onSuccess }) {
   const [page, setPage] = useState(1);
   const [itemPerPage, setItemPerPage] = useState(5);
 
+  const [search, setSearch] = useState("");
+
+  const filteredData = useMemo(() => {
+    return data.filter((item) =>
+      item?.namaPelangan?.toLowerCase().includes(search.toLowerCase())
+    );
+  }, [data, search]);
+
   // Hitung pagination
-  const totalItem = data.length;
-  const totalPage = Math.ceil(totalItem / itemPerPage);
+  const totalPage = Math.ceil(filteredData?.length / itemPerPage);
   const startIndex = (page - 1) * itemPerPage;
-  const paginatedItems = data.slice(startIndex, startIndex + itemPerPage);
+  const paginatedItems = filteredData?.slice(
+    startIndex,
+    startIndex + itemPerPage
+  );
 
   const [openDetail, setOpenDetail] = useState(null);
   const [openEdit, setOpenEdit] = useState(null);
@@ -75,15 +85,6 @@ export default function TableSectionServiceToday({ title, data, onSuccess }) {
     if (!openEdit) return;
 
     try {
-      await Swal.fire({
-        title: "Memperbarui status...",
-        allowOutsideClick: false,
-        allowEscapeKey: false,
-        didOpen: () => {
-          Swal.showLoading();
-        },
-      });
-
       await api.patch(
         `/service-hp/${openEdit.id}/status`,
         { status: newStatus },
@@ -117,17 +118,53 @@ export default function TableSectionServiceToday({ title, data, onSuccess }) {
 
   return (
     <>
-      <div className="bg-white border border-gray-200 shadow-sm rounded-xl overflow-hidden">
+      <div className="bg-white border text-xs md:text-sm border-gray-200 shadow-sm rounded-xl overflow-hidden">
         {/* HEADER */}
-        <div className="px-4 py-3 bg-gray-50 border-b text-gray-700 font-medium flex justify-between">
-          {title}
+        {/* <div className="px-4 py-3 bg-gray-50 border-b text-gray-700 font-medium flex items-center justify-between">
+          <span>{title}</span>
 
           <select
             className="border px-2 py-1 rounded text-sm"
             value={itemPerPage}
             onChange={(e) => {
               setItemPerPage(Number(e.target.value));
-              setPage(1); // reset page
+              setPage(1);
+            }}
+          >
+            <option value={5}>5 / page</option>
+            <option value={10}>10 / page</option>
+            <option value={20}>20 / page</option>
+          </select>
+        </div> */}
+
+        {/* TABLE */}
+        <div className="px-4 py-3 bg-gray-50 border-b text-gray-700 font-medium flex items-center justify-between">
+          <div className="">
+            <div className="relative">
+              <input
+                type="text"
+                value={search}
+                onChange={(e) => {
+                  setSearch(e.target.value);
+                  setPage(1); // reset ke halaman 1 saat search
+                }}
+                placeholder="Masukkan nama pembeli..."
+                className="
+    w-full rounded-xl border border-gray-200 bg-gray-50
+    px-4 py-3 text-sm text-gray-800 placeholder-gray-400
+    transition-all
+    focus:border-blue-500 focus:bg-white focus:outline-none
+    focus:ring-2 focus:ring-blue-500/20
+  "
+              />
+            </div>
+          </div>
+          <select
+            className="border px-2 py-1 rounded text-sm"
+            value={itemPerPage}
+            onChange={(e) => {
+              setItemPerPage(Number(e.target.value));
+              setPage(1);
             }}
           >
             <option value={5}>5 / page</option>
@@ -136,95 +173,108 @@ export default function TableSectionServiceToday({ title, data, onSuccess }) {
           </select>
         </div>
 
-        {/* TABLE */}
-        <div className="w-full overflow-x-auto">
-          <table className="w-[180vw] md:w-full text-sm ">
-            <thead>
-              <tr className="text-gray-600 bg-gray-100">
-                <th className="px-4 py-3 text-left">No</th>
-                <th className="px-4 py-3 text-left">Nama Pembeli</th>
-                <th className="px-4 py-3 text-left">Keterangan</th>
-                <th className="px-4 py-3 text-left">Status</th>
-                <th className="px-4 py-3 text-left">Biaya Jasa</th>
-                <th className="px-4 py-3 text-left">Keuntungan</th>
-                <th className="px-4 py-3 text-left">Tanggal</th>
-                <th className="px-4 py-3 text-left">Aksi</th>
-              </tr>
-            </thead>
-
-            <tbody>
-              {paginatedItems.length === 0 ? (
-                <tr className="border-t">
-                  <td className="px-4 py-3 text-gray-500" colSpan={6}>
-                    Tidak ada data
-                  </td>
-                </tr>
-              ) : (
-                paginatedItems.map((item, i) => (
-                  <tr key={item.id} className="border-t">
-                    <td className="px-4 py-3">
-                      {(page - 1) * itemPerPage + (i + 1)}
-                    </td>
-                    <td className="px-4 py-3">{item.namaPelangan}</td>
-                    <td className="px-4 py-3">{item.keterangan}</td>
-                    <td className="px-4 py-3">{item.status}</td>
-
-                    <td className="px-4 py-3">
-                      Rp {item.biayaJasa.toLocaleString()}
-                    </td>
-                    <td className="px-4 py-3">{item.keuntungan}</td>
-                    <td className="px-4 py-3">
-                      {" "}
+        <div className="p-4 grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
+          {paginatedItems.length === 0 ? (
+            <div className="text-gray-500 text-sm col-span-full text-center py-10">
+              Tidak ada data
+            </div>
+          ) : (
+            paginatedItems.map((item, i) => (
+              <div
+                key={item.id}
+                className="bg-white border rounded-2xl p-4 shadow-sm hover:shadow-md transition"
+              >
+                {/* HEADER */}
+                <div className="flex items-start justify-between mb-3">
+                  <div>
+                    <p className="text-sm text-gray-500">
+                      #{(page - 1) * itemPerPage + (i + 1)}
+                    </p>
+                    <h3 className="font-semibold text-gray-900">
+                      {item.namaPelangan}
+                    </h3>
+                    <p className="text-xs text-gray-500">
                       {new Date(item.tanggal).toLocaleString("id-ID", {
                         day: "numeric",
                         month: "long",
                         year: "numeric",
                       })}
-                    </td>
+                    </p>
+                  </div>
 
-                    <td className="px-4 py-3 flex gap-2">
-                      <button
-                        title="Detail"
-                        className="p-2 bg-blue-500 text-white rounded hover:bg-blue-600"
-                        onClick={() => setOpenDetail(item)}
-                      >
-                        <Eye className="w-4 h-4" />
-                      </button>
+                  <span
+                    className={`text-xs px-2 py-1 rounded-full font-medium
+              ${
+                item.status === "Selesai"
+                  ? "bg-green-100 text-green-700"
+                  : "bg-yellow-100 text-yellow-700"
+              }
+            `}
+                  >
+                    {item.status}
+                  </span>
+                </div>
 
-                      <button
-                        title="Detail"
-                        className="p-2 bg-yellow-500 text-white rounded hover:bg-blue-600"
-                        onClick={() => setOpenEdit(item)}
-                      >
-                        <Pencil className="w-4 h-4" />
-                      </button>
+                {/* CONTENT */}
+                <div className="space-y-1 text-sm text-gray-700">
+                  <p>
+                    <span className="font-medium">Keterangan:</span>{" "}
+                    {item.keterangan}
+                  </p>
+                  <p>
+                    <span className="font-medium">Biaya Jasa:</span> Rp{" "}
+                    {item.biayaJasa.toLocaleString()}
+                  </p>
+                  <p>
+                    <span className="font-medium">Keuntungan:</span> Rp{" "}
+                    {item.keuntungan.toLocaleString()}
+                  </p>
+                </div>
 
-                      {item.status !== "Sukses" && (
-                        <button
-                          title="Delete"
-                          className="p-2 bg-red-500 text-white rounded hover:bg-red-600"
-                          onClick={() => handleDelete(item.id)}
-                        >
-                          <Trash2 className="w-4 h-4" />
-                        </button>
-                      )}
-                    </td>
-                  </tr>
-                ))
-              )}
-            </tbody>
-          </table>
+                {/* ACTION */}
+                <div className="flex gap-2 mt-4">
+                  <button
+                    title="Detail"
+                    className="flex-1 py-2 rounded-lg bg-blue-500 text-white hover:bg-blue-600 flex items-center justify-center gap-1 text-sm"
+                    onClick={() => setOpenDetail(item)}
+                  >
+                    <Eye className="w-4 h-4" />
+                    Detail
+                  </button>
+
+                  <button
+                    title="Edit"
+                    className="flex-1 py-2 rounded-lg bg-yellow-500 text-white hover:bg-yellow-600 flex items-center justify-center gap-1 text-sm"
+                    onClick={() => setOpenEdit(item)}
+                  >
+                    <Pencil className="w-4 h-4" />
+                    Edit
+                  </button>
+
+                  {item.status !== "Sukses" && (
+                    <button
+                      title="Delete"
+                      className="py-2 px-3 rounded-lg bg-red-500 text-white hover:bg-red-600"
+                      onClick={() => handleDelete(item.id)}
+                    >
+                      <Trash2 className="w-4 h-4" />
+                    </button>
+                  )}
+                </div>
+              </div>
+            ))
+          )}
         </div>
 
         {/* PAGINATION */}
         <div className="flex justify-between items-center px-4 py-3 border-t bg-gray-50">
-          <span className="text-sm text-gray-600">
-            Page {page} / {totalPage} — Total {totalItem} data
+          <span className=" text-gray-600">
+            Page {page} / {totalPage} — Total {filteredData?.length} data
           </span>
 
           <div className="space-x-2">
             <button
-              className="px-3 py-1 border rounded text-sm bg-white hover:bg-gray-100 disabled:opacity-40"
+              className="px-3 py-1 border rounded  bg-white hover:bg-gray-100 disabled:opacity-40"
               onClick={() => setPage(page - 1)}
               disabled={page <= 1}
             >
@@ -232,7 +282,7 @@ export default function TableSectionServiceToday({ title, data, onSuccess }) {
             </button>
 
             <button
-              className="px-3 py-1 border rounded text-sm bg-white hover:bg-gray-100 disabled:opacity-40"
+              className="px-3 py-1 border rounded  bg-white hover:bg-gray-100 disabled:opacity-40"
               onClick={() => setPage(page + 1)}
               disabled={page >= totalPage}
             >
@@ -261,7 +311,7 @@ export default function TableSectionServiceToday({ title, data, onSuccess }) {
               </div>
             </div>
 
-            <div className="p-5 flex-1 overflow-y-auto space-y-4 text-sm">
+            <div className="p-5 flex-1 overflow-y-auto space-y-4 ">
               {/* Nama Pelanggan */}
               <div className="flex justify-between">
                 <span className="font-medium text-gray-600">
@@ -273,23 +323,56 @@ export default function TableSectionServiceToday({ title, data, onSuccess }) {
               </div>
 
               {/* Member */}
-              {openDetail.Member.nama ? (
-                <div className="flex justify-between">
-                  <span className="font-medium text-gray-600">Member:</span>
-                  <span className="text-green-600 font-medium">Ya</span>
-                </div>
+              {openDetail.Member !== null ? (
+                <>
+                  {openDetail.Member.nama ? (
+                    <>
+                      <div className="flex justify-between">
+                        <span className="font-medium text-gray-600">
+                          Member:
+                        </span>
+                        <span className="text-green-600 font-medium">Ya</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="font-medium text-gray-600">
+                          No. HP:
+                        </span>
+                        <span>{openDetail.Member?.noTelp || "-"}</span>
+                      </div>
+                    </>
+                  ) : (
+                    <>
+                      <div className="flex justify-between">
+                        <span className="font-medium text-gray-600">
+                          Member:
+                        </span>
+                        <span className="text-gray-500 italic">Tidak</span>
+                      </div>
+
+                      <div className="flex justify-between">
+                        <span className="font-medium text-gray-600">
+                          No. HP:
+                        </span>
+                        <span>{openDetail?.noHP || "-"}</span>
+                      </div>
+                    </>
+                  )}
+                </>
               ) : (
-                <div className="flex justify-between">
-                  <span className="font-medium text-gray-600">Member:</span>
-                  <span className="text-gray-500 italic">Tidak</span>
-                </div>
+                <>
+                  <div className="flex justify-between">
+                    <span className="font-medium text-gray-600">Member:</span>
+                    <span className="text-gray-500 italic">Tidak</span>
+                  </div>
+
+                  <div className="flex justify-between">
+                    <span className="font-medium text-gray-600">No. HP:</span>
+                    <span>{openDetail?.noHP || "-"}</span>
+                  </div>
+                </>
               )}
 
               {/* No HP */}
-              <div className="flex justify-between">
-                <span className="font-medium text-gray-600">No. HP:</span>
-                <span>{openDetail.Member?.noTelp || "-"}</span>
-              </div>
 
               {/* Brand HP */}
               <div className="flex justify-between">
@@ -354,7 +437,7 @@ export default function TableSectionServiceToday({ title, data, onSuccess }) {
 
                 {openDetail?.Sparepart && openDetail?.Sparepart?.length > 0 ? (
                   <div className="mt-2 overflow-x-auto">
-                    <table className="w-full text-sm border-collapse">
+                    <table className="w-full  border-collapse">
                       <thead>
                         <tr className="bg-gray-100 text-left">
                           <th className="px-3 py-2 border">Nama</th>
@@ -395,7 +478,7 @@ export default function TableSectionServiceToday({ title, data, onSuccess }) {
                     </table>
 
                     {/* Ringkasan Total di Bawah Tabel */}
-                    <div className="mt-3 grid grid-cols-1 sm:grid-cols-3 gap-2 text-sm">
+                    <div className="mt-3 grid grid-cols-1 sm:grid-cols-3 gap-2 ">
                       <div className="bg-blue-50 p-2 rounded text-center">
                         <div className="text-gray-600 text-xs">
                           Total Item {openDetail.Sparepart.nama}
@@ -471,9 +554,7 @@ export default function TableSectionServiceToday({ title, data, onSuccess }) {
           <div className="bg-white rounded-xl shadow-lg p-5 w-full max-w-sm">
             <h2 className="text-lg font-semibold mb-3">Edit Status</h2>
 
-            <label className="block mb-2 text-sm font-medium">
-              Pilih Status Baru
-            </label>
+            <label className="block mb-2  font-medium">Pilih Status Baru</label>
             <select
               className="w-full border px-3 py-2 rounded"
               value={newStatus}

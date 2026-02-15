@@ -128,8 +128,8 @@ const Sidebar = ({
 
   return (
     <aside
-      className={`fixed top-0 left-0 z-40 h-screen border-r bg-white shadow-md transition-all duration-300
-        ${isCollapsed ? "w-0 md:w-16" : "w-64"}
+      className={`fixed top-0 left-0 z-10 h-screen border-r bg-white shadow-md transition-all duration-300
+        ${isCollapsed ? "w-0" : "w-64"}
         ${isMobile ? (sidebarOpen ? "translate-x-0" : "-translate-x-full") : ""}
       `}
     >
@@ -146,7 +146,7 @@ const Sidebar = ({
         </div>
 
         {/* Nav Items */}
-        <nav className="flex-1 overflow-y-auto px-3 py-2">
+        <nav className="flex-1 overflow-y-auto px-3 mt-7 py-2">
           {renderNavItems(navItems)}
           <button className="p-3 flex spaxe-x-4" onClick={handleLogout}>
             <LogOut className="mr-2" size={16} />{" "}

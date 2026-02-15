@@ -9,21 +9,12 @@ export const navItems = [
   },
   {
     title: "Yuk Transaksi ",
-    url: "/dashboard/transaksi",
+    url: "/dashboard/penggabungan",
     icon: "university",
     isActive: false,
     shortcut: ["d", "d"],
     items: [],
   },
-  {
-    title: "Yuk Jualan Voucher ",
-    url: "/dashboard/jualan-voucher",
-    icon: "university",
-    isActive: false,
-    shortcut: ["d", "d"],
-    items: [],
-  },
-
   {
     title: "Master Data",
     url: "",

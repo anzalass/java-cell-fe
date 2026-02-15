@@ -37,13 +37,13 @@ export default function TableUangModalToday({ title, data = [] }) {
 
   return (
     <>
-      <div className="bg-white border border-gray-200 shadow-sm rounded-xl overflow-hidden">
+      <div className="bg-white border text-xs md:text-sm border-gray-200 shadow-sm rounded-xl overflow-hidden">
         {/* HEADER */}
         <div className="px-4 py-3 bg-gray-50 border-b text-gray-700 font-medium flex justify-between">
           {title}
 
           <select
-            className="border px-2 py-1 rounded text-sm"
+            className="border px-2 py-1 rounded "
             value={itemPerPage}
             onChange={(e) => {
               setItemPerPage(Number(e.target.value));
@@ -58,7 +58,7 @@ export default function TableUangModalToday({ title, data = [] }) {
 
         {/* TABLE */}
         <div className="w-full overflow-x-auto">
-          <table className="min-w-[150vw] md:min-w-0 w-full text-sm">
+          <table className="min-w-[150vw] md:min-w-0 w-full ">
             <thead>
               <tr className="text-gray-600 bg-gray-100">
                 <th className="px-4 py-3 text-left">No</th>
@@ -128,13 +128,13 @@ export default function TableUangModalToday({ title, data = [] }) {
 
         {/* PAGINATION */}
         <div className="flex justify-between items-center px-4 py-3 border-t bg-gray-50">
-          <span className="text-sm text-gray-600">
+          <span className=" text-gray-600">
             Page {page} / {totalPage} — Total {totalItem} data
           </span>
 
           <div className="space-x-2">
             <button
-              className="px-3 py-1 border rounded text-sm bg-white hover:bg-gray-100 disabled:opacity-40"
+              className="px-3 py-1 border rounded  bg-white hover:bg-gray-100 disabled:opacity-40"
               onClick={() => setPage(page - 1)}
               disabled={page <= 1}
             >
@@ -142,7 +142,7 @@ export default function TableUangModalToday({ title, data = [] }) {
             </button>
 
             <button
-              className="px-3 py-1 border rounded text-sm bg-white hover:bg-gray-100 disabled:opacity-40"
+              className="px-3 py-1 border rounded  bg-white hover:bg-gray-100 disabled:opacity-40"
               onClick={() => setPage(page + 1)}
               disabled={page >= totalPage}
             >
@@ -156,7 +156,7 @@ export default function TableUangModalToday({ title, data = [] }) {
       {openDetail && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
           <div className="bg-white rounded-xl shadow-xl p-6 w-full max-w-lg">
-            <h2 className="text-xl font-bold mb-4">Detail Uang Modal</h2>
+            <h2 className="text-xl font-bold mb-4">Detail Uang Keluar</h2>
 
             <p className="mb-2">
               <span className="font-medium">Keterangan: </span>
@@ -196,7 +196,7 @@ export default function TableUangModalToday({ title, data = [] }) {
           <div className="bg-white rounded-xl shadow-lg p-6 w-full max-w-sm">
             <h2 className="text-lg font-semibold mb-4">Edit Data Modal</h2>
 
-            <label className="text-sm font-medium">Keterangan</label>
+            <label className=" font-medium">Keterangan</label>
             <input
               className="w-full border px-3 py-2 rounded mb-3"
               value={openEdit.keterangan}
@@ -205,7 +205,7 @@ export default function TableUangModalToday({ title, data = [] }) {
               }
             />
 
-            <label className="text-sm font-medium">Nominal</label>
+            <label className=" font-medium">Nominal</label>
             <input
               type="number"
               className="w-full border px-3 py-2 rounded mb-3"

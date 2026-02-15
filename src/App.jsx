@@ -26,6 +26,7 @@ import Home from "./pages/home";
 import JualanVoucher from "./pages/jualan-voucher";
 import TransaksiVoucherHarianPage from "./pages/voucher-harian-page";
 import VoucherTerlarisPage from "./pages/item-voucher-harian";
+import Penggabungan from "./pages/penggabungan";
 
 function App() {
   const { user, isLoading, isCheckingAuth, fetchUser } = useAuthStore();
@@ -43,6 +44,7 @@ function App() {
       <Route path="/dashboard" element={<DashboardLayout />}>
         <Route path="jualan-voucher" element={<JualanVoucher />} />
         <Route path="overview" element={<Overview />} />
+        <Route path="penggabungan" element={<Penggabungan />} />
         <Route path="user" element={<UserManagementPage />} />
         <Route path="transaksi" element={<TransaksiPage />} />
         <Route path="master-data/stok-voucher" element={<StokVoucherPage />} />

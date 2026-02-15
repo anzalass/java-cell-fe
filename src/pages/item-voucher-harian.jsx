@@ -9,6 +9,9 @@ import {
   RefreshCw,
   Filter,
   BarChart3,
+  ChevronRight,
+  ChevronLeft,
+  Download,
 } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import api from "../api/client";
@@ -19,13 +22,14 @@ export default function VoucherTerlarisPage() {
 
   // Filter state
   const [page, setPage] = useState(1);
-  const [pageSize, setPageSize] = useState(10);
+  const [pageSize, setPageSize] = useState(3);
   const [searchInput, setSearchInput] = useState("");
   const [searchQuery, setSearchQuery] = useState("");
   const [brand, setBrand] = useState("");
   const [periode, setPeriode] = useState("semua");
   const [startDate, setStartDate] = useState("");
   const [endDate, setEndDate] = useState("");
+  const [openFilter, setOpenFilter] = useState(false);
 
   console.log(pageSize);
 
@@ -36,7 +40,7 @@ export default function VoucherTerlarisPage() {
   useEffect(() => {
     const fetchBrands = async () => {
       try {
-        const res = await api.get("voucher-master", {
+        const res = await api.get("vouchers-master", {
           headers: { Authorization: `Bearer ${user?.token}` },
         });
         const uniqueBrands = [...new Set(res.data.map((v) => v.brand))];
@@ -47,6 +51,8 @@ export default function VoucherTerlarisPage() {
     };
     fetchBrands();
   }, [user?.token]);
+
+  const handleExportExcel = () => {};
 
   // Reset ke halaman 1 saat filter berubah
   const resetPage = () => setPage(1);
@@ -145,191 +151,164 @@ export default function VoucherTerlarisPage() {
 
   return (
     <div className="p-4 sm:p-6 w-full mx-auto">
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
-        <h1 className="text-2xl font-bold text-gray-800">
-          <BarChart3 className="w-6 h-6 inline mr-2" />
-          Laporan Voucher Terlaris
-        </h1>
-        <button
-          onClick={refetch}
-          className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 flex items-center gap-1"
-        >
-          <RefreshCw className="w-4 h-4" />
-          Refresh
-        </button>
-      </div>
-
-      {/* Statistik */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
-        <StatCard
-          title="Total Terjual"
-          value={statistik.totalTerjual}
-          icon={<Package className="w-5 h-5" />}
-          color="text-blue-600"
-          bg="bg-blue-50"
-        />
-        <StatCard
-          title="Total Pendapatan"
-          value={formatRupiah(statistik.totalPendapatan)}
-          icon={<Wallet className="w-5 h-5" />}
-          color="text-green-600"
-          bg="bg-green-50"
-        />
-        <StatCard
-          title="Total Keuntungan"
-          value={formatRupiah(statistik.totalKeuntungan)}
-          icon={<TrendingUp className="w-5 h-5" />}
-          color="text-amber-600"
-          bg="bg-amber-50"
-        />
-      </div>
-
-      {/* Filter Section */}
-      <div className="bg-white p-4 rounded-lg shadow-sm border mb-6">
-        <div className="grid grid-cols-1 md:grid-cols-12 gap-3">
-          {/* Pencarian */}
-          <div className="md:col-span-4">
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Cari Voucher
-            </label>
-            <div className="flex gap-2">
-              <div className="relative flex-1">
-                <Search className="absolute left-3 top-2.5 h-4 w-4 text-gray-400" />
-                <input
-                  type="text"
-                  value={searchInput}
-                  onChange={(e) => setSearchInput(e.target.value)}
-                  onKeyDown={(e) => e.key === "Enter" && handleSearch()}
-                  className="w-full pl-10 pr-4 py-1.5 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  placeholder="Nama voucher..."
-                />
-              </div>
-              <button
-                onClick={handleSearch}
-                className="px-4 py-1.5 bg-blue-600 text-white rounded-md whitespace-nowrap"
-              >
-                <Search className="w-4 h-4" />
-              </button>
-            </div>
+      <div className="flex mt-3 flex-col gap-4 mb-6 sm:flex-row sm:items-center sm:justify-between">
+        <div className="flex items-center gap-3">
+          <div className="p-2.5 bg-gradient-to-br from-indigo-500 to-indigo-600 rounded-xl shadow-md shadow-indigo-500/30">
+            <Package className="w-5 h-5 text-white" />
           </div>
-
-          {/* Brand */}
-          <div className="md:col-span-2">
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Brand
-            </label>
-            <select
-              value={brand}
-              onChange={(e) => {
-                setBrand(e.target.value);
-                resetPage();
-              }}
-              className="w-full px-3 py-1.5 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-            >
-              <option value="">Semua Brand</option>
-              <option value={"Smartfren"}>Smartfren</option>
-              <option value={"XL"}>XL</option>
-              <option value={"Axis"}>Axis</option>
-              <option value={"Indosat / IM3"}>Indosat / IM3</option>
-              <option value={"Telkomsel"}>Telkomsel</option>
-              <option value={"Tri"}>Tri</option>
-            </select>
-          </div>
-
-          {/* Periode */}
-          <div className="md:col-span-3">
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Periode
-            </label>
-            <div className="flex flex-wrap gap-1">
-              {[
-                { key: "semua", label: "Semua" },
-                { key: "hari", label: "Hari Ini" },
-                { key: "minggu", label: "Minggu Ini" },
-                { key: "bulan", label: "Bulan Ini" },
-                { key: "custom", label: "Custom" },
-              ].map((opt) => (
-                <button
-                  key={opt.key}
-                  onClick={() => {
-                    setPeriode(opt.key);
-                    if (opt.key !== "custom") {
-                      setStartDate("");
-                      setEndDate("");
-                    }
-                    resetPage();
-                  }}
-                  className={`px-2 py-1 text-xs rounded ${
-                    periode === opt.key
-                      ? "bg-blue-600 text-white"
-                      : "bg-white text-gray-700 border border-gray-300 hover:bg-gray-100"
-                  }`}
-                >
-                  {opt.label}
-                </button>
-              ))}
-            </div>
-          </div>
-
-          {/* Reset */}
-          <div className="md:col-span-3 flex items-end">
-            <button
-              onClick={handleReset}
-              className="w-full px-4 py-1.5 text-sm text-gray-600 border border-gray-300 rounded-md hover:bg-gray-100"
-            >
-              <Filter className="w-4 h-4 inline mr-1" />
-              Reset Filter
-            </button>
+          <div>
+            <h1 className="text-xl font-bold text-gray-900">
+              Laporan Barang Keluar
+            </h1>
+            <p className="text-sm text-gray-500">
+              Rekap stok barang yang keluar
+            </p>
           </div>
         </div>
 
-        {/* Custom Date Range */}
-        {periode === "custom" && (
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mt-3">
-            <div>
-              <label className="block text-xs text-gray-600 mb-1">Dari</label>
-              <input
-                type="date"
-                value={startDate}
-                onChange={(e) => {
-                  setStartDate(e.target.value);
-                  resetPage();
-                }}
-                className="w-full px-2.5 py-1.5 border border-gray-300 rounded text-sm"
-              />
+        <div className="flex items-center gap-2">
+          {/* Filter */}
+          <button
+            onClick={() => setOpenFilter(true)}
+            className="px-4 py-2 bg-white border border-gray-200 rounded-xl shadow-sm hover:shadow-md flex items-center gap-2 text-sm font-medium text-gray-700"
+          >
+            <Filter className="w-4 h-4" />
+            <span className="hidden sm:inline">Filter & Pencarian</span>
+          </button>
+
+          {/* Export */}
+          <button className="px-4 py-2 bg-emerald-600 text-white rounded-xl shadow hover:bg-emerald-700 flex items-center gap-2 text-sm font-semibold">
+            <Download className="w-4 h-4" />
+            Export
+          </button>
+        </div>
+      </div>
+
+      {/* Statistik */}
+
+      {openFilter && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm">
+          <div className="bg-white w-full max-w-lg rounded-xl shadow-xl p-6 animate-scaleIn">
+            {/* Header */}
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-lg font-bold text-gray-800 flex items-center gap-2">
+                <Filter className="w-5 h-5 text-blue-600" />
+                Filter Data
+              </h2>
+              <button
+                onClick={() => setOpenFilter(false)}
+                className="text-gray-500 hover:text-gray-800"
+              >
+                ✕
+              </button>
             </div>
-            <div>
-              <label className="block text-xs text-gray-600 mb-1">Sampai</label>
-              <input
-                type="date"
-                value={endDate}
-                onChange={(e) => {
-                  setEndDate(e.target.value);
-                  resetPage();
-                }}
-                className="w-full px-2.5 py-1.5 border border-gray-300 rounded text-sm"
-              />
+
+            <div className="space-y-4">
+              {/* Search */}
+              <div>
+                <label className="text-sm font-medium text-gray-700">
+                  Cari Voucher
+                </label>
+                <div className="relative mt-1">
+                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+                  <input
+                    value={searchInput}
+                    onChange={(e) => setSearchInput(e.target.value)}
+                    className="w-full pl-10 pr-3 py-2 border rounded-lg bg-gray-50 focus:bg-white focus:ring-2 focus:ring-blue-500 outline-none"
+                    placeholder="Pulsa 10K, Paket Data..."
+                  />
+                </div>
+              </div>
+
+              {/* Brand */}
+              <div>
+                <label className="text-sm font-medium text-gray-700">
+                  Provider
+                </label>
+                <select
+                  value={brand}
+                  onChange={(e) => setBrand(e.target.value)}
+                  className="w-full mt-1 px-3 py-2 border rounded-lg bg-gray-50 focus:bg-white focus:ring-2 focus:ring-blue-500 outline-none"
+                >
+                  <option value="">Semua Provider</option>
+                  <option value="Smartfren">Smartfren</option>
+                  <option value="XL">XL</option>
+                  <option value="Axis">Axis</option>
+                  <option value="Indosat / IM3">Indosat / IM3</option>
+                  <option value="Telkomsel">Telkomsel</option>
+                  <option value="Tri">Tri</option>
+                </select>
+              </div>
+
+              {/* Periode */}
+              <div>
+                <label className="text-sm font-medium text-gray-700">
+                  Periode
+                </label>
+                <div className="flex flex-wrap gap-2 mt-2">
+                  {[
+                    { key: "semua", label: "Semua" },
+                    { key: "hari", label: "Hari Ini" },
+                    { key: "minggu", label: "Minggu Ini" },
+                    { key: "bulan", label: "Bulan Ini" },
+                    { key: "custom", label: "Custom" },
+                  ].map((opt) => (
+                    <button
+                      key={opt.key}
+                      onClick={() => setPeriode(opt.key)}
+                      className={`px-3 py-1 text-xs rounded-full border transition ${
+                        periode === opt.key
+                          ? "bg-blue-600 text-white border-blue-600"
+                          : "bg-white text-gray-600 border-gray-300 hover:bg-gray-100"
+                      }`}
+                    >
+                      {opt.label}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* Custom Date */}
+              {periode === "custom" && (
+                <div className="grid grid-cols-2 gap-3">
+                  <input
+                    type="date"
+                    value={startDate}
+                    onChange={(e) => setStartDate(e.target.value)}
+                    className="border rounded-lg px-3 py-2"
+                  />
+                  <input
+                    type="date"
+                    value={endDate}
+                    onChange={(e) => setEndDate(e.target.value)}
+                    className="border rounded-lg px-3 py-2"
+                  />
+                </div>
+              )}
+
+              {/* Actions */}
+              <div className="flex justify-between pt-4 border-t">
+                <button
+                  onClick={handleReset}
+                  className="px-4 py-2 text-sm border rounded-lg hover:bg-gray-100"
+                >
+                  Reset
+                </button>
+
+                <button
+                  onClick={() => {
+                    handleSearch();
+                    setOpenFilter(false);
+                  }}
+                  className="px-5 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 text-sm"
+                >
+                  Terapkan Filter
+                </button>
+              </div>
             </div>
           </div>
-        )}
-
-        {/* Page Size */}
-        {/* <div className="mt-3 flex justify-end">
-          <select
-            value={pageSize}
-            onChange={(e) => {
-              setPageSize(Number(e.target.value));
-              setPage(1);
-            }}
-            className="border px-2 py-1.5 rounded text-sm"
-          >
-            <option value={5}>5/hal</option>
-            <option value={10}>10/hal</option>
-            <option value={20}>20/hal</option>
-            <option value={50}>50/hal</option>
-          </select>
-        </div> */}
-      </div>
+        </div>
+      )}
 
       {/* Tabel Voucher Terlaris */}
       <div className="bg-white rounded-lg shadow-sm border overflow-hidden">
@@ -386,54 +365,65 @@ export default function VoucherTerlarisPage() {
         </div>
 
         {/* Pagination */}
-        {meta.totalPages > 1 && (
-          <div className="flex justify-between items-center px-4 py-3 border-t bg-gray-50">
-            <span className="text-sm text-gray-600">
-              Menampilkan {(page - 1) * pageSize + 1}–
-              {Math.min(page * pageSize, meta.totalItems)} dari{" "}
-              {meta.totalItems} data
-            </span>
+        {/* <div className="bg-gray-50 border-t-2 border-gray-200 p-4">
+          <div className="flex justify-between items-center">
+            <div className="text-sm text-gray-600">
+              <span className="font-semibold">{page}</span> dari{" "}
+              <span className="font-semibold">{meta?.totalPages}</span>
+            </div>
+            <div className="flex items-center  gap-3">
+              <select
+                value={pageSize}
+                onChange={(e) => {
+                  setPageSize(Number(e.target.value));
+                  setPage(1);
+                }}
+                className="
+      px-4 py-2
+      text-sm font-medium
+      rounded-xl
+      border border-gray-200
+      bg-white
+      shadow-sm
+      focus:outline-none
+      focus:ring-2 focus:ring-blue-500
+      focus:border-blue-500
+      hover:bg-gray-50
+      transition
+    "
+              >
+                <option value={5}>5</option>
+                <option value={10}>10</option>
+                <option value={20}>20</option>
+                <option value={50}>50</option>
+              </select>
+            </div>
             <div className="flex items-center gap-2">
               <button
                 onClick={() => setPage((prev) => Math.max(prev - 1, 1))}
                 disabled={page <= 1}
-                className="px-3 py-1.5 border rounded text-sm disabled:opacity-40"
+                className="px-4 py-2 border-2 border-gray-300 rounded-lg text-sm font-medium disabled:text-gray-400 disabled:cursor-not-allowed hover:bg-gray-100 transition flex items-center gap-2"
               >
-                Sebelumnya
+                <ChevronLeft className="w-4 h-4" />
               </button>
-              <span className="text-sm">
-                Halaman {page} dari {meta.totalPages}
-              </span>
+              <div className="px-4 py-2 bg-slate-700 text-white rounded-lg font-semibold text-sm">
+                {page}
+              </div>
               <button
                 onClick={() =>
-                  setPage((prev) => Math.min(prev + 1, meta.totalPages))
+                  setPage((prev) => Math.min(prev + 1, meta?.totalPages))
                 }
-                disabled={page >= meta.totalPages}
-                className="px-3 py-1.5 border rounded text-sm disabled:opacity-40"
+                disabled={page >= meta?.totalPages}
+                className="px-4 py-2 border-2 border-gray-300 rounded-lg text-sm font-medium disabled:text-gray-400 disabled:cursor-not-allowed hover:bg-gray-100 transition flex items-center gap-2"
               >
-                Berikutnya
+                <ChevronRight className="w-4 h-4" />
               </button>
             </div>
           </div>
-        )}
+        </div> */}
       </div>
     </div>
   );
 }
 
 // Stat Card Component
-function StatCard({ title, value, icon, color, bg }) {
-  return (
-    <div className={`${bg} p-4 rounded-lg shadow-sm border`}>
-      <div className="flex items-center gap-3 mb-1">
-        <div className={`p-2 ${bg.replace("50", "200")} rounded-lg ${color}`}>
-          {icon}
-        </div>
-        <div>
-          <p className="text-xs text-gray-500">{title}</p>
-          <p className={`text-lg font-bold ${color}`}>{value}</p>
-        </div>
-      </div>
-    </div>
-  );
-}

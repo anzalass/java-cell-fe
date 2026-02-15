@@ -78,7 +78,7 @@ const KejadianTakTerduga = ({ data, onDelete }) => {
   return (
     <div className="space-y-6 max-w-6xl mx-auto mt-5">
       {/* Form Section */}
-      <div className="bg-white rounded-2xl shadow-xl overflow-hidden">
+      <div className="bg-white rounded-2xl shadow-md overflow-hidden">
         {/* Header */}
         <div className="bg-gradient-to-r from-orange-600 to-red-600 text-white p-6">
           <div className="flex items-center gap-3">
@@ -195,7 +195,7 @@ const KejadianTakTerduga = ({ data, onDelete }) => {
       </div>
 
       {/* Table Section */}
-      <div className="bg-white rounded-2xl shadow-xl p-6">
+      <div className="bg-white rounded-2xl shadow-md p-6">
         <h2 className="font-bold text-xl text-gray-800 mb-4 flex items-center gap-2">
           <FileText className="w-6 h-6 text-orange-600" />
           Daftar Kejadian Hari Ini
@@ -289,7 +289,10 @@ export default function TransaksiPage() {
   const queryClient = useQueryClient();
   const timeoutRef = useRef(null);
 
-  const kategoriList = ["Tarik Tunai", "Transit", "Transfer", "Top-Up"];
+  const [showModal, setShowModal] = useState(false);
+  const memberInputRef = useRef(null);
+
+  const kategoriList = ["Tarik Tunai", "PPOB", "Transfer", "Top-Up"];
   const nominalList = [
     1000, 1500, 2000, 2500, 3000, 4000, 5000, 6000, 7000, 8000, 9000, 10000,
     12000, 15000, 20000, 25000, 30000,
@@ -467,38 +470,53 @@ export default function TransaksiPage() {
   };
 
   useEffect(() => {
-    if (!memberSearch.trim()) {
-      setMembersList([]);
-      setShowMemberDropdown(false);
-      return;
-    }
-
     const fetchMembers = async () => {
       try {
         const res = await api.get("member", {
           headers: { Authorization: `Bearer ${user.token}` },
         });
         const allMembers = res.data.data || [];
-        const filtered = allMembers.filter(
-          (m) =>
-            m.nama.toLowerCase().includes(memberSearch.toLowerCase()) ||
-            (m.noTelp && m.noTelp.includes(memberSearch))
-        );
-        setMembersList(filtered);
+        setMembersList(allMembers);
       } catch (err) {
         console.error("Fetch members error:", err);
       }
     };
 
-    clearTimeout(timeoutRef.current);
-    timeoutRef.current = setTimeout(fetchMembers, 300);
-  }, [memberSearch, user.token]);
+    fetchMembers();
+  }, []);
+
+  console.log("member", membersList);
+
+  useEffect(() => {
+    if (selectedKategori !== null && selectedNominal !== null) {
+      setTimeout(() => {
+        memberInputRef.current?.focus();
+      }, 100);
+    }
+  }, [selectedKategori, selectedNominal]);
 
   const selectMember = (member) => {
     setSelectedMember(member);
-    setMemberSearch("");
     setShowMemberDropdown(false);
   };
+
+  useEffect(() => {
+    if (
+      !memberSearch ||
+      !selectedKategori ||
+      !selectedNominal ||
+      membersList.length === 0
+    )
+      return;
+
+    const cleanedInput = memberSearch.trim();
+
+    const matchedMember = membersList.find((m) => m.noTelp === cleanedInput);
+
+    if (matchedMember) {
+      submitTransaksi(matchedMember.id);
+    }
+  }, [memberSearch]);
 
   // === RENDER ===
   if (isLoading) {
@@ -508,10 +526,10 @@ export default function TransaksiPage() {
   const watchIsForMember = watch("isForMember");
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50 p-4 md:p-6">
-      <div className="max-w-6xl mx-auto">
+    <div className="min-h-screen   ">
+      <div className="w-full mx-auto">
         {/* Header */}
-        <div className="bg-white rounded-2xl shadow-xl p-6 mb-6">
+        <div className="bg-white rounded-2xl shadow-md p-6 mb-6">
           <div className="flex items-center gap-4">
             <div className="bg-gradient-to-r from-blue-600 to-indigo-600 p-4 rounded-xl">
               <TrendingUp className="w-8 h-8 text-white" />
@@ -528,19 +546,19 @@ export default function TransaksiPage() {
         </div>
 
         {/* Quick Input Section */}
-        <div className="bg-white rounded-2xl shadow-xl p-6 mb-6">
+        <div className="bg-white rounded-2xl p-6 mb-6">
           <h2 className="font-bold md:text-xl text=base text-gray-800 mb-6 flex items-center gap-2">
             <DollarSign className="w-6 h-6 text-blue-600" />
-            Input Cepat
+            Pilih Kategori
           </h2>
 
           {/* Kategori */}
           <div className="mb-6">
-            <label className="flex items-center gap-2 text-sm font-semibold text-gray-700 mb-3">
+            {/* <label className="flex items-center gap-2 text-sm font-semibold text-gray-700 mb-3">
               <Tag className="w-4 h-4" />
               Pilih Kategori
-            </label>
-            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+            </label> */}
+            <div className="grid grid-cols-2  gap-3">
               {kategoriList.map((kat) => (
                 <button
                   key={kat}
@@ -563,7 +581,7 @@ export default function TransaksiPage() {
               <DollarSign className="w-4 h-4" />
               Pilih Nominal Keuntungan
             </label>
-            <div className="grid grid-cols-4 md:grid-cols-8 gap-2">
+            <div className="grid grid-cols-4 gap-2">
               {nominalList.map((num) => (
                 <button
                   key={num}
@@ -582,111 +600,63 @@ export default function TransaksiPage() {
 
           {/* Action Buttons */}
           {selectedKategori && selectedNominal && (
-            <div className="flex flex-col sm:flex-row gap-3 p-4 bg-gradient-to-r from-blue-50 to-indigo-50 rounded-xl border-2 border-blue-200">
-              <button
-                onClick={() => submitTransaksi(null)}
-                className="flex-1 text-sm md:text-base px-6 py-3 bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 text-white rounded-lg font-semibold shadow-md hover:shadow-lg transition-all"
-              >
-                💾 Simpan Tanpa Member
-              </button>
-              <button
-                onClick={() => setShowMemberInput(true)}
-                className="flex-1 text-sm md:text-base px-6 py-3 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white rounded-lg font-semibold shadow-md hover:shadow-lg transition-all"
-              >
-                👤 Simpan Dengan Member
-              </button>
+            <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50">
+              <div className="bg-white w-full max-w-md rounded-2xl p-6 shadow-xl">
+                <h2 className="text-lg font-bold mb-4">Simpan Transaksi</h2>
+
+                <p className="text-sm text-gray-600 mb-4">
+                  {selectedKategori} - Rp {selectedNominal?.toLocaleString()}
+                </p>
+
+                {/* Input No Telp */}
+                <input
+                  ref={memberInputRef}
+                  type="text"
+                  value={memberSearch}
+                  onChange={(e) => setMemberSearch(e.target.value)}
+                  placeholder="Masukkan No Telp Member (Opsional)"
+                  className="w-full border-2 border-gray-200 rounded-lg px-4 py-3 focus:border-blue-500 focus:outline-none"
+                />
+
+                {/* Selected */}
+                {selectedMember && (
+                  <div className="mt-3 bg-green-50 p-3 rounded-lg text-sm">
+                    ✅ {selectedMember.nama}
+                  </div>
+                )}
+
+                {/* Buttons */}
+                <div className="flex gap-3 mt-6">
+                  <button
+                    onClick={() => {
+                      submitTransaksi();
+                      setShowModal(false);
+                    }}
+                    className="flex-1 py-3 bg-blue-600 text-white rounded-lg"
+                  >
+                    Simpan Tanpa Member
+                  </button>
+
+                  <button
+                    onClick={() => {
+                      setSelectedMember(null);
+                      setMemberSearch("");
+                      setSelectedKategori(null);
+                    }}
+                    className="flex-1 py-3 bg-gray-500 text-white rounded-lg"
+                  >
+                    Cancel
+                  </button>
+                </div>
+              </div>
             </div>
           )}
 
           {/* Member Input */}
-          {showMemberInput && (
-            <div className="mt-4 p-5 border-2 border-blue-200 rounded-xl bg-gradient-to-br from-blue-50 to-indigo-50">
-              <h3 className="font-semibold text-gray-800 mb-3 flex items-center gap-2">
-                <Search className="w-5 h-5 text-blue-600" />
-                Pilih Member
-              </h3>
-              <div className="relative mb-4">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
-                <input
-                  type="text"
-                  value={memberSearch}
-                  onChange={(e) => {
-                    setMemberSearch(e.target.value);
-                    if (e.target.value.trim()) setShowMemberDropdown(true);
-                  }}
-                  placeholder="Cari nama atau no HP..."
-                  className="w-full border-2 border-blue-200 rounded-lg pl-10 pr-4 py-3 focus:border-blue-500 focus:outline-none transition"
-                  onFocus={() =>
-                    membersList.length > 0 && setShowMemberDropdown(true)
-                  }
-                />
-
-                {showMemberDropdown && (
-                  <div className="absolute z-50 bg-white border-2 border-blue-200 w-full rounded-lg shadow-xl mt-2 max-h-48 overflow-y-auto">
-                    {membersList.length === 0 ? (
-                      <p className="p-3 text-gray-500 text-center">
-                        Member tidak ditemukan
-                      </p>
-                    ) : (
-                      membersList.map((m) => (
-                        <div
-                          key={m.id}
-                          className="p-3 hover:bg-blue-50 cursor-pointer flex justify-between transition"
-                          onClick={() => selectMember(m)}
-                        >
-                          <span className="font-medium">{m.nama}</span>
-                          <span className="text-gray-500 text-sm">
-                            {m.noTelp || "-"}
-                          </span>
-                        </div>
-                      ))
-                    )}
-                  </div>
-                )}
-
-                {selectedMember && (
-                  <div className="mt-3 flex items-center justify-between bg-green-50 border-2 border-green-200 rounded-lg p-3">
-                    <div className="flex items-center gap-2">
-                      <CheckCircle className="w-5 h-5 text-green-600" />
-                      <span className="text-sm text-green-800">
-                        Member: <b>{selectedMember.nama}</b>
-                      </span>
-                    </div>
-                    <button
-                      onClick={() => setSelectedMember(null)}
-                      className="text-red-500 hover:text-red-700"
-                    >
-                      <Trash2 className="w-4 h-4" />
-                    </button>
-                  </div>
-                )}
-              </div>
-
-              <div className="flex gap-3">
-                <button
-                  onClick={() => submitTransaksi(selectedMember?.id)}
-                  disabled={!selectedMember}
-                  className="flex-1 px-6 py-3 bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 text-white rounded-lg font-semibold shadow-md disabled:opacity-50 disabled:cursor-not-allowed transition"
-                >
-                  ✅ Simpan dengan Member
-                </button>
-                <button
-                  onClick={() => {
-                    setShowMemberInput(false);
-                    setSelectedMember(null);
-                    setMemberSearch("");
-                  }}
-                  className="px-6 py-3 bg-gray-500 hover:bg-gray-600 text-white rounded-lg font-semibold transition"
-                >
-                  Batal
-                </button>
-              </div>
-            </div>
-          )}
         </div>
 
         {/* Manual Input Section */}
-        <div className="bg-white rounded-2xl shadow-xl p-6 mb-6">
+        <div className="bg-white rounded-2xl shadow-md p-6 mb-6">
           <h2 className="font-bold md:text-xl text-base text-gray-800 mb-6 flex items-center gap-2">
             <Wallet className="w-6 h-6 text-purple-600" />
             Input Manual Keuntungan
@@ -770,7 +740,7 @@ export default function TransaksiPage() {
                   />
 
                   {showMemberDropdown && (
-                    <div className="absolute z-50 bg-white border-2 border-blue-200 w-full rounded-lg shadow-xl mt-2 max-h-48 overflow-y-auto">
+                    <div className="absolute z-50 bg-white border-2 border-blue-200 w-full rounded-lg shadow-md mt-2 max-h-48 overflow-y-auto">
                       {membersList.length === 0 ? (
                         <p className="p-3 text-gray-500 text-center">
                           Member tidak ditemukan
@@ -821,13 +791,13 @@ export default function TransaksiPage() {
         </div>
 
         {/* Summary Card */}
-        <div className="bg-gradient-to-r from-green-600 to-emerald-600 rounded-2xl shadow-xl p-6 mb-6 text-white">
+        <div className="bg-gradient-to-r from-green-600 to-emerald-600 rounded-2xl shadow-md p-6 mb-6 text-white">
           <div className="flex items-center justify-between">
             <div>
               <p className="text-green-100 text-sm mb-1">
                 Total Keuntungan Hari Ini
               </p>
-              <h3 className="md:text-4xl text-xl font-bold">
+              <h3 className=" lg:text-xl text-xl font-bold">
                 Rp {totalKeuntungan.toLocaleString()}
               </h3>
             </div>
@@ -838,7 +808,7 @@ export default function TransaksiPage() {
         </div>
 
         {/* Table Section */}
-        <div className="bg-white rounded-2xl shadow-xl p-6">
+        <div className="bg-white rounded-2xl shadow-md p-6">
           <h2 className="font-bold md:text-xl text-base text-gray-800 mb-4 flex items-center gap-2">
             <Calendar className="w-6 h-6 text-blue-600" />
             Riwayat Keuntungan Hari Ini

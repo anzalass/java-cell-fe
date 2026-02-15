@@ -27,6 +27,7 @@ export default function ModalServiceHP({ isOpen, onClose, onSuccess }) {
   } = useForm({
     defaultValues: {
       namaPelanggan: "",
+      noHP: 0,
       brandHP: "",
       keterangan: "",
       status: "Pending",
@@ -208,14 +209,14 @@ export default function ModalServiceHP({ isOpen, onClose, onSuccess }) {
 
   // Submit form
   const submitForm = async (data) => {
-    if (spareparts.length === 0) {
-      Swal.fire({
-        title: "Sparepart Belum Ditambahkan",
-        text: "Silakan tambahkan minimal satu sparepart.",
-        icon: "warning",
-      });
-      return;
-    }
+    // if (spareparts.length === 0) {
+    //   Swal.fire({
+    //     title: "Sparepart Belum Ditambahkan",
+    //     text: "Silakan tambahkan minimal satu sparepart.",
+    //     icon: "warning",
+    //   });
+    //   return;
+    // }
 
     try {
       Swal.fire({
@@ -229,6 +230,7 @@ export default function ModalServiceHP({ isOpen, onClose, onSuccess }) {
         brandHP: data.brandHP,
         keterangan: data.keterangan,
         status: data.status,
+        noHP: data.noHP,
         namaPelanggan: data.namaPelanggan,
         biayaJasa: Number(data.biayaJasa),
         sparePart: spareparts.map((sp) => ({
@@ -381,7 +383,7 @@ export default function ModalServiceHP({ isOpen, onClose, onSuccess }) {
               <div>
                 <label className="flex items-center gap-2 text-sm font-semibold text-gray-700 mb-2">
                   <User className="w-4 h-4" />
-                  Nama Pelanggan
+                  Nama Pelanggan <span className="text-red-500">*</span>
                 </label>
                 <input
                   {...register("namaPelanggan", {
@@ -393,6 +395,25 @@ export default function ModalServiceHP({ isOpen, onClose, onSuccess }) {
                 {errors.namaPelanggan && (
                   <p className="text-red-500 text-sm mt-1">
                     {errors.namaPelanggan.message}
+                  </p>
+                )}
+              </div>
+
+              <div>
+                <label className="flex items-center gap-2 text-sm font-semibold text-gray-700 mb-2">
+                  <User className="w-4 h-4" />
+                  no HP <span className="text-red-500">*</span>
+                </label>
+                <input
+                  {...register("noHP", {
+                    required: "No HP wajib diisi",
+                  })}
+                  className="w-full border-2 border-gray-200 rounded-lg px-4 py-2.5 focus:border-purple-500 focus:outline-none transition"
+                  placeholder="Masukkan No HP pelanggan"
+                />
+                {errors.noHP && (
+                  <p className="text-red-500 text-sm mt-1">
+                    {errors.noHP.message}
                   </p>
                 )}
               </div>
@@ -575,7 +596,7 @@ export default function ModalServiceHP({ isOpen, onClose, onSuccess }) {
                     valueAsNumber: true,
                     required: "Biaya jasa wajib diisi",
                     min: {
-                      value: 0,
+                      value: 1,
                       message: "Biaya jasa tidak boleh negatif",
                     },
                   })}

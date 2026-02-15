@@ -346,7 +346,7 @@ export default function ModalGrosirVoucher({ isOpen, onClose, onSuccess }) {
                         </div>
                       </div>
 
-                      <div className="flex gap-2">
+                      <div className="flex md:flex-row flex-col gap-2">
                         <input
                           type="number"
                           min="0"
@@ -357,7 +357,7 @@ export default function ModalGrosirVoucher({ isOpen, onClose, onSuccess }) {
                         />
                         <button
                           onClick={() => tambahKeranjang(d, i)}
-                          className="bg-blue-600 hover:bg-blue-700 text-white px-4 rounded-lg font-medium transition"
+                          className="bg-blue-600 hover:bg-blue-700 h-[40px] text-white px-4 rounded-lg font-medium transition"
                         >
                           Tambah
                         </button>

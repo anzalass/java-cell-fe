@@ -12,6 +12,8 @@ import {
   BarChart3,
   PlusCircle,
   DollarSign,
+  Building2,
+  ChevronDown,
 } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import api from "../api/client";
@@ -30,6 +32,7 @@ import ModalTransaksiSparepart from "../components/modal-trans-sparepart";
 import ModalServiceHP from "../components/modal-service";
 import ModalTransaksiAcc from "../components/modal-trans-acc";
 import { useAuthStore } from "../store/useAuthStore";
+import PencarianCepat from "../components/pencarian-cepat";
 
 export default function Overview() {
   const { user } = useAuthStore();
@@ -43,6 +46,7 @@ export default function Overview() {
   const [modalOmset, setModalOmset] = useState(false);
   const [modalTrx, setModalTrx] = useState(false);
   const [modalService, setModalService] = useState(false);
+  const [jenis, setJenis] = useState("Transaksi Aksesoris Harian");
 
   // Search
   const [searchAccStok, setSearchAccStok] = useState("");
@@ -75,22 +79,21 @@ export default function Overview() {
   const d = dashboardData;
 
   return (
-    <div className="p-6 space-y-8">
+    <div className="p-2 space-y-8">
       {/* HEADER */}
-      <h1 className="text-2xl font-semibold">Dashboard Overview</h1>
       {/* STAT CARDS — DATA REAL */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-5">
+      <div className="grid grid-cols-2 mt-4 md:grid-cols-2 lg:grid-cols-5 gap-2">
         <div className="" onClick={() => setModalKeuntungan(true)}>
           <StatCard
             label="Keuntungan Hari Ini"
-            value={`Rp ${Number(d?.totalKeuntunganHariIni + d.keuntunganGrosirVoucherHariIni + d.keuntunganAccHariIni).toLocaleString("id-ID")}`}
+            value={`Rp ${Number(d?.totalKeuntunganHariIni + d?.keuntunganGrosirVoucherHariIni + d?.keuntunganAccHariIni + d?.keuntunganVoucherHarian).toLocaleString("id-ID")}`}
             icon={DollarSign}
           />
         </div>
         <div className="" onClick={() => setModalOmset(true)}>
           <StatCard
             label="Omset Hari Ini"
-            value={`Rp ${d.omsetGrosirVoucherHariIni.toLocaleString("id-ID")}`}
+            value={`Rp ${(d.omsetGrosirVoucherHariIni + d.omsetAccHariIni + d.omsetVoucherHarian).toLocaleString("id-ID")}`}
             icon={Wallet}
           />
         </div>
@@ -123,51 +126,61 @@ export default function Overview() {
         </div>
       </div>
       {/* ACTION BUTTONS */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+      <div className="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-4 gap-4">
         <ActionButton
           onClick={() => setOpenModalVD(true)}
-          label="Tambah Transaksi Grosir Voucher"
+          label="  Grosir Voucher"
         />
         <ActionButton
-          label="Tambah Transaksi Aksesoris"
+          label="  Aksesoris"
           onClick={() => setOpenModalAcc(true)}
         />
         <ActionButton
           onClick={() => setOpenModalService(true)}
-          label="Tambah Service HP"
+          label=" Service HP"
         />
         <ActionButton
           onClick={() => setOpenModalSparepart(true)}
-          label="Tambah Transaksi Sparepart"
+          label="  Sparepart"
         />
       </div>
       {/* SEARCH INPUTS STOK */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <SearchInput
-          placeholder="Cari stok voucher..."
-          value={searchVdStok}
-          onChange={(e) => {
-            setSearchVdStok(e.target.value);
-            setPageVdStok(1); // reset ke halaman 1 saat cari
-          }}
-        />
-        <SearchInput
-          placeholder="Cari stok aksesoris..."
-          value={searchAccStok}
-          onChange={(e) => {
-            setSearchAccStok(e.target.value);
-            setPageAccStok(1);
-          }}
-        />
-        <SearchInput
-          placeholder="Cari stok sparepart..."
-          value={searchSparepartStok}
-          onChange={(e) => {
-            setSearchSparepartStok(e.target.value);
-            setPageSparepartStok(1);
-          }}
-        />
+      <div className="">
+        <PencarianCepat />
       </div>
+
+      <div>
+        <label className="block text-sm font-semibold text-gray-700 mb-2">
+          Pilih Transaksi
+        </label>
+
+        <div className="relative">
+          <Building2 className="absolute left-3.5 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+
+          <select
+            value={jenis}
+            onChange={(e) => setJenis(e.target.value)}
+            className="w-full pl-11 pr-4 py-3 border border-gray-200 rounded-xl bg-gray-50 
+                 focus:bg-white focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 
+                 outline-none transition appearance-none"
+          >
+            <option value="Transaksi Voucher Harian">
+              Transaksi Voucher Harian
+            </option>
+            <option value="Transaksi Sparepart Harian">
+              Transaksi Sparepart Harian
+            </option>
+            <option value="Service Harian">Service Harian</option>
+            <option value="Transaksi Aksesoris Harian">
+              Transaksi Aksesoris Harian
+            </option>
+          </select>
+
+          {/* Arrow */}
+          <ChevronDown className="absolute right-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400 pointer-events-none" />
+        </div>
+      </div>
+
       {/* MODALS */}
       <ModalTransaksiAcc
         isOpen={openModalAcc}
@@ -191,28 +204,34 @@ export default function Overview() {
       />
       {/* TABLES — KIRIM DATA & PAGINATION */}
       <div className="space-y-10">
-        <TableSectionVoucherGrosirToday
-          title="Transaksi Grosir Voucher Hari Ini"
-          data={dashboardData.trxVoucherDownlineHariIni}
-          onSuccess={refetch}
-        />
-        <TableSectionAccToday
-          title="Transaksi Aksesoris Hari Ini"
-          data={dashboardData.trxAccHariIni}
-          onSuccess={refetch}
-        />
-        <TableSectionSparepartToday
-          title="Transaksi Sparepart Hari Ini"
-          data={dashboardData.trxSparepartHariIni}
-          onSuccess={refetch}
-        />
-        <TableSectionServiceToday
-          title="Service HP"
-          data={d.trxServiceHariIni}
-          onSuccess={refetch}
-        />
+        {jenis === "Transaksi Voucher Harian" ? (
+          <TableSectionVoucherGrosirToday
+            title="Grosir Voucher Hari Ini"
+            data={dashboardData.trxVoucherDownlineHariIni}
+            onSuccess={refetch}
+          />
+        ) : jenis === "Transaksi Sparepart Harian" ? (
+          <TableSectionSparepartToday
+            title="Sparepart Hari Ini"
+            data={dashboardData.trxSparepartHariIni}
+            onSuccess={refetch}
+          />
+        ) : jenis === "Transaksi Aksesoris Harian" ? (
+          <TableSectionAccToday
+            title="Aksesoris Hari Ini"
+            data={dashboardData.trxAccHariIni}
+            onSuccess={refetch}
+          />
+        ) : jenis === "Service Harian" ? (
+          <TableSectionServiceToday
+            title="Service HP"
+            data={dashboardData.trxServiceHariIni}
+            onSuccess={refetch}
+          />
+        ) : null}
+
         <TableUangModalToday
-          title="Uang Modal Hari Ini"
+          title="Uang Keluar Hari Ini"
           data={dashboardData.uangModalHariIni}
           onSuccess={refetch}
         />
@@ -223,7 +242,7 @@ export default function Overview() {
           data={d.stokSparepart}
         />
 
-        {/* Uang Modal — sesuaikan jika punya data */}
+        {/* Uang Keluar — sesuaikan jika punya data */}
       </div>
       {modalKeuntungan ? (
         <DetailKeuntunganModal
@@ -275,13 +294,13 @@ export default function Overview() {
 // === Komponen UI Tetap Sama ===
 function StatCard({ label, value, icon: Icon }) {
   return (
-    <div className="bg-white shadow-sm border border-gray-200 rounded-xl p-5 flex gap-4 items-center">
-      <div className="p-3 bg-blue-50 text-blue-600 rounded-lg">
-        <Icon className="w-6 h-6" />
-      </div>
+    <div className="group bg-white  rounded-xl p-4 border border-gray-300 hover:shadow-md transition-all flex items-center justify-between">
       <div>
-        <p className="text-xs text-gray-500">{label}</p>
-        <p className="text-base font-semibold">{value}</p>
+        <p className="text-sm font-bold text-gray-900 mb-1">{value}</p>
+        <p className="text-xs font-medium text-gray-500">{label}</p>
+      </div>
+      <div className="p-2 rounded-lg bg-green-50 group-hover:bg-green-100 transition">
+        <Icon className="w-3 h-3" />
       </div>
     </div>
   );
@@ -667,7 +686,7 @@ function DetailServiceModal({
 }) {
   if (!isOpen) return null;
 
-  const totalKeuntungan = keuntunganService + keuntunganSparepart;
+  const totalKeuntungan = omsetService + omsetSparepart;
 
   const formatRupiah = (num) => {
     return new Intl.NumberFormat("id-ID", {
@@ -718,12 +737,14 @@ function DetailServiceModal({
 
     {
       title: "Keuntungan Service",
-      value: keuntunganSparepart,
+      value: keuntunganService,
       icon: <TrendingUp className="w-5 h-5" />,
       color: "text-amber-600",
       bg: "bg-amber-50",
     },
   ];
+
+  const isText = ["Service", "Transaksi Sparepart"].includes(items);
 
   return (
     <div className="fixed inset-0 -top-10 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
@@ -734,7 +755,7 @@ function DetailServiceModal({
             <div>
               <h2 className="text-2xl font-bold flex items-center gap-2">
                 <TrendingUp className="w-6 h-6" />
-                Detail Transaksi
+                Detail Transaksii
               </h2>
               <p className="text-indigo-100 text-sm mt-1">
                 Rincian Transaksi hari ini
@@ -756,7 +777,7 @@ function DetailServiceModal({
           <div className="text-center mb-8">
             <p className="text-gray-600">Total Omset Hari Ini</p>
             <h3 className="text-3xl font-bold text-green-600 mt-1">
-              {totalKeuntungan}
+              Rp. {totalKeuntungan.toLocaleString()}
             </h3>
           </div>
 
@@ -775,7 +796,12 @@ function DetailServiceModal({
                     {item.title}
                   </span>
                 </div>
-                <span className={`font-bold ${item.color}`}>{item.value}</span>
+
+                <span className={`font-bold ${item.color}`}>
+                  {isText
+                    ? item.value
+                    : `${Number(item.value).toLocaleString("id-ID")}`}
+                </span>
               </div>
             ))}
           </div>
@@ -798,25 +824,10 @@ function ActionButton({ label, onClick }) {
   return (
     <button
       onClick={onClick}
-      className="flex items-center justify-center gap-2 bg-blue-600 hover:bg-blue-700 text-white py-3 rounded-lg font-medium shadow-sm transition w-full"
+      className="flex items-center text-xs justify-center gap-2 bg-blue-600 hover:bg-blue-700 text-white py-3 rounded-lg font-medium shadow-sm transition w-full"
     >
       <PlusCircle className="w-5 h-5" />
       {label}
     </button>
-  );
-}
-
-function SearchInput({ placeholder, value, onChange }) {
-  return (
-    <div className="relative">
-      <Search className="absolute left-3 top-3 text-gray-400" size={18} />
-      <input
-        type="text"
-        placeholder={placeholder}
-        value={value}
-        onChange={onChange}
-        className="w-full border border-gray-300 pl-10 pr-3 py-2 rounded-lg focus:ring-2 focus:ring-blue-500 text-sm"
-      />
-    </div>
   );
 }

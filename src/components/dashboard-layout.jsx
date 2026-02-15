@@ -9,7 +9,7 @@ import { useAuthStore } from "../store/useAuthStore";
 export default function DashboardLayout() {
   const { user, isLoading, isCheckingAuth, fetchUser } = useAuthStore();
   const isDesktop = useMediaQuery("(min-width: 768px)");
-  const [sidebarOpen, setSidebarOpen] = useState(isDesktop);
+  const [sidebarOpen, setSidebarOpen] = useState(false);
 
   // ✅ Jalankan fetchUser saat komponen mount
   useEffect(() => {
@@ -19,9 +19,9 @@ export default function DashboardLayout() {
   console.log(user);
 
   // Sinkronkan sidebar
-  useEffect(() => {
-    setSidebarOpen(isDesktop);
-  }, [isDesktop]);
+  // useEffect(() => {
+  //   setSidebarOpen(isDesktop);
+  // }, [isDesktop]);
 
   // ✅ Tampilkan loading saat sedang mengecek auth
   if (isCheckingAuth || isLoading) {
@@ -47,23 +47,19 @@ export default function DashboardLayout() {
         onToggleCollapse={() => setSidebarOpen((prev) => !prev)}
       />
 
-      {!isDesktop && sidebarOpen && (
+      {sidebarOpen && (
         <div
-          className="fixed inset-0 z-30 bg-black/40"
+          className="fixed inset-0 bg-black/40"
           onClick={() => setSidebarOpen(false)}
         />
       )}
 
-      <div
-        className={`w-full flex flex-col transition-all duration-300 ${
-          isDesktop ? (sidebarOpen ? "ml-64" : "ml-16") : "ml-0"
-        }`}
-      >
-        <header className="sticky shadow-xl top-0 z-20 flex items-center justify-between bg-white p-4">
+      <div className={`w-full flex flex-col transition-all duration-300`}>
+        <header className="sticky shadow-xl top-0 z-40 flex items-center justify-between bg-white p-4">
           <div className="flex space-x-3">
             <button
               onClick={() => setSidebarOpen((prev) => !prev)}
-              className="p-2 text-xl"
+              className="p-2 text-xl "
             >
               ☰
             </button>

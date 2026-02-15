@@ -539,6 +539,17 @@ export default function ListMemberPage() {
                 Menampilkan{" "}
                 <span className="font-semibold">{members.length}</span> dari{" "}
                 <span className="font-semibold">{perPage}</span> data
+                <select
+                  value={perPage}
+                  onChange={(e) => setPerPage(Number(e.target.value))}
+                  className="border-2 ml-3 border-gray-300 rounded-lg px-3 py-2 text-sm focus:border-purple-500 focus:outline-none"
+                >
+                  {[5, 10, 20, 50].map((n) => (
+                    <option key={n} value={n}>
+                      {n}
+                    </option>
+                  ))}
+                </select>
               </div>
               <div className="flex items-center gap-2">
                 <button
@@ -547,7 +558,6 @@ export default function ListMemberPage() {
                   className="px-4 py-2 border-2 border-gray-300 rounded-lg text-sm font-medium disabled:text-gray-400 disabled:cursor-not-allowed hover:bg-gray-100 transition flex items-center gap-2"
                 >
                   <ChevronLeft className="w-4 h-4" />
-                  Sebelumnya
                 </button>
                 <div className="px-4 py-2 bg-rose-600 text-white rounded-lg font-semibold text-sm">
                   {page} / {totalPages}
@@ -557,7 +567,6 @@ export default function ListMemberPage() {
                   onClick={() => setPage(page + 1)}
                   className="px-4 py-2 border-2 border-gray-300 rounded-lg text-sm font-medium disabled:text-gray-400 disabled:cursor-not-allowed hover:bg-gray-100 transition flex items-center gap-2"
                 >
-                  Berikutnya
                   <ChevronRight className="w-4 h-4" />
                 </button>
               </div>
@@ -573,6 +582,7 @@ export default function ListMemberPage() {
           onSubmit={handleSubmit(saveAdd)}
           register={register}
           errors={errors}
+          isLoading={createMemberMutation.isPending}
         />
       )}
 
@@ -582,6 +592,8 @@ export default function ListMemberPage() {
           title="Edit Member"
           onClose={() => setOpenEdit(null)}
           onSubmit={handleSubmit(saveEdit)}
+          isLoading={updateMemberMutation.isPending}
+          isEdit={true}
           register={register}
           errors={errors}
           defaultValues={{
@@ -601,8 +613,10 @@ function MemberModal({
   onClose,
   onSubmit,
   register,
+  isEdit = false,
   errors,
   defaultValues,
+  isLoading = false,
 }) {
   return (
     <div className="fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center z-50 p-4">
@@ -636,11 +650,27 @@ function MemberModal({
               No. Telepon
             </label>
             <input
-              {...register("noTelp", { required: "Wajib diisi" })}
+              type="text"
+              {...register("noTelp", {
+                required: "Wajib diisi",
+                minLength: {
+                  value: 11,
+                  message: "Minimal 11 digit",
+                },
+                maxLength: {
+                  value: 13,
+                  message: "Maksimal 13 digit",
+                },
+                pattern: {
+                  value: /^[0-9]+$/,
+                  message: "Hanya boleh angka",
+                },
+              })}
               defaultValue={defaultValues?.noTelp || ""}
               className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-              placeholder="081234567890"
+              placeholder="08xxx"
             />
+
             {errors.noTelp && (
               <p className="text-xs text-red-500 mt-1">
                 {errors.noTelp.message}
@@ -670,20 +700,39 @@ function MemberModal({
             )}
           </div>
 
-          <div className="flex justify-end gap-3">
+          <div className="flex justify-end gap-3 pt-2">
             <button
               type="button"
               onClick={onClose}
-              className="px-4 py-2 text-gray-700 bg-gray-100 rounded-md hover:bg-gray-200"
+              disabled={isLoading}
+              className="
+      px-4 py-2 rounded-md
+      text-gray-700 bg-gray-100
+      hover:bg-gray-200
+      disabled:opacity-50 disabled:cursor-not-allowed
+    "
             >
               Batal
             </button>
+
             <button
               type="button"
               onClick={onSubmit}
-              className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700"
+              disabled={isLoading}
+              className="
+      px-4 py-2 rounded-md text-white
+      bg-blue-600 hover:bg-blue-700
+      disabled:opacity-70 disabled:cursor-not-allowed
+      flex items-center gap-2
+    "
             >
-              Simpan
+              {isLoading
+                ? isEdit
+                  ? "Memperbarui..."
+                  : "Menyimpan..."
+                : isEdit
+                  ? "Perbarui"
+                  : "Simpan"}
             </button>
           </div>
         </form>

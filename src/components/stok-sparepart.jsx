@@ -27,11 +27,9 @@ export default function TableStokSparepart({ title, data = [] }) {
   };
 
   return (
-    <div className="bg-white border border-gray-200 shadow-sm rounded-xl overflow-hidden mt-5">
+    <div className="bg-white border text-xs md:text-sm border-gray-200 shadow-sm rounded-xl overflow-hidden mt-5">
       {/* HEADER */}
       <div className="px-4 py-3 bg-gray-50 border-b flex justify-between items-center">
-        <h2 className="font-semibold text-gray-700">{title}</h2>
-
         <div className="flex items-center gap-3">
           {/* SEARCH */}
           <div className="relative">
@@ -44,29 +42,28 @@ export default function TableStokSparepart({ title, data = [] }) {
                 setSearch(e.target.value);
                 setPage(1);
               }}
-              className="border rounded-lg pl-8 pr-3 py-1 text-sm"
+              className="border rounded-lg pl-8 pr-3 py-1 "
             />
           </div>
-
-          {/* ITEM PER PAGE */}
-          <select
-            className="border px-2 py-1 rounded text-sm"
-            value={itemPerPage}
-            onChange={(e) => {
-              setItemPerPage(Number(e.target.value));
-              setPage(1);
-            }}
-          >
-            <option value={5}>5 / page</option>
-            <option value={10}>10 / page</option>
-            <option value={20}>20 / page</option>
-          </select>
         </div>
-      </div>
 
+        {/* ITEM PER PAGE */}
+        <select
+          className="border px-2 py-1 rounded "
+          value={itemPerPage}
+          onChange={(e) => {
+            setItemPerPage(Number(e.target.value));
+            setPage(1);
+          }}
+        >
+          <option value={5}>5 / page</option>
+          <option value={10}>10 / page</option>
+          <option value={20}>20 / page</option>
+        </select>
+      </div>
       {/* TABLE */}
       <div className="w-full overflow-x-auto">
-        <table className="w-[180vw] md:w-full text-sm">
+        <table className="w-[180vw] md:w-full">
           <thead>
             <tr className="text-gray-600 bg-gray-100">
               <th className="px-4 py-3 text-left">Nama Barang</th>
@@ -137,7 +134,7 @@ export default function TableStokSparepart({ title, data = [] }) {
 
         <div className="space-x-2">
           <button
-            className="px-3 py-1 border rounded text-sm bg-white hover:bg-gray-100 disabled:opacity-40"
+            className="px-3 py-1 border rounded bg-white hover:bg-gray-100 disabled:opacity-40"
             onClick={() => setPage(page - 1)}
             disabled={page <= 1}
           >
@@ -145,7 +142,7 @@ export default function TableStokSparepart({ title, data = [] }) {
           </button>
 
           <button
-            className="px-3 py-1 border rounded text-sm bg-white hover:bg-gray-100 disabled:opacity-40"
+            className="px-3 py-1 border rounded bg-white hover:bg-gray-100 disabled:opacity-40"
             onClick={() => setPage(page + 1)}
             disabled={page >= totalPage}
           >

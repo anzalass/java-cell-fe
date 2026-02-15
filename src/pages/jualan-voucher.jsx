@@ -180,14 +180,14 @@ export default function JualanVoucher() {
   }
 
   return (
-    <div className="p-4 sm:p-6 w-full mx-auto">
-      <div className="bg-white rounded-2xl mt-3 shadow-md p-6 mb-6">
+    <div className="w-full mx-auto">
+      <div className="bg-white rounded-2xl shadow-md p-6 mb-6">
         <div className="flex items-center gap-4">
           <div className="bg-gradient-to-r from-cyan-600 to-blue-600 p-4 rounded-xl">
             <Wallet className="w-8 h-8 text-white" />
           </div>
           <div>
-            <h1 className="text-base md:text-3xl font-bold text-gray-800">
+            <h1 className="text-base  font-bold text-gray-800">
               Penjualan Voucher
             </h1>
             <p className="text-gray-600 text-sm mt-1">
@@ -197,7 +197,7 @@ export default function JualanVoucher() {
         </div>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1  gap-6">
         {/* === KIRI: BRAND & VOUCHER === */}
         <div className="lg:col-span-2 space-y-6">
           {/* Brand Buttons */}
@@ -208,7 +208,7 @@ export default function JualanVoucher() {
                 Pilih Provider
               </h2>
             </div>
-            <div className="grid grid-cols-3 sm:grid-cols-6 gap-3">
+            <div className="grid grid-cols-3 gap-3">
               <button
                 onClick={() => setSelectedBrand("")}
                 className={`px-4 py-3 rounded-xl font-semibold transition-all ${
@@ -245,7 +245,7 @@ export default function JualanVoucher() {
                 Tidak ada voucher tersedia
               </div>
             ) : (
-              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-4">
+              <div className="grid grid-cols-2  gap-4">
                 {filteredVouchers.map((v) => (
                   <div
                     key={v.id}

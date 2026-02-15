@@ -22,6 +22,22 @@ import {
   Tag,
 } from "lucide-react";
 
+function useDebounce(value, delay) {
+  const [debouncedValue, setDebouncedValue] = useState(value);
+
+  useEffect(() => {
+    const handler = setTimeout(() => {
+      setDebouncedValue(value);
+    }, delay);
+
+    return () => {
+      clearTimeout(handler);
+    };
+  }, [value, delay]);
+
+  return debouncedValue;
+}
+
 export default function StokBarangSparepartPage() {
   const { user } = useAuthStore();
   const queryClient = useQueryClient();
@@ -32,9 +48,9 @@ export default function StokBarangSparepartPage() {
 
   // Filter state
   const [searchNama, setSearchNama] = useState("");
+  const [penempatan, setPenempatan] = useState("");
+
   const [filterBrand, setFilterBrand] = useState("");
-  const [searchQuery, setSearchQuery] = useState("");
-  const [brandQuery, setFilterBrandQuery] = useState("");
   const [filterBarcode, setFilterBarcode] = useState("all");
   const [filterDibuat, setFilterDibuat] = useState("");
   const [filterDiupdate, setFilterDiupdate] = useState("");
@@ -44,9 +60,23 @@ export default function StokBarangSparepartPage() {
     direction: "desc",
   });
 
+  const [createdRange, setCreatedRange] = useState({
+    start: "",
+    end: "",
+  });
+
+  const [updatedRange, setUpdatedRange] = useState({
+    start: "",
+    end: "",
+  });
+
   const [page, setPage] = useState(1);
   const [perPage, setPerPage] = useState(10);
   const [totalPage, setTotalPage] = useState(1);
+
+  const debouncedPenempatan = useDebounce(penempatan, 500);
+  const debouncedSearchNama = useDebounce(searchNama, 500);
+  const debouncedBrand = useDebounce(filterBrand, 500);
 
   const resetPage = () => setPage(1);
 
@@ -60,8 +90,11 @@ export default function StokBarangSparepartPage() {
   } = useQuery({
     queryKey: [
       "sparepart",
-      searchQuery,
-      brandQuery,
+      debouncedBrand,
+      debouncedPenempatan,
+      createdRange,
+      updatedRange,
+      debouncedSearchNama,
       filterBarcode,
       filterDibuat,
       filterDiupdate,
@@ -71,9 +104,24 @@ export default function StokBarangSparepartPage() {
     ],
     queryFn: async () => {
       const params = new URLSearchParams();
-      if (searchQuery) params.append("search", searchQuery);
-      if (brandQuery) params.append("brand", brandQuery);
+
       params.append("filterBarcode", filterBarcode);
+      params.append("brand", debouncedBrand);
+      params.append("penempatan", debouncedPenempatan);
+      params.append("search", debouncedSearchNama);
+
+      if (createdRange.start) params.append("createdStart", createdRange.start);
+
+      if (createdRange.end) params.append("createdEnd", createdRange.end);
+
+      if (updatedRange.start) params.append("updatedStart", updatedRange.start);
+
+      if (updatedRange.end) params.append("updatedEnd", updatedRange.end);
+
+      params.append("filterBarcode", filterBarcode);
+
+      params.append("filterBarcode", filterBarcode);
+
       if (filterDibuat) params.append("createdAt", filterDibuat);
       if (filterDiupdate) params.append("updatedAt", filterDiupdate);
       params.append("sortBy", sortConfig.key);
@@ -93,12 +141,19 @@ export default function StokBarangSparepartPage() {
 
   const clearFilters = () => {
     setSearchNama("");
-    setSearchQuery("");
-    setFilterBrandQuery("");
     setFilterBrand("");
+    setPenempatan("");
     setFilterBarcode("all");
     setFilterDibuat("");
     setFilterDiupdate("");
+    setCreatedRange({
+      start: "",
+      end: "",
+    });
+    setUpdatedRange({
+      start: "",
+      end: "",
+    });
   };
 
   const data = queryData?.data || [];
@@ -283,6 +338,7 @@ export default function StokBarangSparepartPage() {
       ...form,
       kategori: form.kategori || "Umum",
       stok: Number(form.stok),
+      penempatan: form.penempatan,
       hargaModal: Number(form.hargaModal),
       hargaJual: Number(form.hargaJual),
     });
@@ -308,6 +364,16 @@ export default function StokBarangSparepartPage() {
       day: "numeric",
     });
   };
+
+  const isCreatedInvalid =
+    createdRange.start &&
+    createdRange.end &&
+    new Date(createdRange.end) < new Date(createdRange.start);
+
+  const isUpdatedInvalid =
+    updatedRange.start &&
+    updatedRange.end &&
+    new Date(updatedRange.end) < new Date(updatedRange.start);
 
   // === RENDER ===
   if (isLoading) {
@@ -365,7 +431,7 @@ export default function StokBarangSparepartPage() {
             </h2>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-4">
             <div className="flex flex-col gap-2">
               <label className="text-sm font-semibold text-gray-700">
                 Cari Nama Barang
@@ -381,14 +447,23 @@ export default function StokBarangSparepartPage() {
                   placeholder="Charger, Kabel..."
                 />
               </div>
+            </div>
 
-              <button
-                onClick={() => setSearchQuery(searchNama)}
-                className="w-full py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition"
-                disabled={!searchNama.trim()}
-              >
-                Cari Nama
-              </button>
+            <div className="flex flex-col gap-2">
+              <label className="text-sm font-semibold text-gray-700">
+                Penempatan
+              </label>
+
+              <div className="relative">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+                <input
+                  type="text"
+                  value={penempatan}
+                  onChange={(e) => setPenempatan(e.target.value)}
+                  className="w-full pl-10 pr-4 py-3 border-2 border-gray-200 rounded-lg focus:border-purple-500 focus:outline-none"
+                  placeholder="Etalase..."
+                />
+              </div>
             </div>
 
             {/* Search Brand */}
@@ -407,14 +482,6 @@ export default function StokBarangSparepartPage() {
                   placeholder="Vivan, Baseus..."
                 />
               </div>
-
-              <button
-                onClick={() => setFilterBrandQuery(filterBrand)}
-                className="w-full py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition"
-                disabled={!filterBrand.trim()}
-              >
-                Cari Brand
-              </button>
             </div>
             {/* Barcode Filter */}
             <div>
@@ -436,7 +503,7 @@ export default function StokBarangSparepartPage() {
             </div>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4">
             {/* Date Created */}
             <div>
               <label className="block text-sm font-semibold text-gray-700 mb-2">
@@ -446,9 +513,39 @@ export default function StokBarangSparepartPage() {
                 <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
                 <input
                   type="date"
-                  value={filterDibuat}
-                  onChange={(e) => setFilterDibuat(e.target.value)}
+                  value={createdRange.start}
+                  onChange={(e) =>
+                    setCreatedRange((prev) => ({
+                      ...prev,
+                      start: e.target.value,
+                    }))
+                  }
                   className="w-full pl-10 pr-4 py-3 border-2 border-gray-200 rounded-lg focus:border-purple-500 focus:outline-none"
+                />
+              </div>
+            </div>
+
+            <div>
+              <label className="block text-sm font-semibold text-gray-700 mb-2">
+                Sampai Tanggal Dibuat
+              </label>
+              <div className="relative">
+                <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+                <input
+                  type="date"
+                  value={createdRange.end}
+                  min={createdRange.start || undefined} // 🔥 Prevent pilih sebelum start
+                  onChange={(e) =>
+                    setCreatedRange((prev) => ({
+                      ...prev,
+                      end: e.target.value,
+                    }))
+                  }
+                  className={`w-full pl-10 pr-4 py-3 border-2 rounded-lg focus:outline-none ${
+                    isCreatedInvalid
+                      ? "border-red-500 focus:border-red-500"
+                      : "border-gray-200 focus:border-emerald-500"
+                  }`}
                 />
               </div>
             </div>
@@ -462,10 +559,51 @@ export default function StokBarangSparepartPage() {
                 <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
                 <input
                   type="date"
-                  value={filterDiupdate}
-                  onChange={(e) => setFilterDiupdate(e.target.value)}
+                  value={updatedRange.start}
+                  onChange={(e) =>
+                    setUpdatedRange((prev) => ({
+                      ...prev,
+                      start: e.target.value,
+                    }))
+                  }
                   className="w-full pl-10 pr-4 py-3 border-2 border-gray-200 rounded-lg focus:border-purple-500 focus:outline-none"
                 />
+                {isCreatedInvalid && (
+                  <p className="text-red-500 text-sm mt-1">
+                    Tanggal Awal tidak boleh lebih besar dari tanggal akhir
+                  </p>
+                )}
+              </div>
+            </div>
+
+            <div>
+              <label className="block text-sm font-semibold text-gray-700 mb-2">
+                Tanggal Diupdate Sampai
+              </label>
+              <div className="relative">
+                <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+                <input
+                  type="date"
+                  value={updatedRange.end}
+                  min={updatedRange.start || undefined}
+                  onChange={(e) =>
+                    setUpdatedRange((prev) => ({
+                      ...prev,
+                      end: e.target.value,
+                    }))
+                  }
+                  className={`w-full pl-10 pr-4 py-3 border-2 rounded-lg focus:outline-none ${
+                    isUpdatedInvalid
+                      ? "border-red-500 focus:border-red-500"
+                      : "border-gray-200 focus:border-emerald-500"
+                  }`}
+                />
+
+                {isUpdatedInvalid && (
+                  <p className="text-red-500 text-sm mt-1">
+                    Tanggal akhir tidak boleh lebih kecil dari tanggal awal
+                  </p>
+                )}
               </div>
             </div>
           </div>
@@ -524,11 +662,51 @@ export default function StokBarangSparepartPage() {
                       <ArrowUpDown className="w-4 h-4" />
                     </div>
                   </th>
-                  <th className="p-4 text-center font-semibold">Penempatan</th>
-                  <th className="p-4 text-right font-semibold">Modal</th>
-                  <th className="p-4 text-right font-semibold">Harga Jual</th>
-                  <th className="p-4 text-left font-semibold">Dibuat</th>
-                  <th className="p-4 text-left font-semibold">Diupdate</th>
+                  <th
+                    className="p-4 text-center font-semibold cursor-pointer hover:bg-purple-700 transition"
+                    onClick={() => handleSort("penempatan")}
+                  >
+                    <div className="flex items-center justify-center gap-2">
+                      Penempatan
+                      <ArrowUpDown className="w-4 h-4" />
+                    </div>
+                  </th>{" "}
+                  <th
+                    className="p-4 text-center font-semibold cursor-pointer hover:bg-purple-700 transition"
+                    onClick={() => handleSort("hargaModal")}
+                  >
+                    <div className="flex items-center justify-center gap-2">
+                      Harga Modal
+                      <ArrowUpDown className="w-4 h-4" />
+                    </div>
+                  </th>{" "}
+                  <th
+                    className="p-4 text-center font-semibold cursor-pointer hover:bg-purple-700 transition"
+                    onClick={() => handleSort("hargaJual")}
+                  >
+                    <div className="flex items-center justify-center gap-2">
+                      Harga Jual
+                      <ArrowUpDown className="w-4 h-4" />
+                    </div>
+                  </th>{" "}
+                  <th
+                    className="p-4 text-center font-semibold cursor-pointer hover:bg-purple-700 transition"
+                    onClick={() => handleSort("createdAt")}
+                  >
+                    <div className="flex items-center justify-center gap-2">
+                      Dibuat pada
+                      <ArrowUpDown className="w-4 h-4" />
+                    </div>
+                  </th>{" "}
+                  <th
+                    className="p-4 text-center font-semibold cursor-pointer hover:bg-purple-700 transition"
+                    onClick={() => handleSort("updatedAt")}
+                  >
+                    <div className="flex items-center justify-center gap-2">
+                      Diupdate pada
+                      <ArrowUpDown className="w-4 h-4" />
+                    </div>
+                  </th>
                   <th className="p-4 text-center font-semibold">Aksi</th>
                 </tr>
               </thead>
@@ -638,7 +816,7 @@ export default function StokBarangSparepartPage() {
                   onChange={(e) => setPerPage(Number(e.target.value))}
                   className="border-2 border-gray-300 rounded-lg px-3 py-2 text-sm focus:border-purple-500 focus:outline-none"
                 >
-                  {[1, 10, 20, 50].map((n) => (
+                  {[5, 10, 20, 50].map((n) => (
                     <option key={n} value={n}>
                       {n}
                     </option>
@@ -657,7 +835,6 @@ export default function StokBarangSparepartPage() {
                   className="px-4 py-2 border-2 border-gray-300 rounded-lg text-sm font-medium disabled:text-gray-400 disabled:cursor-not-allowed hover:bg-gray-100 transition flex items-center gap-2"
                 >
                   <ChevronLeft className="w-4 h-4" />
-                  Sebelumnya
                 </button>
                 <div className="px-4 py-2 bg-purple-600 text-white rounded-lg font-semibold text-sm">
                   {page} / {totalPage}
@@ -667,7 +844,6 @@ export default function StokBarangSparepartPage() {
                   onClick={() => setPage(page + 1)}
                   className="px-4 py-2 border-2 border-gray-300 rounded-lg text-sm font-medium disabled:text-gray-400 disabled:cursor-not-allowed hover:bg-gray-100 transition flex items-center gap-2"
                 >
-                  Berikutnya
                   <ChevronRight className="w-4 h-4" />
                 </button>
               </div>
@@ -683,6 +859,7 @@ export default function StokBarangSparepartPage() {
           currentNama={updateStokItem.nama}
           currentStok={updateStokItem.stok}
           onSubmit={handleSimpanStok}
+          isLoading={updateStokMutation.isPending}
         />
       )}
 
@@ -693,6 +870,7 @@ export default function StokBarangSparepartPage() {
           onSubmit={handleSubmit(saveAdd)}
           register={register}
           errors={errors}
+          isLoading={createSparepartMutation.isPending}
           showKategori={true}
         />
       )}
@@ -704,6 +882,7 @@ export default function StokBarangSparepartPage() {
           onSubmit={handleSubmit(saveEdit)}
           register={register}
           errors={errors}
+          isLoading={createSparepartMutation.isPending}
           isEdit={true}
           showKategori={true}
         />
@@ -721,6 +900,7 @@ function ModalForm({
   errors,
   isEdit = false,
   showKategori = false,
+  isLoading = false, // ⬅️ baru
 }) {
   return (
     <div className="fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center z-50 p-4">
@@ -764,6 +944,22 @@ function ModalForm({
             />
             {errors.brand && (
               <p className="text-xs text-red-500 mt-1">Brand wajib diisi</p>
+            )}
+          </div>
+
+          <div className="mb-4">
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Penempatan Barang *
+            </label>
+            <input
+              {...register("penempatan", { required: true })}
+              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+              placeholder="Etalase no 1"
+            />
+            {errors.penempatan && (
+              <p className="text-xs text-red-500 mt-1">
+                Penempatan wajib diisi
+              </p>
             )}
           </div>
 
@@ -851,16 +1047,35 @@ function ModalForm({
             <button
               type="button"
               onClick={onClose}
-              className="px-4 py-2 text-gray-700 bg-gray-100 rounded-md hover:bg-gray-200"
+              disabled={isLoading}
+              className="
+      px-4 py-2 rounded-md
+      text-gray-700 bg-gray-100
+      hover:bg-gray-200
+      disabled:opacity-50 disabled:cursor-not-allowed
+    "
             >
               Batal
             </button>
+
             <button
               type="button"
               onClick={onSubmit}
-              className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700"
+              disabled={isLoading}
+              className="
+      px-4 py-2 rounded-md text-white
+      bg-blue-600 hover:bg-blue-700
+      disabled:opacity-70 disabled:cursor-not-allowed
+      flex items-center gap-2
+    "
             >
-              {isEdit ? "Perbarui" : "Simpan"}
+              {isLoading
+                ? isEdit
+                  ? "Memperbarui..."
+                  : "Menyimpan..."
+                : isEdit
+                  ? "Perbarui"
+                  : "Simpan"}
             </button>
           </div>
         </form>

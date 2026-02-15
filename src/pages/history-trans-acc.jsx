@@ -7,6 +7,9 @@ import {
   Wallet,
   BarChart3,
   Search,
+  Filter,
+  ChevronLeft,
+  ChevronRight,
 } from "lucide-react";
 import { useState, useMemo } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
@@ -19,6 +22,7 @@ export default function TableSectionAccecoris({
 }) {
   const { user } = useAuthStore();
   const queryClient = useQueryClient();
+  const [openFilter, setOpenFilter] = useState(false);
 
   const [page, setPage] = useState(1);
   const [itemPerPage, setItemPerPage] = useState(5);
@@ -188,205 +192,361 @@ export default function TableSectionAccecoris({
     <>
       <div className="bg-white border border-gray-200 shadow-sm rounded-xl overflow-hidden">
         {/* === STATS === */}
-        <div className="p-4 bg-gradient-to-r from-blue-50 to-indigo-50 border-b">
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-            <StatCard
-              title="Total Transaksi"
-              value={stats.totalTransaksi}
-              icon={<BarChart3 className="w-5 h-5" />}
-              color="text-blue-600"
-            />
-            <StatCard
-              title="Pendapatan"
-              value={`Rp ${stats.totalPendapatan.toLocaleString("id-ID")}`}
-              icon={<Wallet className="w-5 h-5" />}
-              color="text-green-600"
-            />
-            <StatCard
-              title="Keuntungan"
-              value={`Rp ${stats.totalKeuntungan.toLocaleString("id-ID")}`}
-              icon={<TrendingUp className="w-5 h-5" />}
-              color="text-amber-600"
-            />
-            <StatCard
-              title="Rata-rata/Transaksi"
-              value={`Rp ${stats.avgKeuntungan.toLocaleString("id-ID")}`}
-              icon={<Calendar className="w-5 h-5" />}
-              color="text-purple-600"
-            />
-          </div>
-        </div>
-
-        {/* === FILTER SECTION === */}
-        <div className="p-4 border-b bg-gray-50">
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-3">
-            <div className="md:col-span-2">
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Cari Nama Pembeli
-              </label>
-              <div className="flex gap-2">
-                <div className="relative flex-1">
-                  <Search className="absolute left-3 top-2.5 h-4 w-4 text-gray-400" />
-                  <input
-                    type="text"
-                    value={searchInput}
-                    onChange={(e) => setSearchInput(e.target.value)}
-                    className="w-full pl-10 pr-4 py-1.5 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    placeholder="Ahmad, DL-001, dll..."
-                  />
+        <div className="space-y-6">
+          {/* ================= STATISTIK ================= */}
+          <div className="bg-white rounded-sm shadow-sm border border-gray-100 p-2">
+            <div className="flex flex-row gap-4 my-6  items-center justify-between">
+              {/* Left: Icon + Title */}
+              <div className="flex items-center gap-3">
+                <div className="p-2.5 bg-gradient-to-br from-blue-500 to-blue-600 rounded-xl shadow-lg shadow-blue-500/30">
+                  <BarChart3 className="w-5 h-5 text-white" />
                 </div>
+
+                <div>
+                  <h2 className="text-lg md:text-xl font-bold text-gray-900">
+                    Statistik Transaksi
+                  </h2>
+                  <p className="text-xs md:text-sm text-gray-500">
+                    Ringkasan performa transaksi
+                  </p>
+                </div>
+              </div>
+
+              {/* Right: Filter Button */}
+              <div className="flex justify-end">
+                {/* Desktop */}
                 <button
-                  onClick={handleSearch}
-                  className="px-4 py-1.5 bg-blue-600 text-white rounded-md hover:bg-blue-700 flex items-center gap-1 whitespace-nowrap"
+                  onClick={() => setOpenFilter(true)}
+                  className="hidden md:flex px-5 py-2.5 bg-white border border-gray-200 rounded-xl shadow-sm hover:shadow-md transition-all items-center gap-2 text-gray-700 font-medium"
                 >
-                  <Search className="w-4 h-4" />
-                  Cari
+                  <Filter className="w-5 h-5 text-gray-600" />
+                  Filter & Pencarian
+                </button>
+
+                {/* Mobile */}
+                <button
+                  onClick={() => setOpenFilter(true)}
+                  className="md:hidden p-2.5 bg-white border border-gray-200 rounded-xl shadow-sm hover:shadow-md transition"
+                  aria-label="Filter"
+                >
+                  <Filter className="w-5 h-5 text-gray-600" />
                 </button>
               </div>
             </div>
 
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Rekap Waktu
-              </label>
-              <div className="flex flex-wrap gap-1">
-                {[
-                  { key: "all", label: "Semua" },
-                  { key: "today", label: "Hari Ini" },
-                  { key: "week", label: "Minggu Ini" },
-                  { key: "month", label: "Bulan Ini" },
-                  { key: "custom", label: "Custom" },
-                ].map((opt) => (
-                  <button
-                    key={opt.key}
-                    onClick={() => {
-                      setFilterType(opt.key);
-                      if (opt.key !== "custom") {
-                        setDateFrom("");
-                        setDateTo("");
-                      }
-                    }}
-                    className={`px-2.5 py-2 text-xs rounded ${
-                      filterType === opt.key
-                        ? "bg-blue-600 text-white"
-                        : "bg-white text-gray-700 border border-gray-300 hover:bg-gray-100"
-                    }`}
-                  >
-                    {opt.label}
-                  </button>
-                ))}
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+              {/* Total */}
+
+              <div className="group bg-white rounded-xl p-4 border border-gray-100 hover:shadow-md transition-all flex items-center justify-between">
+                <div>
+                  <p className="text-sm font-bold text-gray-900 mb-1">
+                    {stats.totalTransaksi}
+                  </p>
+                  <p className="text-xs font-medium text-gray-500">
+                    Total Transaksi
+                  </p>
+                </div>
+                <div className="p-2 rounded-lg bg-blue-50 group-hover:bg-blue-100 transition">
+                  <BarChart3 className="w-4 h-4 text-blue-600" />
+                </div>
+              </div>
+
+              <div className="group bg-white rounded-xl p-4 border border-gray-100 hover:shadow-md transition-all flex items-center justify-between">
+                <div>
+                  <p className="text-sm font-bold text-gray-900 mb-1">
+                    Rp {stats.totalPendapatan.toLocaleString("id-ID")}
+                  </p>
+                  <p className="text-xs font-medium text-gray-500">
+                    Total Omset
+                  </p>
+                </div>
+                <div className="p-2 rounded-lg bg-blue-50 group-hover:bg-blue-100 transition">
+                  <BarChart3 className="w-4 h-4 text-blue-600" />
+                </div>
+              </div>
+
+              <div className="group bg-white rounded-xl p-4 border border-gray-100 hover:shadow-md transition-all flex items-center justify-between">
+                <div>
+                  <p className="text-sm font-bold text-gray-900 mb-1">
+                    Rp {stats.totalKeuntungan.toLocaleString("id-ID")}
+                  </p>
+                  <p className="text-xs font-medium text-gray-500">
+                    Total Keuntungan
+                  </p>
+                </div>
+                <div className="p-2 rounded-lg bg-blue-50 group-hover:bg-blue-100 transition">
+                  <BarChart3 className="w-4 h-4 text-blue-600" />
+                </div>
+              </div>
+
+              <div className="group bg-white rounded-xl p-4 border border-gray-100 hover:shadow-md transition-all flex items-center justify-between">
+                <div>
+                  <p className="text-sm font-bold text-gray-900 mb-1">
+                    Rp {stats.totalKeuntungan.toLocaleString("id-ID")}
+                  </p>
+                  <p className="text-xs font-medium text-gray-500">
+                    Rata Rata Keuntungan
+                  </p>
+                </div>
+                <div className="p-2 rounded-lg bg-blue-50 group-hover:bg-blue-100 transition">
+                  <BarChart3 className="w-4 h-4 text-blue-600" />
+                </div>
               </div>
             </div>
           </div>
 
-          {filterType === "custom" && (
-            <div className="flex flex-col sm:flex-row gap-3 mt-2">
-              <div className="flex-1">
-                <label className="block text-xs text-gray-600 mb-1">Dari</label>
-                <input
-                  type="date"
-                  value={dateFrom}
-                  onChange={(e) => setDateFrom(e.target.value)}
-                  className="w-full px-2.5 py-1.5 border border-gray-300 rounded text-sm"
-                />
-              </div>
-              <div className="flex-1">
-                <label className="block text-xs text-gray-600 mb-1">
-                  Sampai
-                </label>
-                <input
-                  type="date"
-                  value={dateTo}
-                  onChange={(e) => setDateTo(e.target.value)}
-                  className="w-full px-2.5 py-1.5 border border-gray-300 rounded text-sm"
-                />
+          {/* ================= BUTTON FILTER ================= */}
+
+          {/* ================= MODAL FILTER ================= */}
+          {openFilter && (
+            <div className="fixed inset-0 z-50 flex items-center justify-center">
+              {/* Backdrop */}
+              <div
+                className="absolute inset-0 bg-black/40 backdrop-blur-sm"
+                onClick={() => setOpenFilter(false)}
+              />
+
+              {/* Modal */}
+              <div className="relative w-full max-w-2xl mx-4 bg-white rounded-2xl shadow-xl p-6">
+                {/* Header */}
+                <div className="flex items-start justify-between mb-6">
+                  <div className="flex items-center gap-3">
+                    <div className="p-2 bg-gray-100 rounded-lg">
+                      <Filter className="w-5 h-5 text-gray-600" />
+                    </div>
+                    <div>
+                      <h2 className="text-xl font-bold text-gray-900">
+                        Filter & Pencarian
+                      </h2>
+                      <p className="text-sm text-gray-500">
+                        Temukan transaksi yang Anda cari
+                      </p>
+                    </div>
+                  </div>
+
+                  <button
+                    onClick={() => setOpenFilter(false)}
+                    className="text-gray-400 hover:text-gray-600 text-xl"
+                  >
+                    ✕
+                  </button>
+                </div>
+
+                {/* Body */}
+                <div className="space-y-5">
+                  {/* Search */}
+                  <div>
+                    <label className="block text-sm font-semibold text-gray-700 mb-2">
+                      Cari Nama Pembeli
+                    </label>
+                    <div className="relative">
+                      <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+                      <input
+                        type="text"
+                        value={searchInput}
+                        onChange={(e) => setSearchInput(e.target.value)}
+                        onKeyDown={(e) => e.key === "Enter" && handleSearch()}
+                        className="w-full pl-11 pr-4 py-3 border border-gray-200 rounded-xl bg-gray-50 focus:bg-white focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 outline-none transition"
+                        placeholder="Ahmad, DL-001, dll..."
+                      />
+                    </div>
+                  </div>
+
+                  {/* Periode */}
+                  <div>
+                    <label className="block text-sm font-semibold text-gray-700 mb-2">
+                      Periode Waktu
+                    </label>
+                    <div className="relative">
+                      <Calendar className="absolute left-3.5 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+                      <select
+                        value={filterType}
+                        onChange={(e) => {
+                          setFilterType(e.target.value);
+                          if (e.target.value !== "custom") {
+                            setDateFrom("");
+                            setDateTo("");
+                          }
+                        }}
+                        className="w-full pl-11 pr-4 py-3 border border-gray-200 rounded-xl bg-gray-50 focus:bg-white focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 outline-none transition font-medium"
+                      >
+                        <option value="all">Semua Waktu</option>
+                        <option value="today">Hari Ini</option>
+                        <option value="week">Minggu Ini</option>
+                        <option value="month">Bulan Ini</option>
+                        <option value="custom">Custom Range</option>
+                      </select>
+                    </div>
+                  </div>
+
+                  {/* Custom */}
+                  {filterType === "custom" && (
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 p-4 bg-blue-50 rounded-xl border border-blue-100">
+                      <div>
+                        <label className="block text-sm font-semibold mb-2">
+                          Dari Tanggal
+                        </label>
+                        <input
+                          type="date"
+                          value={dateFrom}
+                          onChange={(e) => setDateFrom(e.target.value)}
+                          className="w-full px-4 py-3 border border-gray-200 rounded-xl"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-sm font-semibold mb-2">
+                          Sampai Tanggal
+                        </label>
+                        <input
+                          type="date"
+                          value={dateTo}
+                          onChange={(e) => setDateTo(e.target.value)}
+                          className="w-full px-4 py-3 border border-gray-200 rounded-xl"
+                        />
+                      </div>
+                    </div>
+                  )}
+                </div>
+
+                {/* Footer */}
+                <div className="mt-6 flex justify-between items-center pt-4 border-t">
+                  <button
+                    onClick={handleReset}
+                    className="px-5 py-2.5 bg-gray-100 hover:bg-gray-200 rounded-xl font-medium"
+                  >
+                    Reset
+                  </button>
+
+                  <button
+                    onClick={() => {
+                      handleSearch();
+                      setOpenFilter(false);
+                    }}
+                    className="px-6 py-2.5 bg-gradient-to-r from-blue-600 to-blue-700 text-white rounded-xl font-semibold shadow-lg shadow-blue-500/30"
+                  >
+                    Terapkan Filter
+                  </button>
+                </div>
               </div>
             </div>
           )}
-
-          <div className="mt-3 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
-            <div>
-              <button
-                onClick={handleReset}
-                className="px-4 py-1.5 text-sm text-gray-600 border border-gray-300 rounded-md hover:bg-gray-100"
-              >
-                Reset Filter
-              </button>
-            </div>
-            <div className="flex items-center gap-2">
-              <span className="text-sm text-gray-700">Baris/halaman:</span>
-              <select
-                className="border px-2 py-1.5 rounded text-sm"
-                value={itemPerPage}
-                onChange={(e) => {
-                  setItemPerPage(Number(e.target.value));
-                  setPage(1);
-                }}
-              >
-                <option value={5}>5</option>
-                <option value={10}>10</option>
-                <option value={20}>20</option>
-              </select>
-            </div>
-          </div>
         </div>
 
-        {/* === TABLE === */}
-        <div className="px-4 py-3 bg-gray-50 border-b text-gray-700 font-medium">
-          {title}
-        </div>
-
-        <div className="w-full overflow-x-auto">
-          <table className="w-full text-sm">
+        <div className="w-full overflow-x-auto bg-white rounded-xl shadow-sm border border-gray-100">
+          <table className="w-full">
             <thead>
-              <tr className="text-gray-600 bg-gray-100">
-                <th className="px-4 py-3 text-left">No</th>
-                <th className="px-4 py-3 text-left">Nama Pembeli</th>
-                <th className="px-4 py-3 text-left">Total Harga</th>
-                <th className="px-4 py-3 text-left">Tanggal</th>
-                <th className="px-4 py-3 text-left">Keuntungan</th>
-                <th className="px-4 py-3 text-left">Aksi</th>
+              <tr className="bg-gradient-to-r from-gray-50 to-gray-100 border-b border-gray-200">
+                {[
+                  "No",
+                  "Nama Pembeli",
+                  "Total Harga",
+                  "Tanggal",
+                  "Keuntungan",
+                  "Aksi",
+                ].map((h) => (
+                  <th
+                    key={h}
+                    className="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase tracking-wider"
+                  >
+                    {h}
+                  </th>
+                ))}
               </tr>
             </thead>
-            <tbody>
+
+            <tbody className="divide-y divide-gray-100">
               {data.length === 0 ? (
-                <tr className="border-t">
-                  <td
-                    className="px-4 py-3 text-gray-500 text-center"
-                    colSpan={6}
-                  >
-                    Tidak ada data
+                <tr>
+                  <td colSpan={6} className="px-6 py-12 text-center">
+                    <div className="flex flex-col items-center justify-center">
+                      <div className="p-4 bg-gray-100 rounded-full mb-3">
+                        <svg
+                          className="w-8 h-8 text-gray-400"
+                          fill="none"
+                          stroke="currentColor"
+                          viewBox="0 0 24 24"
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth={2}
+                            d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5"
+                          />
+                        </svg>
+                      </div>
+                      <p className="text-gray-500 font-medium">
+                        Tidak ada data transaksi
+                      </p>
+                      <p className="text-sm text-gray-400 mt-1">
+                        Data transaksi akan muncul di sini
+                      </p>
+                    </div>
                   </td>
                 </tr>
               ) : (
                 data.map((item, i) => (
-                  <tr key={item.id} className="border-t hover:bg-gray-50">
-                    <td className="px-4 py-3">
+                  <tr
+                    key={item.id}
+                    className="hover:bg-gray-50 transition-colors duration-150"
+                  >
+                    {/* No */}
+                    <td className="px-6 py-4 text-sm text-gray-600">
                       {(page - 1) * itemPerPage + i + 1}
                     </td>
-                    <td className="px-4 py-3 font-medium">
-                      {item.namaPembeli}
+
+                    {/* Nama */}
+                    <td className="px-6 py-4">
+                      <div className="flex items-center gap-3">
+                        <div className="w-8 h-8 bg-gradient-to-br from-blue-500 to-blue-600 rounded-full flex items-center justify-center text-white font-semibold text-sm shadow-sm">
+                          {item.namaPembeli.charAt(0).toUpperCase()}
+                        </div>
+                        <span className="text-sm font-semibold text-gray-900">
+                          {item.namaPembeli}
+                        </span>
+                      </div>
                     </td>
-                    <td className="px-4 py-3">
-                      Rp {item.totalHarga.toLocaleString("id-ID")}
+
+                    {/* Total */}
+                    <td className="px-6 py-4">
+                      <span className="text-sm font-bold text-gray-900">
+                        Rp {item.totalHarga.toLocaleString("id-ID")}
+                      </span>
                     </td>
-                    <td className="px-4 py-3">{item.tanggal}</td>
-                    <td className="px-4 py-3 text-green-600">
-                      Rp {item.keuntungan.toLocaleString("id-ID")}
+
+                    {/* Tanggal */}
+                    <td className="px-6 py-4">
+                      <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-700">
+                        <Calendar className="w-3.5 h-3.5" />
+                        {new Date(item.tanggal).toLocaleDateString("id-ID", {
+                          day: "numeric",
+                          month: "short",
+                          year: "numeric",
+                        })}
+                      </span>
                     </td>
-                    <td className="px-4 py-3">
+
+                    {/* Keuntungan */}
+                    <td className="px-6 py-4">
+                      <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-bold bg-green-50 text-green-700">
+                        <TrendingUp className="w-3.5 h-3.5" />
+                        Rp {item.keuntungan.toLocaleString("id-ID")}
+                      </span>
+                    </td>
+
+                    {/* Aksi */}
+                    <td className="px-6 py-4">
                       <div className="flex gap-2">
                         <button
                           title="Detail"
-                          className="p-2 bg-blue-500 text-white rounded hover:bg-blue-600"
                           onClick={() => setOpenDetail(item)}
+                          className="p-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-all duration-200 hover:scale-110 active:scale-95 shadow-sm"
                         >
                           <Eye className="w-4 h-4" />
                         </button>
                         <button
                           title="Hapus"
-                          className="p-2 bg-red-500 text-white rounded hover:bg-red-600"
                           onClick={() => handleDelete(item.id)}
+                          className="p-2 bg-red-500 text-white rounded-lg hover:bg-red-600 transition-all duration-200 hover:scale-110 active:scale-95 shadow-sm"
                         >
                           <Trash2 className="w-4 h-4" />
                         </button>
@@ -397,38 +557,66 @@ export default function TableSectionAccecoris({
               )}
             </tbody>
           </table>
-        </div>
 
-        {/* ✅ PAGINATION YANG BENAR */}
-        {totalPages > 1 && (
-          <div className="flex justify-between items-center px-4 py-3 border-t bg-gray-50">
-            <span className="text-sm text-gray-600">
-              Menampilkan {(page - 1) * itemPerPage + 1}–
-              {Math.min(page * itemPerPage, total)} dari {total} data
-            </span>
-            <div className="space-x-2">
+          {/* PAGINATION */}
+          {/* Pagination */}
+        </div>
+        {/* <div className="bg-gray-50 border-t-2 border-gray-200 p-4">
+          <div className="flex justify-between items-center">
+            <div className="text-sm text-gray-600">
+              <span className="font-semibold">{page}</span> dari{" "}
+              <span className="font-semibold">{totalPages}</span>
+            </div>
+            <div className="flex items-center  gap-3">
+              <select
+                value={itemPerPage}
+                onChange={(e) => {
+                  setItemPerPage(Number(e.target.value));
+                  setPage(1);
+                }}
+                className="
+      px-4 py-2
+      text-sm font-medium
+      rounded-xl
+      border border-gray-200
+      bg-white
+      shadow-sm
+      focus:outline-none
+      focus:ring-2 focus:ring-blue-500
+      focus:border-blue-500
+      hover:bg-gray-50
+      transition
+    "
+              >
+                <option value={5}>5</option>
+                <option value={10}>10</option>
+                <option value={20}>20</option>
+                <option value={50}>50</option>
+              </select>
+            </div>
+            <div className="flex items-center gap-2">
               <button
                 onClick={() => setPage((prev) => Math.max(prev - 1, 1))}
                 disabled={page <= 1}
-                className="px-3 py-1.5 border rounded text-sm bg-white hover:bg-gray-100 disabled:opacity-40"
+                className="px-4 py-2 border-2 border-gray-300 rounded-lg text-sm font-medium disabled:text-gray-400 disabled:cursor-not-allowed hover:bg-gray-100 transition flex items-center gap-2"
               >
-                Sebelumnya
+                <ChevronLeft className="w-4 h-4" />
               </button>
-              <span className="px-3 py-1.5 text-sm">
-                Halaman {page} dari {totalPages}
-              </span>
+              <div className="px-4 py-2 bg-slate-700 text-white rounded-lg font-semibold text-sm">
+                {page}
+              </div>
               <button
                 onClick={() =>
                   setPage((prev) => Math.min(prev + 1, totalPages))
                 }
                 disabled={page >= totalPages}
-                className="px-3 py-1.5 border rounded text-sm bg-white hover:bg-gray-100 disabled:opacity-40"
+                className="px-4 py-2 border-2 border-gray-300 rounded-lg text-sm font-medium disabled:text-gray-400 disabled:cursor-not-allowed hover:bg-gray-100 transition flex items-center gap-2"
               >
-                Berikutnya
+                <ChevronRight className="w-4 h-4" />
               </button>
             </div>
           </div>
-        )}
+        </div> */}
       </div>
 
       {/* === MODAL DETAIL === */}

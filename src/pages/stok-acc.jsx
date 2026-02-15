@@ -1,5 +1,5 @@
 // src/pages/StokBarangAksesorisPage.jsx
-import { useState, useMemo, useEffect, useCallback } from "react";
+import { useState, useMemo, useEffect, useCallback, useRef } from "react";
 import { useForm } from "react-hook-form";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import Swal from "sweetalert2";
@@ -40,6 +40,12 @@ function useDebounce(value, delay) {
 }
 
 export default function StokBarangAksesorisPage() {
+  const searchInputRef = useRef(null);
+
+  useEffect(() => {
+    searchInputRef.current?.focus();
+  }, []);
+
   const { user } = useAuthStore();
   const queryClient = useQueryClient();
 
@@ -49,10 +55,22 @@ export default function StokBarangAksesorisPage() {
 
   // Filter state
   const [searchNama, setSearchNama] = useState("");
+  const [penempatan, setPenempatan] = useState("");
+
   const [filterBrand, setFilterBrand] = useState("");
   const [filterBarcode, setFilterBarcode] = useState("all");
   const [filterDibuat, setFilterDibuat] = useState("");
   const [filterDiupdate, setFilterDiupdate] = useState("");
+
+  const [createdRange, setCreatedRange] = useState({
+    start: "",
+    end: "",
+  });
+
+  const [updatedRange, setUpdatedRange] = useState({
+    start: "",
+    end: "",
+  });
 
   const [sortConfig, setSortConfig] = useState({
     key: "createdAt",
@@ -66,34 +84,46 @@ export default function StokBarangAksesorisPage() {
 
   // ✅ Debounced values
   const debouncedSearchNama = useDebounce(searchNama, 500);
+
+  const debouncedPenempatan = useDebounce(penempatan, 500);
   const debouncedFilterBrand = useDebounce(filterBrand, 500);
 
-  // === QUERY: Fetch Data ===
   const {
     data: queryData,
     isLoading,
     isError,
     error,
-    refetch,
   } = useQuery({
     queryKey: [
       "acc",
-      debouncedSearchNama, // ✅ gunakan debounced
-      debouncedFilterBrand, // ✅ gunakan debounced
+      debouncedSearchNama,
+      debouncedFilterBrand,
+      debouncedPenempatan,
       filterBarcode,
-      filterDibuat,
-      filterDiupdate,
+      createdRange,
+      updatedRange,
       sortConfig,
       page,
       perPage,
     ],
     queryFn: async () => {
       const params = new URLSearchParams();
+
       if (debouncedSearchNama) params.append("search", debouncedSearchNama);
+
       if (debouncedFilterBrand) params.append("brand", debouncedFilterBrand);
+      if (debouncedPenempatan) params.append("penempatan", debouncedPenempatan);
+
       params.append("filterBarcode", filterBarcode);
-      if (filterDibuat) params.append("createdAt", filterDibuat);
-      if (filterDiupdate) params.append("updatedAt", filterDiupdate);
+
+      if (createdRange.start) params.append("createdStart", createdRange.start);
+
+      if (createdRange.end) params.append("createdEnd", createdRange.end);
+
+      if (updatedRange.start) params.append("updatedStart", updatedRange.start);
+
+      if (updatedRange.end) params.append("updatedEnd", updatedRange.end);
+
       params.append("sortBy", sortConfig.key);
       params.append("sortOrder", sortConfig.direction);
       params.append("page", page);
@@ -102,10 +132,12 @@ export default function StokBarangAksesorisPage() {
       const res = await api.get(`/acc?${params.toString()}`, {
         headers: { Authorization: `Bearer ${user?.token}` },
       });
+
       return res.data;
     },
     keepPreviousData: true,
     staleTime: 5000,
+    enabled: !!user?.token,
   });
 
   const data = queryData?.data || [];
@@ -193,6 +225,14 @@ export default function StokBarangAksesorisPage() {
     setFilterDibuat("");
     setFilterDiupdate("");
     setPage(1);
+    setCreatedRange({
+      start: "",
+      end: "",
+    });
+    setUpdatedRange({
+      start: "",
+      end: "",
+    });
   };
 
   const updateStokMutation = useMutation({
@@ -231,6 +271,7 @@ export default function StokBarangAksesorisPage() {
       nama: "nama",
       stok: "stok",
       penempatan: "penempatan",
+      hargaModal: "hargaModal",
       hargaJual: "hargaJual",
       dibuat: "createdAt",
       diupdate: "updatedAt",
@@ -283,6 +324,7 @@ export default function StokBarangAksesorisPage() {
       ...form,
       kategori: form.kategori || "Umum",
       stok: Number(form.stok),
+      penempatan: form.penempatan,
       hargaModal: Number(form.hargaModal),
       hargaJual: Number(form.hargaJual),
     });
@@ -321,6 +363,16 @@ export default function StokBarangAksesorisPage() {
       day: "numeric",
     });
   };
+
+  const isCreatedInvalid =
+    createdRange.start &&
+    createdRange.end &&
+    new Date(createdRange.end) < new Date(createdRange.start);
+
+  const isUpdatedInvalid =
+    updatedRange.start &&
+    updatedRange.end &&
+    new Date(updatedRange.end) < new Date(updatedRange.start);
 
   // === RENDER ===
   if (isLoading) {
@@ -378,7 +430,7 @@ export default function StokBarangAksesorisPage() {
             </h2>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-4">
             {/* Search Nama */}
             <div>
               <label className="block text-sm font-semibold text-gray-700 mb-2">
@@ -389,9 +441,25 @@ export default function StokBarangAksesorisPage() {
                 <input
                   type="text"
                   value={searchNama}
+                  ref={searchInputRef}
                   onChange={(e) => setSearchNama(e.target.value)}
                   className="w-full pl-10 pr-4 py-3 border-2 border-gray-200 rounded-lg focus:border-emerald-500 focus:outline-none transition"
                   placeholder="Headset, Charger..."
+                />
+              </div>
+            </div>
+            <div>
+              <label className="block text-sm font-semibold text-gray-700 mb-2">
+                Penempatan
+              </label>
+              <div className="relative">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+                <input
+                  type="text"
+                  value={penempatan}
+                  onChange={(e) => setPenempatan(e.target.value)}
+                  className="w-full pl-10 pr-4 py-3 border-2 border-gray-200 rounded-lg focus:border-emerald-500 focus:outline-none transition"
+                  placeholder="Etalase 1..."
                 />
               </div>
             </div>
@@ -439,15 +507,52 @@ export default function StokBarangAksesorisPage() {
               <label className="block text-sm font-semibold text-gray-700 mb-2">
                 Tanggal Dibuat
               </label>
+
+              {/* START */}
               <div className="relative">
                 <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
                 <input
                   type="date"
-                  value={filterDibuat}
-                  onChange={(e) => setFilterDibuat(e.target.value)}
+                  value={createdRange.start}
+                  onChange={(e) =>
+                    setCreatedRange((prev) => ({
+                      ...prev,
+                      start: e.target.value,
+                    }))
+                  }
                   className="w-full pl-10 pr-4 py-3 border-2 border-gray-200 rounded-lg focus:border-emerald-500 focus:outline-none"
                 />
               </div>
+
+              {/* END */}
+              <div className="relative mt-3">
+                <label className="block text-sm font-semibold text-gray-700 mb-2">
+                  Sampai Tanggal Dibuat
+                </label>
+                <Calendar className="absolute left-3 top-12 -translate-y-1/2 w-5 h-5 text-gray-400" />
+                <input
+                  type="date"
+                  value={createdRange.end}
+                  min={createdRange.start || undefined} // 🔥 Prevent pilih sebelum start
+                  onChange={(e) =>
+                    setCreatedRange((prev) => ({
+                      ...prev,
+                      end: e.target.value,
+                    }))
+                  }
+                  className={`w-full pl-10 pr-4 py-3 border-2 rounded-lg focus:outline-none ${
+                    isCreatedInvalid
+                      ? "border-red-500 focus:border-red-500"
+                      : "border-gray-200 focus:border-emerald-500"
+                  }`}
+                />
+              </div>
+
+              {isCreatedInvalid && (
+                <p className="text-red-500 text-sm mt-1">
+                  Tanggal akhir tidak boleh lebih kecil dari tanggal awal
+                </p>
+              )}
             </div>
 
             {/* Date Updated */}
@@ -455,15 +560,52 @@ export default function StokBarangAksesorisPage() {
               <label className="block text-sm font-semibold text-gray-700 mb-2">
                 Tanggal Diupdate
               </label>
+
+              {/* START */}
               <div className="relative">
                 <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
                 <input
                   type="date"
-                  value={filterDiupdate}
-                  onChange={(e) => setFilterDiupdate(e.target.value)}
+                  value={updatedRange.start}
+                  onChange={(e) =>
+                    setUpdatedRange((prev) => ({
+                      ...prev,
+                      start: e.target.value,
+                    }))
+                  }
                   className="w-full pl-10 pr-4 py-3 border-2 border-gray-200 rounded-lg focus:border-emerald-500 focus:outline-none"
                 />
               </div>
+
+              {/* END */}
+              <div className="relative mt-3">
+                <label className="block text-sm font-semibold text-gray-700 mb-2">
+                  Sampai Tanggal Diupdate
+                </label>
+                <Calendar className="absolute left-3 top-12 -translate-y-1/2 w-5 h-5 text-gray-400" />
+                <input
+                  type="date"
+                  value={updatedRange.end}
+                  min={updatedRange.start || undefined}
+                  onChange={(e) =>
+                    setUpdatedRange((prev) => ({
+                      ...prev,
+                      end: e.target.value,
+                    }))
+                  }
+                  className={`w-full pl-10 pr-4 py-3 border-2 rounded-lg focus:outline-none ${
+                    isUpdatedInvalid
+                      ? "border-red-500 focus:border-red-500"
+                      : "border-gray-200 focus:border-emerald-500"
+                  }`}
+                />
+              </div>
+
+              {isUpdatedInvalid && (
+                <p className="text-red-500 text-sm mt-1">
+                  Tanggal akhir tidak boleh lebih kecil dari tanggal awal
+                </p>
+              )}
             </div>
           </div>
 
@@ -521,11 +663,51 @@ export default function StokBarangAksesorisPage() {
                       <ArrowUpDown className="w-4 h-4" />
                     </div>
                   </th>
-                  <th className="p-4 text-center font-semibold">Penempatan</th>
-                  <th className="p-4 text-right font-semibold">Modal</th>
-                  <th className="p-4 text-right font-semibold">Harga Jual</th>
-                  <th className="p-4 text-left font-semibold">Dibuat</th>
-                  <th className="p-4 text-left font-semibold">Diupdate</th>
+                  <th
+                    onClick={() => handleSort("penempatan")}
+                    className="p-4 text-center font-semibold cursor-pointer hover:bg-emerald-700 transition"
+                  >
+                    <div className="flex items-center justify-center gap-2">
+                      Penempatan
+                      <ArrowUpDown className="w-4 h-4" />
+                    </div>
+                  </th>
+                  <th
+                    onClick={() => handleSort("hargaMoadal")}
+                    className="p-4 text-center font-semibold cursor-pointer hover:bg-emerald-700 transition"
+                  >
+                    <div className="flex items-center justify-center gap-2">
+                      Modal
+                      <ArrowUpDown className="w-4 h-4" />
+                    </div>
+                  </th>
+                  <th
+                    onClick={() => handleSort("hargaJual")}
+                    className="p-4 text-center font-semibold cursor-pointer hover:bg-emerald-700 transition"
+                  >
+                    <div className="flex items-center justify-center gap-2">
+                      Harga Jual
+                      <ArrowUpDown className="w-4 h-4" />
+                    </div>
+                  </th>
+                  <th
+                    onClick={() => handleSort("createdAt")}
+                    className="p-4 text-center font-semibold cursor-pointer hover:bg-emerald-700 transition"
+                  >
+                    <div className="flex items-center justify-center gap-2">
+                      Dibuat
+                      <ArrowUpDown className="w-4 h-4" />
+                    </div>
+                  </th>
+                  <th
+                    onClick={() => handleSort("updatedAt")}
+                    className="p-4 text-center font-semibold cursor-pointer hover:bg-emerald-700 transition"
+                  >
+                    <div className="flex items-center justify-center gap-2">
+                      Diupdate
+                      <ArrowUpDown className="w-4 h-4" />
+                    </div>
+                  </th>
                   <th className="p-4 text-center font-semibold">Aksi</th>
                 </tr>
               </thead>
@@ -632,7 +814,6 @@ export default function StokBarangAksesorisPage() {
           <div className="bg-gray-50 border-t-2 border-gray-200 p-4">
             <div className="flex flex-col sm:flex-row justify-between items-center gap-4">
               <div className="flex items-center gap-3">
-                <span className="text-sm text-gray-600">Baris/halaman:</span>
                 <select
                   value={perPage}
                   onChange={(e) => setPerPage(Number(e.target.value))}
@@ -657,7 +838,6 @@ export default function StokBarangAksesorisPage() {
                   className="px-4 py-2 border-2 border-gray-300 rounded-lg text-sm font-medium disabled:text-gray-400 disabled:cursor-not-allowed hover:bg-gray-100 transition flex items-center gap-2"
                 >
                   <ChevronLeft className="w-4 h-4" />
-                  Sebelumnya
                 </button>
                 <div className="px-4 py-2 bg-emerald-600 text-white rounded-lg font-semibold text-sm">
                   {page} / {totalPage}
@@ -667,7 +847,6 @@ export default function StokBarangAksesorisPage() {
                   onClick={() => setPage(page + 1)}
                   className="px-4 py-2 border-2 border-gray-300 rounded-lg text-sm font-medium disabled:text-gray-400 disabled:cursor-not-allowed hover:bg-gray-100 transition flex items-center gap-2"
                 >
-                  Berikutnya
                   <ChevronRight className="w-4 h-4" />
                 </button>
               </div>
@@ -685,6 +864,7 @@ export default function StokBarangAksesorisPage() {
           currentNama={updateStokItem.nama}
           currentStok={updateStokItem.stok}
           onSubmit={handleSimpanStok}
+          isLoading={updateStokMutation.isPending}
         />
       )}
 
@@ -696,6 +876,7 @@ export default function StokBarangAksesorisPage() {
           register={register}
           errors={errors}
           showKategori={true}
+          isLoading={createMutation.isPending}
         />
       )}
 
@@ -707,6 +888,7 @@ export default function StokBarangAksesorisPage() {
           register={register}
           errors={errors}
           isEdit={true}
+          isLoading={updateMutation.isPending}
         />
       )}
     </div>
@@ -722,7 +904,19 @@ function ModalForm({
   errors,
   isEdit = false,
   showKategori = false,
+  isLoading = false, // ⬅️ baru
 }) {
+  const validateHargaJual = (value, formValues) => {
+    const hargaModal = formValues.hargaModal
+      ? Number(formValues.hargaModal)
+      : 0;
+    const hargaJual = Number(value);
+    if (hargaJual < hargaModal) {
+      return "Harga jual tidak boleh lebih kecil dari harga modal";
+    }
+    return true;
+  };
+
   return (
     <div className="fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center z-50 p-4">
       <div className="bg-white w-full max-w-md p-6 rounded-xl shadow-xl relative">
@@ -795,6 +989,22 @@ function ModalForm({
 
           <div className="mb-4">
             <label className="block text-sm font-medium text-gray-700 mb-1">
+              Penempatan Barang *
+            </label>
+            <input
+              {...register("penempatan", { required: true })}
+              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+              placeholder="Etalase no 1"
+            />
+            {errors.penempatan && (
+              <p className="text-xs text-red-500 mt-1">
+                Penempatan wajib diisi
+              </p>
+            )}
+          </div>
+
+          <div className="mb-4">
+            <label className="block text-sm font-medium text-gray-700 mb-1">
               Stok *
             </label>
             <input
@@ -841,10 +1051,21 @@ function ModalForm({
                   required: true,
                   min: 0,
                   valueAsNumber: true,
+                  validate: (value) =>
+                    validateHargaJual(value, {
+                      hargaModal: document.querySelector(
+                        'input[name="hargaModal"]'
+                      )?.value,
+                    }),
                 })}
                 className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                 placeholder="55000"
               />
+              {errors.hargaJual && (
+                <p className="text-xs text-red-500 mt-1">
+                  {errors.hargaJual.message || "Harga jual wajib diisi"}
+                </p>
+              )}
             </div>
           </div>
 
@@ -852,16 +1073,35 @@ function ModalForm({
             <button
               type="button"
               onClick={onClose}
-              className="px-4 py-2 text-gray-700 bg-gray-100 rounded-md hover:bg-gray-200"
+              disabled={isLoading}
+              className="
+      px-4 py-2 rounded-md
+      text-gray-700 bg-gray-100
+      hover:bg-gray-200
+      disabled:opacity-50 disabled:cursor-not-allowed
+    "
             >
               Batal
             </button>
+
             <button
               type="button"
               onClick={onSubmit}
-              className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700"
+              disabled={isLoading}
+              className="
+      px-4 py-2 rounded-md text-white
+      bg-blue-600 hover:bg-blue-700
+      disabled:opacity-70 disabled:cursor-not-allowed
+      flex items-center gap-2
+    "
             >
-              {isEdit ? "Perbarui" : "Simpan"}
+              {isLoading
+                ? isEdit
+                  ? "Memperbarui..."
+                  : "Menyimpan..."
+                : isEdit
+                  ? "Perbarui"
+                  : "Simpan"}
             </button>
           </div>
         </form>
