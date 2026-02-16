@@ -3,11 +3,12 @@ import { useMemo, useState } from "react";
 import { useAuthStore } from "../store/useAuthStore";
 import api from "../api/client";
 import Swal from "sweetalert2";
+import { useNavigate } from "react-router-dom";
 
 export default function TableSectionServiceToday({ title, data, onSuccess }) {
   // Dummy data BE format
   const { user, isLoading, isCheckingAuth, fetchUser } = useAuthStore();
-
+  const nav = useNavigate();
   const [page, setPage] = useState(1);
   const [itemPerPage, setItemPerPage] = useState(5);
 
@@ -538,10 +539,10 @@ export default function TableSectionServiceToday({ title, data, onSuccess }) {
 
             <div className="p-5 border-t">
               <button
-                onClick={() => setOpenDetail(null)}
+                onClick={() => nav(`/print-service-hp/${openDetail.id}`)}
                 className="w-full py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition"
               >
-                Tutup
+                Print Cetak
               </button>
             </div>
           </div>

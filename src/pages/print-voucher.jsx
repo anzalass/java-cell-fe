@@ -1,10 +1,9 @@
 import { useEffect, useState } from "react";
-import { useParams, useNavigate } from "react-router-dom";
+import { useParams } from "react-router-dom";
 import api from "../api/client";
 
 export default function PrintVoucherGrosir() {
   const { id } = useParams();
-  const navigate = useNavigate();
   const [data, setData] = useState(null);
 
   useEffect(() => {
@@ -23,32 +22,35 @@ export default function PrintVoucherGrosir() {
     }
   }, [data]);
 
-  console.log(data);
-
   if (!data) return null;
 
   return (
     <>
-      {/* CSS KHUSUS PRINT */}
       <style>{`
-        body {
+        html, body {
           margin: 0;
+          padding: 0;
+          width: 100%;
+          background: #fff;
           font-family: monospace;
-          font-size: 12px;
+          font-size: 38px;
         }
 
         @page {
-          size: A4;
-          margin: 0;
+          size: auto;
+          margin: 0mm;
         }
 
         .receipt {
-          width: A4;
-          padding: 6px;
+          width: 100%;
+          padding: 10px;
+          box-sizing: border-box;
+
         }
 
         .center {
           text-align: center;
+
         }
 
         .bold {
@@ -56,45 +58,66 @@ export default function PrintVoucherGrosir() {
         }
 
         .small {
-          font-size: 10px;
+          font-size: 25px;
+          
+        }
+
+        .item {
+          margin-bottom: 40px;
+        }
+
+        .voucher-name {
+          font-weight: 700;
+          margin-bottom: 6px;
         }
 
         .row {
           display: flex;
           justify-content: space-between;
+          margin-bottom: 4px;
         }
 
         .line {
           border-top: 1px dashed #000;
-          margin: 6px 0;
+          margin: 16px 0;
         }
 
+        /* HILANGKAN GARIS SAAT PRINT */
         @media print {
+          .line {
+            display: none;
+          }
+
           body {
-            margin: 0;
+            -webkit-print-color-adjust: exact;
+            print-color-adjust: exact;
           }
         }
       `}</style>
 
-      {/* STRUK */}
       <div className="receipt">
-        <div className="center bold">VOUCHER GROSIR</div>
+        <div className="center bold" style={{ fontSize: "40px" }}>
+          VOUCHER GROSIR JAVA CELL
+        </div>
 
-        <div className="center small">
+        <div className="center small" style={{ marginBottom: "60px" }}>
           {data.downline.kodeDownline} - {data.downline.nama}
         </div>
 
         <div className="line" />
 
         <div className="small">
-          {new Date(data.tanggal).toLocaleDateString("id-ID")}
+          {new Date(data.tanggal).toLocaleDateString("id-ID", {
+            dateStyle: "full",
+          })}
         </div>
 
         <div className="line" />
 
         {data.items.map((item, i) => (
-          <div key={i}>
-            <div>{item.Voucher.nama}</div>
+          <div key={i} className="item">
+            <div className="voucher-name">{item.Voucher.nama}</div>
+
             <div className="row">
               <span>
                 {item.quantity} x{" "}
@@ -111,14 +134,9 @@ export default function PrintVoucherGrosir() {
 
         <div className="line" />
 
-        <div className="row bold">
+        <div className="row bold" style={{ fontSize: "40px" }}>
           <span>Total</span>
           <span>{data.totalHarga.toLocaleString("id-ID")}</span>
-        </div>
-
-        <div className="row">
-          <span>Keuntungan</span>
-          <span>{data.keuntungan.toLocaleString("id-ID")}</span>
         </div>
 
         <div className="line" />

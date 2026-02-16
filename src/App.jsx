@@ -28,6 +28,7 @@ import TransaksiVoucherHarianPage from "./pages/voucher-harian-page";
 import VoucherTerlarisPage from "./pages/item-voucher-harian";
 import Penggabungan from "./pages/penggabungan";
 import PrintVoucherGrosir from "./pages/print-voucher";
+import PrintServiceHP from "./pages/print-service-hp";
 
 function App() {
   const { user, isLoading, isCheckingAuth, fetchUser } = useAuthStore();
@@ -42,6 +43,7 @@ function App() {
       <Route path="/" element={<Home />} />
       <Route path="/login" element={<LoginPage />} />
       <Route path="/print/grosir/:id" element={<PrintVoucherGrosir />} />
+      <Route path="/print-service-hp/:id" element={<PrintServiceHP />} />
 
       <Route path="/dashboard" element={<DashboardLayout />}>
         <Route path="jualan-voucher" element={<JualanVoucher />} />
