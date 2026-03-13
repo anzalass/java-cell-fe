@@ -398,6 +398,7 @@ export default function TransaksiVoucherHarianPage() {
                   <option value="Axis">Axis</option>
                   <option value="Indosat / IM3">Indosat / IM3</option>
                   <option value="Telkomsel">Telkomsel</option>
+                  <option value={"Byu"}>Byu</option>
                   <option value="Tri">Tri</option>
                 </select>
               </div>

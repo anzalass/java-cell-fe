@@ -82,82 +82,97 @@ export default function Overview() {
   const d = dashboardData;
 
   return (
-    <div className="p-2 space-y-8">
+    <div className="p-2 space-y-8 mt-6">
       {/* HEADER */}
       {/* STAT CARDS — DATA REAL */}
-      <div className="grid grid-cols-2 lg:grid-cols-3 gap-2 sm:gap-3">
-        {/* Keuntungan Hari Ini - GREEN */}
-        <StatCard
-          label="Keuntungan Hari Ini"
-          value={`Rp ${(
-            Number(d?.totalKeuntunganHariIni || 0) +
-            Number(d?.keuntunganGrosirVoucherHariIni || 0) +
-            Number(d?.keuntunganAccHariIni || 0) +
-            Number(d?.keuntunganVoucherHarian || 0)
-          ).toLocaleString("id-ID")}`}
-          icon={DollarSign}
-          color="emerald"
-          onClick={() => setModalKeuntungan(true)}
-        />
+      {/* Tambahkan loading state */}
+      {!d ? (
+        <div className="grid grid-cols-2 lg:grid-cols-3 gap-2 sm:gap-3">
+          {[...Array(6)].map((_, i) => (
+            <div
+              key={i}
+              className="bg-gray-100 rounded-2xl p-4 sm:p-5 animate-pulse min-h-[100px]"
+            >
+              <div className="h-4 bg-gray-200 rounded w-3/4 mb-2"></div>
+              <div className="h-6 bg-gray-200 rounded w-1/2"></div>
+            </div>
+          ))}
+        </div>
+      ) : (
+        <div className="grid grid-cols-2 lg:grid-cols-3 gap-2 sm:gap-3">
+          {/* Keuntungan Hari Ini - GREEN */}
+          <StatCard
+            label="Keuntungan Hari Ini"
+            value={`Rp ${(
+              Number(d?.totalKeuntunganHariIni || 0) +
+              Number(d?.keuntunganGrosirVoucherHariIni || 0) +
+              Number(d?.keuntunganAccHariIni || 0) +
+              Number(d?.keuntunganVoucherHarian || 0)
+            ).toLocaleString("id-ID")}`}
+            icon={DollarSign}
+            color="emerald"
+            onClick={() => setModalKeuntungan(true)}
+          />
 
-        {/* Omset Hari Ini - BLUE */}
-        <StatCard
-          label="Omset Hari Ini"
-          value={`Rp ${(
-            (d?.omsetGrosirVoucherHariIni || 0) +
-            (d?.omsetAccHariIni || 0) +
-            (d?.omsetVoucherHarian || 0)
-          ).toLocaleString("id-ID")}`}
-          icon={Wallet}
-          color="blue"
-          onClick={() => setModalOmset(true)}
-        />
+          {/* Omset Hari Ini - BLUE */}
+          <StatCard
+            label="Omset Hari Ini"
+            value={`Rp ${(
+              (d?.omsetGrosirVoucherHariIni || 0) +
+              (d?.omsetAccHariIni || 0) +
+              (d?.omsetVoucherHarian || 0)
+            ).toLocaleString("id-ID")}`}
+            icon={Wallet}
+            color="blue"
+            onClick={() => setModalOmset(true)}
+          />
 
-        {/* Transaksi Hari Ini - INDIGO */}
-        <StatCard
-          label="Transaksi Hari Ini"
-          value={
-            (d?.totalTransaksiVoucherHarian || 0) +
-            (d?.trxAccHariIniTotal || 0) +
-            (d?.trxVoucherDownlineHariIniTotal || 0) +
-            (d?.trxHariIniTotal || 0)
-          }
-          icon={ArrowRightLeft}
-          color="indigo"
-          onClick={() => setModalTrx(true)}
-        />
+          {/* Transaksi Hari Ini - INDIGO */}
+          <StatCard
+            label="Transaksi Hari Ini"
+            value={
+              (d?.totalTransaksiVoucherHarian || 0) +
+              (d?.trxAccHariIniTotal || 0) +
+              (d?.trxVoucherDownlineHariIniTotal || 0) +
+              (d?.trxHariIniTotal || 0)
+            }
+            icon={ArrowRightLeft}
+            color="indigo"
+            onClick={() => setModalTrx(true)}
+          />
 
-        {/* Voucher Pending - AMBER */}
-        <StatCard
-          label="Voucher Pending"
-          value={`${d?.trxVoucherPendingHariIni || 0} Pesanan`}
-          icon={Clock}
-          color="amber"
-        />
+          {/* Voucher Pending - AMBER */}
+          <StatCard
+            label="Voucher Pending"
+            value={`${d?.trxVoucherPendingHariIni || 0} Pesanan`}
+            icon={Clock}
+            color="amber"
+          />
 
-        {/* Omset Sparepart + Service - VIOLET */}
-        <StatCard
-          label="Omset Sparepart + Service"
-          value={`Rp ${(
-            (d?.omsetServicetHariIni || 0) + (d?.omsetSparepartHariIni || 0)
-          ).toLocaleString("id-ID")}`}
-          icon={TrendingUp}
-          color="violet"
-          onClick={() => setModalService(true)}
-        />
+          {/* Omset Sparepart + Service - VIOLET */}
+          <StatCard
+            label="Omset Sparepart + Service"
+            value={`Rp ${(
+              (d?.omsetServicetHariIni || 0) + (d?.omsetSparepartHariIni || 0)
+            ).toLocaleString("id-ID")}`}
+            icon={TrendingUp}
+            color="violet"
+            onClick={() => setModalService(true)}
+          />
 
-        {/* Keuntungan Sparepart + Service - ROSE */}
-        <StatCard
-          label="Keuntungan Sparepart + Service"
-          value={`Rp ${(
-            (d?.keuntunganServiceHariIni || 0) +
-            (d?.keuntunganSparepartHariIni || 0)
-          ).toLocaleString("id-ID")}`}
-          icon={Wrench}
-          color="rose"
-          onClick={() => setModalService2(true)}
-        />
-      </div>
+          {/* Keuntungan Sparepart + Service - ROSE */}
+          <StatCard
+            label="Keuntungan Sparepart + Service"
+            value={`Rp ${(
+              (d?.keuntunganServiceHariIni || 0) +
+              (d?.keuntunganSparepartHariIni || 0)
+            ).toLocaleString("id-ID")}`}
+            icon={Wrench}
+            color="rose"
+            onClick={() => setModalService2(true)}
+          />
+        </div>
+      )}
       <div className="flex flex-col lg:flex-row gap-x-3">
         <div className="lg:w-1/2 w-full ">
           <GrafikKeuntungan />
@@ -349,6 +364,7 @@ export default function Overview() {
 // StatCard Component dengan Color Variants
 // StatCard Component - Colorful Version
 // StatCard Component (update untuk terima onClick)
+// Gunakan button bukan div untuk onClick
 function StatCard({ label, value, icon: Icon, color = "emerald", onClick }) {
   const colorConfig = {
     emerald: {
@@ -397,14 +413,20 @@ function StatCard({ label, value, icon: Icon, color = "emerald", onClick }) {
 
   const config = colorConfig[color] || colorConfig.emerald;
 
+  // Jika ada onClick, gunakan button, jika tidak gunakan div
+  const Component = onClick ? "button" : "div";
+
   return (
-    <div
+    <Component
+      type={onClick ? "button" : undefined}
       onClick={onClick}
       className={`
         ${config.bg} rounded-2xl p-4 sm:p-5 border ${config.border} 
         hover:shadow-lg ${config.shadow} transition-all duration-300 
-        hover:-translate-y-0.5 cursor-pointer
+        hover:-translate-y-0.5 w-full text-left
+        ${onClick ? "cursor-pointer active:scale-95" : ""}
       `}
+      style={{ minHeight: "100px" }} // Fixed height untuk prevent layout shift
     >
       <div className="flex items-start justify-between">
         <div className="flex-1 min-w-0">
@@ -412,22 +434,21 @@ function StatCard({ label, value, icon: Icon, color = "emerald", onClick }) {
             {label}
           </p>
           <p
-            className={`text-base sm:text-xl font-bold mt-1 ${config.text} truncate`}
+            className={`text-base sm:text-lg font-bold mt-1 ${config.text} truncate`}
           >
-            {value}
+            {value} ..
           </p>
         </div>
         <div
           className={`flex-shrink-0 p-2.5 rounded-xl bg-gradient-to-br ${config.gradient} 
-                      shadow-lg shadow-slate-200/50 hover:scale-110 transition-transform`}
+                      shadow-lg shadow-slate-200/50 transition-transform`}
         >
           <Icon className="w-4 h-4 sm:w-5 sm:h-5 text-white" />
         </div>
       </div>
-    </div>
+    </Component>
   );
 }
-
 // src/components/DetailKeuntunganModal.jsx
 
 function DetailKeuntunganModal({

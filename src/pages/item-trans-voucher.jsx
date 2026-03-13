@@ -332,6 +332,7 @@ export default function LaporanBarangKeluarVoucherPage() {
                     <option value="Tri">Tri</option>
                     <option value="Indosat">Indosat</option>
                     <option value="Telkomsel">Telkomsel</option>
+                    <option value={"Byu"}>Byu</option>
                   </select>
                   <ChevronDown className="absolute right-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400 pointer-events-none" />
                 </div>

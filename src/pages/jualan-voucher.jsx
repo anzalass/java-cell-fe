@@ -447,6 +447,7 @@ export default function JualanVoucher() {
                     {brand === "Telkomsel" && (
                       <span className="text-sm">📡</span>
                     )}
+                    {brand === "Byu" && <span className="text-sm">🎧</span>}
                     {brand === "Indosat / IM3" && (
                       <span className="text-sm">🌐</span>
                     )}
