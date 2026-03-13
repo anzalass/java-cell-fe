@@ -30,50 +30,49 @@ function StatCard({
   const colorConfig = {
     emerald: {
       bg: "bg-emerald-50",
-      border: "border-emerald-200/60",
+      border: "border-emerald-200",
       text: "text-emerald-700",
       gradient: "from-emerald-500 to-teal-600",
     },
     blue: {
       bg: "bg-blue-50",
-      border: "border-blue-200/60",
+      border: "border-blue-200",
       text: "text-blue-700",
       gradient: "from-blue-500 to-cyan-600",
     },
     indigo: {
       bg: "bg-indigo-50",
-      border: "border-indigo-200/60",
+      border: "border-indigo-200",
       text: "text-indigo-700",
       gradient: "from-indigo-500 to-purple-600",
     },
     amber: {
       bg: "bg-amber-50",
-      border: "border-amber-200/60",
+      border: "border-amber-200",
       text: "text-amber-700",
       gradient: "from-amber-500 to-orange-600",
     },
     violet: {
       bg: "bg-violet-50",
-      border: "border-violet-200/60",
+      border: "border-violet-200",
       text: "text-violet-700",
       gradient: "from-violet-500 to-fuchsia-600",
     },
     rose: {
       bg: "bg-rose-50",
-      border: "border-rose-200/60",
+      border: "border-rose-200",
       text: "text-rose-700",
       gradient: "from-rose-500 to-pink-600",
     },
     slate: {
       bg: "bg-slate-50",
-      border: "border-slate-200/60",
+      border: "border-slate-200",
       text: "text-slate-700",
       gradient: "from-slate-500 to-slate-700",
     },
   };
 
   const config = colorConfig[color] || colorConfig.emerald;
-  const hasClick = !!onClick;
 
   const formatValue = () => {
     if (typeof value === "number") {
@@ -91,30 +90,36 @@ function StatCard({
   return (
     <div
       onClick={onClick}
-      role={hasClick ? "button" : undefined}
-      tabIndex={hasClick ? 0 : undefined}
+      role={onClick ? "button" : undefined}
       className={`
-        ${config.bg} rounded-2xl p-4 sm:p-5 border ${config.border} 
-        transition-all duration-300 w-full text-left select-none
-        ${hasClick ? "cursor-pointer hover:-translate-y-0.5 hover:shadow-lg active:scale-95" : ""}
-        hover:shadow-${color}-200/50
+        ${config.bg} 
+        ${config.border}
+        border
+        rounded-2xl 
+        p-4 sm:p-5 
+        w-full
+        min-h-[100px]
+        select-none
+        shadow-md
+        transform-gpu
+        will-change-transform
+        transition
+        ${onClick ? "cursor-pointer active:scale-95 hover:-translate-y-0.5" : ""}
       `}
-      style={{ minHeight: "100px" }}
     >
       <div className="flex items-start justify-between">
         <div className="flex-1 min-w-0">
           <p className="text-slate-500 text-xs sm:text-sm font-medium">
             {label}
           </p>
-          <p
-            className={`text-base sm:text-lg font-bold mt-1 ${config.text} truncate`}
-          >
+
+          <p className={`text-base sm:text-lg font-bold mt-1 ${config.text}`}>
             {formatValue()}
           </p>
         </div>
+
         <div
-          className={`flex-shrink-0 p-2.5 rounded-xl bg-gradient-to-br ${config.gradient} 
-                      shadow-lg shadow-slate-200/50`}
+          className={`flex-shrink-0 p-2.5 rounded-xl bg-gradient-to-br ${config.gradient}`}
         >
           <Icon className="w-4 h-4 sm:w-5 sm:h-5 text-white" />
         </div>
