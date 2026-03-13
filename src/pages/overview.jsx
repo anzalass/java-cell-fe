@@ -12,6 +12,7 @@ import {
   ChevronDown,
   ArrowRightLeft,
   Clock,
+  Wrench,
 } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import api from "../api/client";
@@ -84,54 +85,81 @@ export default function Overview() {
     <div className="p-2 space-y-8">
       {/* HEADER */}
       {/* STAT CARDS — DATA REAL */}
-      <div className="grid grid-cols-2 mt-4 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-2">
-        <div className="" onClick={() => setModalKeuntungan(true)}>
+      <div className="grid grid-cols-2 mt-4 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-2 sm:gap-3">
+        {/* Keuntungan Hari Ini - GREEN */}
+        <div onClick={() => setModalKeuntungan(true)}>
           <StatCard
             label="Keuntungan Hari Ini"
-            value={`Rp ${Number(d?.totalKeuntunganHariIni + d?.keuntunganGrosirVoucherHariIni + d?.keuntunganAccHariIni + d?.keuntunganVoucherHarian).toLocaleString("id-ID")}`}
+            value={`Rp ${(
+              Number(d?.totalKeuntunganHariIni || 0) +
+              Number(d?.keuntunganGrosirVoucherHariIni || 0) +
+              Number(d?.keuntunganAccHariIni || 0) +
+              Number(d?.keuntunganVoucherHarian || 0)
+            ).toLocaleString("id-ID")}`}
             icon={DollarSign}
-          />
-        </div>
-        <div className="" onClick={() => setModalOmset(true)}>
-          <StatCard
-            label="Omset Hari Ini"
-            value={`Rp ${(d.omsetGrosirVoucherHariIni + d.omsetAccHariIni + d.omsetVoucherHarian).toLocaleString("id-ID")}`}
-            icon={Wallet}
+            color="green"
           />
         </div>
 
-        <div className="" onClick={() => setModalTrx(true)}>
+        {/* Omset Hari Ini - BLUE */}
+        <div onClick={() => setModalOmset(true)}>
+          <StatCard
+            label="Omset Hari Ini"
+            value={`Rp ${(
+              (d?.omsetGrosirVoucherHariIni || 0) +
+              (d?.omsetAccHariIni || 0) +
+              (d?.omsetVoucherHarian || 0)
+            ).toLocaleString("id-ID")}`}
+            icon={Wallet}
+            color="blue"
+          />
+        </div>
+
+        {/* Transaksi Hari Ini - INDIGO */}
+        <div onClick={() => setModalTrx(true)}>
           <StatCard
             label="Transaksi Hari Ini"
             value={
-              d.totalTransaksiVoucherHarian +
-              d.trxAccHariIniTotal +
-              d.trxVoucherDownlineHariIniTotal +
-              d.trxHariIniTotal
+              (d?.totalTransaksiVoucherHarian || 0) +
+              (d?.trxAccHariIniTotal || 0) +
+              (d?.trxVoucherDownlineHariIniTotal || 0) +
+              (d?.trxHariIniTotal || 0)
             }
             icon={ArrowRightLeft}
+            color="indigo"
           />
         </div>
 
+        {/* Voucher Pending - AMBER */}
         <StatCard
           label="Voucher Pending"
-          value={` ${d.trxVoucherPendingHariIni} Pesanan`}
+          value={`${d?.trxVoucherPendingHariIni || 0} Pesanan`}
           icon={Clock}
+          color="amber"
         />
 
-        <div className="" onClick={() => setModalService(true)}>
+        {/* Omset Sparepart + Service - VIOLET */}
+        <div onClick={() => setModalService(true)}>
           <StatCard
             label="Omset Sparepart + Service"
-            value={`Rp ${(d.omsetServicetHariIni + d.omsetSparepartHariIni).toLocaleString("id-ID")}`}
-            icon={DollarSign}
+            value={`Rp ${(
+              (d?.omsetServicetHariIni || 0) + (d?.omsetSparepartHariIni || 0)
+            ).toLocaleString("id-ID")}`}
+            icon={TrendingUp}
+            color="violet"
           />
         </div>
 
-        <div className="" onClick={() => setModalService2(true)}>
+        {/* Keuntungan Sparepart + Service - ROSE */}
+        <div onClick={() => setModalService2(true)}>
           <StatCard
             label="Keuntungan Sparepart + Service"
-            value={`Rp ${(d?.keuntunganServiceHariIni + d?.keuntunganSparepartHariIni).toLocaleString("id-ID")}`}
-            icon={DollarSign}
+            value={`Rp ${(
+              (d?.keuntunganServiceHariIni || 0) +
+              (d?.keuntunganSparepartHariIni || 0)
+            ).toLocaleString("id-ID")}`}
+            icon={Wrench}
+            color="rose"
           />
         </div>
       </div>
@@ -323,15 +351,86 @@ export default function Overview() {
 }
 
 // === Komponen UI Tetap Sama ===
-function StatCard({ label, value, icon: Icon }) {
+// StatCard Component dengan Color Variants
+// StatCard Component - Colorful Version
+function StatCard({ label, value, icon: Icon, color = "emerald" }) {
+  // Color configurations matching metric card style
+  const colorConfig = {
+    emerald: {
+      bg: "bg-emerald-50",
+      border: "border-emerald-200/60",
+      shadow: "hover:shadow-emerald-200/50",
+      text: "text-emerald-700",
+      gradient: "from-emerald-500 to-teal-600",
+      label: "text-emerald-600",
+    },
+    blue: {
+      bg: "bg-blue-50",
+      border: "border-blue-200/60",
+      shadow: "hover:shadow-blue-200/50",
+      text: "text-blue-700",
+      gradient: "from-blue-500 to-cyan-600",
+      label: "text-blue-600",
+    },
+    indigo: {
+      bg: "bg-indigo-50",
+      border: "border-indigo-200/60",
+      shadow: "hover:shadow-indigo-200/50",
+      text: "text-indigo-700",
+      gradient: "from-indigo-500 to-purple-600",
+      label: "text-indigo-600",
+    },
+    violet: {
+      bg: "bg-violet-50",
+      border: "border-violet-200/60",
+      shadow: "hover:shadow-violet-200/50",
+      text: "text-violet-700",
+      gradient: "from-violet-500 to-fuchsia-600",
+      label: "text-violet-600",
+    },
+    amber: {
+      bg: "bg-amber-50",
+      border: "border-amber-200/60",
+      shadow: "hover:shadow-amber-200/50",
+      text: "text-amber-700",
+      gradient: "from-amber-500 to-orange-600",
+      label: "text-amber-600",
+    },
+    rose: {
+      bg: "bg-rose-50",
+      border: "border-rose-200/60",
+      shadow: "hover:shadow-rose-200/50",
+      text: "text-rose-700",
+      gradient: "from-rose-500 to-pink-600",
+      label: "text-rose-600",
+    },
+  };
+
+  const config = colorConfig[color] || colorConfig.emerald;
+
   return (
-    <div className="group bg-white  rounded-xl p-4 border border-gray-300 hover:shadow-md transition-all flex items-center justify-between">
-      <div>
-        <p className="text-sm font-bold text-gray-900 mb-1">{value}</p>
-        <p className="text-xs font-medium text-gray-500">{label}</p>
-      </div>
-      <div className="p-2 rounded-lg bg-green-50 group-hover:bg-green-100 transition">
-        <Icon className="w-3 h-3" />
+    <div
+      className={`${config.bg} rounded-2xl p-4 sm:p-5 border ${config.border} 
+                  hover:shadow-lg ${config.shadow} transition-all duration-300 
+                  hover:-translate-y-0.5 group cursor-pointer`}
+    >
+      <div className="flex items-start justify-between">
+        <div className="flex-1 min-w-0">
+          <p className="text-slate-500 text-xs sm:text-sm font-medium">
+            {label}
+          </p>
+          <p
+            className={`text-lg sm:text-xl font-bold mt-1 ${config.text} truncate`}
+          >
+            {value}
+          </p>
+        </div>
+        <div
+          className={`flex-shrink-0 p-2.5 rounded-xl bg-gradient-to-br ${config.gradient} 
+                      shadow-lg shadow-slate-200/50 group-hover:scale-110 transition-transform`}
+        >
+          <Icon className="w-4 h-4 sm:w-5 sm:h-5 text-white" />
+        </div>
       </div>
     </div>
   );

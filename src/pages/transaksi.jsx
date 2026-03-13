@@ -689,6 +689,53 @@ export default function TransaksiPage() {
     }
   }, [isScanning2]);
 
+  {
+    /* Color Configuration untuk setiap kategori */
+  }
+  const kategoriConfig = {
+    "Tarik Tunai": {
+      active: "from-emerald-900 to-teal-900",
+      inactive: "from-emerald-500 to-teal-500",
+      bg: "bg-emerald-50",
+      text: "text-emerald-700",
+      border: "border-emerald-200",
+      icon: "💵",
+      shadow: "shadow-emerald-500/30",
+    },
+    Transfer: {
+      active: "from-blue-900 to-cyan-900",
+      inactive: "from-blue-500 to-cyan-500",
+      bg: "bg-blue-50",
+      text: "text-blue-700",
+      border: "border-blue-200",
+      icon: "💸",
+      shadow: "shadow-blue-500/30",
+    },
+    "Top-Up": {
+      active: "from-violet-900 to-purple-900",
+      inactive: "from-violet-500 to-purple-500",
+      bg: "bg-violet-50",
+      text: "text-violet-700",
+      border: "border-violet-200",
+      icon: "📱",
+      shadow: "shadow-violet-500/30",
+    },
+    PPOB: {
+      active: "from-amber-900 to-orange-900",
+      inactive: "from-amber-500 to-orange-500",
+      bg: "bg-amber-50",
+      text: "text-amber-700",
+      border: "border-amber-200",
+      icon: "🏪",
+      shadow: "shadow-amber-500/30",
+    },
+  };
+
+  // Helper untuk mendapatkan warna kategori
+  const getKategoriColor = (kategoriName) => {
+    return kategoriConfig[kategoriName] || kategoriConfig["PPOB"];
+  };
+
   // === RENDER ===
   if (isLoading) {
     return <div className="p-6 text-center">Memuat data hari ini...</div>;
@@ -715,7 +762,7 @@ export default function TransaksiPage() {
         </div> */}
 
         {/* Quick Input Section */}
-        <div className="bg-white rounded-2xl p-6 mb-6">
+        <div className="bg-white rounded-2xl p-2 mb-6">
           <h2 className="font-bold md:text-xl text=base text-gray-800 mb-6 flex items-center gap-2">
             <DollarSign className="w-6 h-6 text-blue-600" />
             Pilih Kategori
@@ -727,20 +774,36 @@ export default function TransaksiPage() {
               <Tag className="w-4 h-4" />
               Pilih Kategori
             </label> */}
-            <div className="grid grid-cols-2  gap-3">
-              {kategoriList.map((kat) => (
-                <button
-                  key={kat}
-                  onClick={() => setSelectedKategori(kat)}
-                  className={`px-4 py-3 text-sm md:text-base rounded-xl border-2 font-medium transition-all ${
-                    selectedKategori === kat
-                      ? "bg-gradient-to-r from-blue-600 to-indigo-600 text-white border-blue-600 shadow-lg scale-105"
-                      : "bg-white border-gray-200 text-gray-700 hover:border-blue-300 hover:shadow-md"
-                  }`}
-                >
-                  {kat}
-                </button>
-              ))}
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+              {/* Semua Kategori Button (Optional) */}
+
+              {/* Category Buttons */}
+              {kategoriList.map((kat) => {
+                const colors = getKategoriColor(kat);
+                const isSelected = selectedKategori === kat;
+
+                return (
+                  <button
+                    key={kat}
+                    onClick={() => setSelectedKategori(kat)}
+                    className={`
+          px-4 py-3 text-sm md:text-base rounded-xl border-2 font-semibold 
+          transition-all duration-300 
+          hover:scale-105 hover:shadow-lg
+          flex items-center justify-center gap-2
+          min-h-[60px]
+          ${
+            isSelected
+              ? `bg-gradient-to-r ${colors.active} text-white border-transparent shadow-lg ${colors.shadow} scale-105`
+              : `${colors.bg} ${colors.text} border ${colors.border} hover:shadow-md hover:bg-opacity-80`
+          }
+        `}
+                  >
+                    <span className="text-xl">{colors.icon}</span>
+                    <span>{kat}</span>
+                  </button>
+                );
+              })}
             </div>
           </div>
 

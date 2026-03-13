@@ -131,8 +131,11 @@ export default function Penggabungan() {
 
 function ActionButton({ label, onClick }) {
   return (
-    <div className="flex flex-col items-center rounded-xl gap-2 bg-blue-600 p-2">
-      <PlusCircle onClick={onClick} className="w-6 h-6" color="white" />
+    <div
+      onClick={onClick}
+      className="flex flex-col items-center rounded-xl gap-2 bg-blue-600 p-2"
+    >
+      <PlusCircle className="w-6 h-6" color="white" />
       <span className="text-xs md:text-sm text-white text-center">{label}</span>
     </div>
   );

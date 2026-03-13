@@ -296,6 +296,67 @@ export default function JualanVoucher() {
     }
   }, [isScanning, selectedVoucher, membersList]);
 
+  {
+    /* Color Configuration untuk setiap brand */
+  }
+  const brandColors = {
+    Axis: {
+      active: "from-purple-900 to-fuchsia-900",
+      inactive: "from-purple-500 to-fuchsia-500",
+      bg: "bg-purple-50",
+      text: "text-purple-700",
+      border: "border-purple-200",
+    },
+    Smartfren: {
+      active: "from-pink-900 to-rose-900",
+      inactive: "from-pink-500 to-rose-500",
+      bg: "bg-pink-50",
+      text: "text-pink-700",
+      border: "border-pink-200",
+    },
+    XL: {
+      active: "from-blue-900 to-cyan-900",
+      inactive: "from-blue-500 to-cyan-500",
+      bg: "bg-blue-50",
+      text: "text-blue-700",
+      border: "border-blue-200",
+    },
+    Tri: {
+      active: "from-violet-900 to-purple-900",
+      inactive: "from-violet-500 to-purple-500",
+      bg: "bg-violet-50",
+      text: "text-violet-700",
+      border: "border-violet-200",
+    },
+    "Indosat / IM3": {
+      active: "from-amber-900 to-yellow-900",
+      inactive: "from-amber-500 to-yellow-500",
+      bg: "bg-amber-50",
+      text: "text-amber-700",
+      border: "border-amber-200",
+    },
+    Telkomsel: {
+      active: "from-red-900 to-rose-900",
+      inactive: "from-red-500 to-rose-500",
+      bg: "bg-red-50",
+      text: "text-red-700",
+      border: "border-red-200",
+    },
+  };
+
+  // Helper untuk mendapatkan warna brand
+  const getBrandColor = (brandName) => {
+    return (
+      brandColors[brandName] || {
+        active: "from-gray-900 to-slate-900",
+        inactive: "from-gray-500 to-slate-500",
+        bg: "bg-gray-50",
+        text: "text-gray-700",
+        border: "border-gray-200",
+      }
+    );
+  };
+
   if (isLoading) {
     return (
       <div className="p-6 text-center">
@@ -341,30 +402,64 @@ export default function JualanVoucher() {
                 Pilih Provider
               </h2>
             </div>
-            <div className="grid grid-cols-3 xl:grid-cols-6 gap-3">
+            <div className="grid grid-cols-3 md:grid-cols-6 gap-2 sm:gap-3">
+              {/* Semua Brands Button */}
               <button
                 onClick={() => setSelectedBrand("")}
-                className={`px-4 py-3 rounded-xl font-semibold transition-all ${
-                  !selectedBrand
-                    ? "bg-gradient-to-r from-cyan-600 to-blue-600 text-white shadow-lg scale-105"
-                    : "bg-gray-100 text-gray-700 hover:bg-gray-200 hover:shadow-md"
-                }`}
+                className={`
+      px-4 py-3 text-sm rounded-xl font-semibold 
+      transition-all duration-300 hover:scale-105
+      flex items-center justify-center gap-2
+      min-w-[110px]
+      ${
+        !selectedBrand
+          ? "bg-gradient-to-r from-slate-700 to-slate-900 text-white shadow-lg shadow-slate-500/30 scale-105"
+          : "bg-gray-100 text-gray-700 border border-gray-200 hover:shadow-md"
+      }
+    `}
               >
-                Semua
+                <span className="text-lg">📱</span>
+                <span>Semua</span>
               </button>
-              {brands.map((brand) => (
-                <button
-                  key={brand}
-                  onClick={() => setSelectedBrand(brand)}
-                  className={`px-4 py-3 text-sm rounded-xl font-semibold transition-all ${
-                    selectedBrand === brand
-                      ? "bg-gradient-to-r from-cyan-600 to-blue-600 text-white shadow-lg scale-105"
-                      : "bg-gray-100 text-gray-700 hover:bg-gray-200 hover:shadow-md"
-                  }`}
-                >
-                  {brand === "Indosat / IM3" ? "Indosat" : brand}
-                </button>
-              ))}
+
+              {/* Brand Buttons */}
+              {brands.map((brand) => {
+                const colors = getBrandColor(brand);
+                const isSelected = selectedBrand === brand;
+
+                return (
+                  <button
+                    key={brand}
+                    onClick={() => setSelectedBrand(brand)}
+                    className={`
+          px-4 py-3 text-sm rounded-xl font-semibold 
+          transition-all duration-300 
+          hover:scale-105 hover:shadow-lg
+          flex items-center justify-center gap-2
+          min-w-[110px]
+          ${
+            isSelected
+              ? `bg-gradient-to-r ${colors.active} text-white shadow-lg shadow-${brand.toLowerCase()}-500/30 scale-105`
+              : `${colors.bg} ${colors.text} border ${colors.border} hover:shadow-md`
+          }
+        `}
+                  >
+                    {brand === "Telkomsel" && (
+                      <span className="text-sm">📡</span>
+                    )}
+                    {brand === "Indosat / IM3" && (
+                      <span className="text-sm">🌐</span>
+                    )}
+                    {brand === "XL" && <span className="text-sm">📶</span>}
+                    {brand === "Axis" && <span className="text-sm">🎯</span>}
+                    {brand === "Smartfren" && (
+                      <span className="text-sm">⚡</span>
+                    )}
+                    {brand === "Tri" && <span className="text-sm">🍀</span>}
+                    <span>{brand === "Indosat / IM3" ? "Indosat" : brand}</span>
+                  </button>
+                );
+              })}
             </div>
           </div>
 
