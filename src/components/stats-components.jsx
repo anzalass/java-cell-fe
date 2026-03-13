@@ -1,4 +1,3 @@
-// src/components/stats-components.jsx
 import React from "react";
 import { useNavigate } from "react-router-dom";
 import {
@@ -14,14 +13,15 @@ export const StatsSection = React.memo(function StatsSection({ stats }) {
   const navigate = useNavigate();
   const d = stats || {};
 
+  const cardBase =
+    "rounded-2xl p-4 sm:p-5 border transition-all duration-300 w-full text-left select-none cursor-pointer active:scale-95 transform-gpu will-change-transform shadow-md";
+
   return (
     <div className="grid grid-cols-2 lg:grid-cols-3 gap-2 sm:gap-3">
-      {/* Keuntungan Hari Ini - Emerald */}
+      {/* Keuntungan Hari Ini */}
       <button
         onClick={() => navigate("/dashboard/detail-overview")}
-        className="bg-emerald-50 rounded-2xl p-4 sm:p-5 border border-emerald-200/60 
-          transition-all duration-300 w-full text-left select-none 
-          cursor-pointer hover:-translate-y-0.5 hover:shadow-lg hover:shadow-emerald-200/50 active:scale-95"
+        className={`${cardBase} bg-emerald-50 border-emerald-200 hover:-translate-y-0.5 hover:shadow-lg`}
         style={{ minHeight: "100px" }}
       >
         <div className="flex items-start justify-between">
@@ -30,21 +30,20 @@ export const StatsSection = React.memo(function StatsSection({ stats }) {
               Keuntungan Hari Ini
             </p>
             <p className="text-base sm:text-lg font-bold mt-1 text-emerald-700 truncate">
-              Rp {d.keuntunganHariIni?.toLocaleString("id-ID")}
+              Rp {(d.keuntunganHariIni ?? 0).toLocaleString("id-ID")}
             </p>
           </div>
-          <div className="flex-shrink-0 p-2.5 rounded-xl bg-gradient-to-br from-emerald-500 to-teal-600 shadow-lg shadow-slate-200/50">
+
+          <div className="flex-shrink-0 p-2.5 rounded-xl bg-gradient-to-br from-emerald-500 to-teal-600">
             <DollarSign className="w-4 h-4 sm:w-5 sm:h-5 text-white" />
           </div>
         </div>
       </button>
 
-      {/* Omset Hari Ini - Blue */}
+      {/* Omset Hari Ini */}
       <button
         onClick={() => navigate("/dashboard/detail-overview")}
-        className="bg-blue-50 rounded-2xl p-4 sm:p-5 border border-blue-200/60 
-          transition-all duration-300 w-full text-left select-none 
-          cursor-pointer hover:-translate-y-0.5 hover:shadow-lg hover:shadow-blue-200/50 active:scale-95"
+        className={`${cardBase} bg-blue-50 border-blue-200 hover:-translate-y-0.5 hover:shadow-lg`}
         style={{ minHeight: "100px" }}
       >
         <div className="flex items-start justify-between">
@@ -53,21 +52,20 @@ export const StatsSection = React.memo(function StatsSection({ stats }) {
               Omset Hari Ini
             </p>
             <p className="text-base sm:text-lg font-bold mt-1 text-blue-700 truncate">
-              Rp {d.omsetHariIni?.toLocaleString("id-ID")}
+              Rp {(d.omsetHariIni ?? 0).toLocaleString("id-ID")}
             </p>
           </div>
-          <div className="flex-shrink-0 p-2.5 rounded-xl bg-gradient-to-br from-blue-500 to-cyan-600 shadow-lg shadow-slate-200/50">
+
+          <div className="flex-shrink-0 p-2.5 rounded-xl bg-gradient-to-br from-blue-500 to-cyan-600">
             <Wallet className="w-4 h-4 sm:w-5 sm:h-5 text-white" />
           </div>
         </div>
       </button>
 
-      {/* Transaksi Hari Ini - Indigo */}
+      {/* Transaksi Hari Ini */}
       <button
         onClick={() => navigate("/dashboard/detail-overview")}
-        className="bg-indigo-50 rounded-2xl p-4 sm:p-5 border border-indigo-200/60 
-          transition-all duration-300 w-full text-left select-none 
-          cursor-pointer hover:-translate-y-0.5 hover:shadow-lg hover:shadow-indigo-200/50 active:scale-95"
+        className={`${cardBase} bg-indigo-50 border-indigo-200 hover:-translate-y-0.5 hover:shadow-lg`}
         style={{ minHeight: "100px" }}
       >
         <div className="flex items-start justify-between">
@@ -76,19 +74,20 @@ export const StatsSection = React.memo(function StatsSection({ stats }) {
               Transaksi Hari Ini
             </p>
             <p className="text-base sm:text-lg font-bold mt-1 text-indigo-700 truncate">
-              {d.transaksiHariIni}
+              {d.transaksiHariIni ?? 0}
             </p>
           </div>
-          <div className="flex-shrink-0 p-2.5 rounded-xl bg-gradient-to-br from-indigo-500 to-purple-600 shadow-lg shadow-slate-200/50">
+
+          <div className="flex-shrink-0 p-2.5 rounded-xl bg-gradient-to-br from-indigo-500 to-purple-600">
             <ArrowRightLeft className="w-4 h-4 sm:w-5 sm:h-5 text-white" />
           </div>
         </div>
       </button>
 
-      {/* Voucher Pending - Amber */}
+      {/* Voucher Pending */}
       <div
-        className="bg-amber-50 rounded-2xl p-4 sm:p-5 border border-amber-200/60 
-        transition-all duration-300 w-full text-left select-none min-h-[100px]"
+        className={`${cardBase} bg-amber-50 border-amber-200 cursor-default`}
+        style={{ minHeight: "100px" }}
       >
         <div className="flex items-start justify-between">
           <div className="flex-1 min-w-0">
@@ -96,21 +95,20 @@ export const StatsSection = React.memo(function StatsSection({ stats }) {
               Voucher Pending
             </p>
             <p className="text-base sm:text-lg font-bold mt-1 text-amber-700 truncate">
-              {d.voucherPending} Pesanan
+              {d.voucherPending ?? 0} Pesanan
             </p>
           </div>
-          <div className="flex-shrink-0 p-2.5 rounded-xl bg-gradient-to-br from-amber-500 to-orange-600 shadow-lg shadow-slate-200/50">
+
+          <div className="flex-shrink-0 p-2.5 rounded-xl bg-gradient-to-br from-amber-500 to-orange-600">
             <Clock className="w-4 h-4 sm:w-5 sm:h-5 text-white" />
           </div>
         </div>
       </div>
 
-      {/* Omset Service + Sparepart - Violet */}
+      {/* Omset Sparepart + Service */}
       <button
         onClick={() => navigate("/dashboard/detail-overview")}
-        className="bg-violet-50 rounded-2xl p-4 sm:p-5 border border-violet-200/60 
-          transition-all duration-300 w-full text-left select-none 
-          cursor-pointer hover:-translate-y-0.5 hover:shadow-lg hover:shadow-violet-200/50 active:scale-95"
+        className={`${cardBase} bg-violet-50 border-violet-200 hover:-translate-y-0.5 hover:shadow-lg`}
         style={{ minHeight: "100px" }}
       >
         <div className="flex items-start justify-between">
@@ -119,21 +117,20 @@ export const StatsSection = React.memo(function StatsSection({ stats }) {
               Omset Sparepart + Service
             </p>
             <p className="text-base sm:text-lg font-bold mt-1 text-violet-700 truncate">
-              Rp {d.omsetService?.toLocaleString("id-ID")}
+              Rp {(d.omsetService ?? 0).toLocaleString("id-ID")}
             </p>
           </div>
-          <div className="flex-shrink-0 p-2.5 rounded-xl bg-gradient-to-br from-violet-500 to-fuchsia-600 shadow-lg shadow-slate-200/50">
+
+          <div className="flex-shrink-0 p-2.5 rounded-xl bg-gradient-to-br from-violet-500 to-fuchsia-600">
             <TrendingUp className="w-4 h-4 sm:w-5 sm:h-5 text-white" />
           </div>
         </div>
       </button>
 
-      {/* Keuntungan Service + Sparepart - Rose */}
+      {/* Keuntungan Sparepart + Service */}
       <button
         onClick={() => navigate("/dashboard/detail-overview")}
-        className="bg-rose-50 rounded-2xl p-4 sm:p-5 border border-rose-200/60 
-          transition-all duration-300 w-full text-left select-none 
-          cursor-pointer hover:-translate-y-0.5 hover:shadow-lg hover:shadow-rose-200/50 active:scale-95"
+        className={`${cardBase} bg-rose-50 border-rose-200 hover:-translate-y-0.5 hover:shadow-lg`}
         style={{ minHeight: "100px" }}
       >
         <div className="flex items-start justify-between">
@@ -142,10 +139,11 @@ export const StatsSection = React.memo(function StatsSection({ stats }) {
               Keuntungan Sparepart + Service
             </p>
             <p className="text-base sm:text-lg font-bold mt-1 text-rose-700 truncate">
-              Rp {d.keuntunganService?.toLocaleString("id-ID")}
+              Rp {(d.keuntunganService ?? 0).toLocaleString("id-ID")}
             </p>
           </div>
-          <div className="flex-shrink-0 p-2.5 rounded-xl bg-gradient-to-br from-rose-500 to-pink-600 shadow-lg shadow-slate-200/50">
+
+          <div className="flex-shrink-0 p-2.5 rounded-xl bg-gradient-to-br from-rose-500 to-pink-600">
             <Wrench className="w-4 h-4 sm:w-5 sm:h-5 text-white" />
           </div>
         </div>
