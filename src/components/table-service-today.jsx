@@ -1,4 +1,12 @@
-import { Eye, Pencil, Trash2 } from "lucide-react";
+import {
+  Eye,
+  MessageCircle,
+  MessageCircleIcon,
+  MessageCircleWarning,
+  Pencil,
+  Printer,
+  Trash2,
+} from "lucide-react";
 import { useMemo, useState } from "react";
 import { useAuthStore } from "../store/useAuthStore";
 import api from "../api/client";
@@ -48,15 +56,6 @@ export default function TableSectionServiceToday({ title, data, onSuccess }) {
     if (!result.isConfirmed) return;
 
     try {
-      await Swal.fire({
-        title: "Menghapus...",
-        allowOutsideClick: false,
-        allowEscapeKey: false,
-        didOpen: () => {
-          Swal.showLoading();
-        },
-      });
-
       await api.delete(`/service-hp/${id}`, {
         headers: {
           Authorization: `Bearer ${user.token}`,
@@ -115,6 +114,29 @@ export default function TableSectionServiceToday({ title, data, onSuccess }) {
         icon: "error",
       });
     }
+  };
+
+  const handleWhatsapp = (item) => {
+    const phone = item.noHP; // nomor customer
+
+    const message = `
+Halo ${item.namaPelangan}
+
+Status servis Anda: ${item.status}
+
+Merk : ${item.brandHP}
+
+Keterangan:
+${item.keterangan}
+
+Terima kasih.
+`;
+
+    const encodedMessage = encodeURIComponent(message);
+
+    const url = `https://wa.me/${phone}?text=${encodedMessage}`;
+
+    window.open(url, "_blank");
   };
 
   return (
@@ -195,10 +217,12 @@ export default function TableSectionServiceToday({ title, data, onSuccess }) {
                       {item.namaPelangan}
                     </h3>
                     <p className="text-xs text-gray-500">
-                      {new Date(item.tanggal).toLocaleString("id-ID", {
+                      {new Date(item.createdAt).toLocaleString("id-ID", {
                         day: "numeric",
                         month: "long",
                         year: "numeric",
+                        hour: "2-digit",
+                        minute: "2-digit",
                       })}
                     </p>
                   </div>
@@ -236,20 +260,34 @@ export default function TableSectionServiceToday({ title, data, onSuccess }) {
                 <div className="flex gap-2 mt-4">
                   <button
                     title="Detail"
-                    className="flex-1 py-2 rounded-lg bg-blue-500 text-white hover:bg-blue-600 flex items-center justify-center gap-1 text-sm"
+                    className=" py-2 px-3 rounded-lg bg-blue-500 text-white hover:bg-blue-600 flex items-center justify-center gap-1 text-sm"
                     onClick={() => setOpenDetail(item)}
                   >
                     <Eye className="w-4 h-4" />
-                    Detail
+                  </button>
+
+                  <button
+                    title="WhatsApp"
+                    className=" py-2 px-3 rounded-lg bg-green-500 text-white hover:bg-green-600 flex items-center justify-center gap-1 text-sm"
+                    onClick={() => handleWhatsapp(item)}
+                  >
+                    <MessageCircleIcon className="w-4 h-4" />
+                  </button>
+
+                  <button
+                    title="Cetak"
+                    className=" py-2 px-3 rounded-lg bg-zinc-500 text-white hover:bg-zinc-600 flex items-center justify-center gap-1 text-sm"
+                    onClick={() => nav(`/print-service-hp/${openDetail.id}`)}
+                  >
+                    <Printer className="w-4 h-4" />
                   </button>
 
                   <button
                     title="Edit"
-                    className="flex-1 py-2 rounded-lg bg-yellow-500 text-white hover:bg-yellow-600 flex items-center justify-center gap-1 text-sm"
+                    className=" py-2 px-3 rounded-lg bg-yellow-500 text-white hover:bg-yellow-600 flex items-center justify-center gap-1 text-sm"
                     onClick={() => setOpenEdit(item)}
                   >
                     <Pencil className="w-4 h-4" />
-                    Edit
                   </button>
 
                   {item.status !== "Sukses" && (

@@ -20,8 +20,10 @@ import {
   ArrowUpDown,
   TrendingUp,
   UserCheck,
+  Eye,
 } from "lucide-react";
 import { useDebounce } from "../components/use-debounce";
+import { useNavigate } from "react-router-dom";
 
 export default function ListMemberPage() {
   const { user } = useAuthStore();
@@ -201,6 +203,8 @@ export default function ListMemberPage() {
     resetPage();
   };
 
+  const nav = useNavigate();
+
   const handleDelete = async (id) => {
     const result = await Swal.fire({
       title: "Yakin hapus?",
@@ -332,27 +336,6 @@ export default function ListMemberPage() {
               <p className="text-xs text-rose-700">Pelanggan terdaftar</p>
             </div>
           </div>
-
-          <div className="bg-white rounded-2xl shadow-xl overflow-hidden">
-            <div className="bg-gradient-to-r from-emerald-600 to-teal-600 p-6">
-              <div className="flex items-center justify-between text-white">
-                <div>
-                  <p className="text-emerald-100 text-sm mb-1">
-                    Total Transaksi
-                  </p>
-                  <p className="text-3xl font-bold">
-                    {formatRupiah(stats.totalTransaksi)}
-                  </p>
-                </div>
-                <div className="bg-white/20 p-4 rounded-xl">
-                  <TrendingUp className="w-10 h-10" />
-                </div>
-              </div>
-            </div>
-            <div className="p-4 bg-emerald-50">
-              <p className="text-xs text-emerald-700">Akumulasi semua member</p>
-            </div>
-          </div>
         </div>
 
         {/* Filters */}
@@ -440,16 +423,7 @@ export default function ListMemberPage() {
                       <ArrowUpDown className="w-4 h-4" />
                     </div>
                   </th>
-                  <th
-                    className="p-4 text-left font-semibold cursor-pointer hover:bg-rose-700 transition"
-                    onClick={() => handleSort("totalTransaksi")}
-                  >
-                    <div className="flex items-center gap-2">
-                      <DollarSign className="w-4 h-4" />
-                      Total Transaksi
-                      <ArrowUpDown className="w-4 h-4" />
-                    </div>
-                  </th>
+
                   <th
                     className="p-4 text-left font-semibold cursor-pointer hover:bg-rose-700 transition"
                     onClick={() => handleSort("createdAt")}
@@ -493,9 +467,7 @@ export default function ListMemberPage() {
                           </span>
                         )}
                       </td>
-                      <td className="p-4 font-bold text-emerald-600">
-                        {formatRupiah(member.totalTransaksi)}
-                      </td>
+
                       <td className="p-4 text-gray-600 text-sm">
                         {formatDate(member.createdAt)}
                       </td>
@@ -522,6 +494,15 @@ export default function ListMemberPage() {
                             title="Hapus"
                           >
                             <Trash2 className="w-4 h-4" />
+                          </button>
+                          <button
+                            onClick={() =>
+                              nav(`/dashboard/master-data/trx/${member.id}`)
+                            }
+                            className="p-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition shadow-md hover:shadow-lg"
+                            title="Hapus"
+                          >
+                            <Eye className="w-4 h-4" />
                           </button>
                         </div>
                       </td>
@@ -674,28 +655,6 @@ function MemberModal({
             {errors.noTelp && (
               <p className="text-xs text-red-500 mt-1">
                 {errors.noTelp.message}
-              </p>
-            )}
-          </div>
-
-          <div className="mb-4">
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Total Transaksi (Rp) *
-            </label>
-            <input
-              type="number"
-              {...register("totalTransaksi", {
-                required: "Wajib diisi",
-                min: { value: 0, message: "Minimal 0" },
-              })}
-              defaultValue={defaultValues?.totalTransaksi || "0"}
-              min="0"
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-              placeholder="250000"
-            />
-            {errors.totalTransaksi && (
-              <p className="text-xs text-red-500 mt-1">
-                {errors.totalTransaksi.message}
               </p>
             )}
           </div>

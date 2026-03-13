@@ -11,19 +11,24 @@ import {
   BarChart3,
   ChevronLeft,
   ChevronRight,
+  Trash2,
 } from "lucide-react";
-import { useQuery } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import api from "../api/client";
 import { useAuthStore } from "../store/useAuthStore";
+import Swal from "sweetalert2";
 
 export default function TransaksiVoucherHarianPage() {
   const { user } = useAuthStore();
+  const queryClient = useQueryClient();
 
   // Filter state
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(10);
   const [searchInput, setSearchInput] = useState("");
   const [searchQuery, setSearchQuery] = useState("");
+  const [statusFilter, setStatusFilter] = useState("active");
+
   const [brand, setBrand] = useState("");
   const [periode, setPeriode] = useState("semua");
   const [startDate, setStartDate] = useState("");
@@ -80,12 +85,15 @@ export default function TransaksiVoucherHarianPage() {
       periode,
       startDate,
       endDate,
+      statusFilter,
     ],
     queryFn: async () => {
       const params = new URLSearchParams();
       params.append("page", page);
       params.append("pageSize", pageSize);
       params.append("periode", periode);
+      params.append("deletedFilter", statusFilter);
+
       if (searchQuery) params.append("search", searchQuery);
       if (brand) params.append("brand", brand);
       if (startDate) params.append("startDate", startDate);
@@ -141,6 +149,45 @@ export default function TransaksiVoucherHarianPage() {
       currency: "IDR",
       minimumFractionDigits: 0,
     }).format(num);
+  };
+
+  const deleteMutation = useMutation({
+    mutationFn: (id) =>
+      api.delete(`voucher-harian/${id}`, {
+        headers: { Authorization: `Bearer ${user?.token}` },
+      }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["transaksiVoucher"] });
+      Swal.fire({
+        title: "Dihapus!",
+        text: "Transaksi berhasil dihapus.",
+        icon: "success",
+        timer: 1500,
+        showConfirmButton: false,
+      });
+    },
+    onError: (err) => {
+      Swal.fire({
+        title: "Gagal!",
+        text: err.response?.data?.error || "Gagal menghapus transaksi.",
+        icon: "error",
+      });
+    },
+  });
+
+  const handleDelete = async (id) => {
+    const result = await Swal.fire({
+      title: "Yakin hapus?",
+      text: "Transaksi ini akan dihapus permanen!",
+      icon: "warning",
+      showCancelButton: true,
+      confirmButtonText: "Ya, hapus!",
+      cancelButtonText: "Batal",
+      reverseButtons: true,
+    });
+    if (result.isConfirmed) {
+      deleteMutation.mutate(id);
+    }
   };
 
   if (isLoading) {
@@ -277,6 +324,48 @@ export default function TransaksiVoucherHarianPage() {
             {/* Body */}
             <div className="space-y-5">
               {/* Search Voucher */}
+
+              <div>
+                <label className="block text-sm font-semibold text-gray-700 mb-2">
+                  Status Transaksi
+                </label>
+
+                <div className="flex bg-gray-100 p-1 my-3 rounded-xl">
+                  <button
+                    onClick={() => setStatusFilter("active")}
+                    className={`flex-1 py-2 rounded-lg text-sm font-semibold transition ${
+                      statusFilter === "active"
+                        ? "bg-white shadow text-blue-600"
+                        : "text-gray-500 hover:text-gray-700"
+                    }`}
+                  >
+                    Active
+                  </button>
+
+                  <button
+                    onClick={() => setStatusFilter("deleted")}
+                    className={`flex-1 py-2 rounded-lg text-sm font-semibold transition ${
+                      statusFilter === "deleted"
+                        ? "bg-white shadow text-red-600"
+                        : "text-gray-500 hover:text-gray-700"
+                    }`}
+                  >
+                    Void
+                  </button>
+
+                  {/* <button
+                  onClick={() => setStatusFilter("all")}
+                  className={`flex-1 py-2 rounded-lg text-sm font-semibold transition ${
+                    statusFilter === "all"
+                      ? "bg-white shadow text-gray-800"
+                      : "text-gray-500 hover:text-gray-700"
+                  }`}
+                >
+                  Semua
+                </button> */}
+                </div>
+              </div>
+
               <div>
                 <label className="block text-sm font-semibold text-gray-700 mb-2">
                   Cari Voucher
@@ -441,6 +530,11 @@ export default function TransaksiVoucherHarianPage() {
                 <th className="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">
                   Tanggal
                 </th>
+                {statusFilter !== "deleted" && (
+                  <th className="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">
+                    Aksi
+                  </th>
+                )}
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-200">
@@ -470,6 +564,17 @@ export default function TransaksiVoucherHarianPage() {
                     <td className="px-4 py-3 text-gray-600">
                       {formatDate(trx.tanggal)}
                     </td>
+                    {statusFilter !== "deleted" && (
+                      <td className="px-4 py-3 text-gray-600">
+                        <button
+                          className="p-2 bg-red-600 hover:bg-red-700 text-white rounded-lg transition shadow-md hover:shadow-lg"
+                          onClick={() => handleDelete(trx.id)}
+                          title="Hapus"
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </button>
+                      </td>
+                    )}
                   </tr>
                 ))
               )}

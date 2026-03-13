@@ -12,15 +12,14 @@ import {
   X,
   Filter,
   Calendar,
-  ChevronLeft,
-  ChevronRight,
-  Building2,
+  Printer,
 } from "lucide-react";
 import { useState, useMemo, useEffect } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import Swal from "sweetalert2";
 import api from "../api/client";
 import { useAuthStore } from "../store/useAuthStore";
+import { useNavigate } from "react-router-dom";
 
 export default function TableSectionVoucherGrosir({
   title = "Transaksi Voucher Grosir",
@@ -35,12 +34,13 @@ export default function TableSectionVoucherGrosir({
   const [currentSearch, setCurrentSearch] = useState("");
 
   const [filterType, setFilterType] = useState("all");
+  const [statusFilter, setStatusFilter] = useState("active");
   const [dateFrom, setDateFrom] = useState("");
   const [dateTo, setDateTo] = useState("");
   const [brand, setBrand] = useState("");
 
   const [openDetail, setOpenDetail] = useState(null);
-  console.log(openDetail?.detail);
+  const navigate = useNavigate();
 
   const [openEdit, setOpenEdit] = useState(null);
   const [newStatus, setNewStatus] = useState("");
@@ -77,10 +77,12 @@ export default function TableSectionVoucherGrosir({
       filterType,
       dateFrom,
       dateTo,
+      statusFilter,
     ],
     queryFn: async () => {
       const params = new URLSearchParams();
       params.append("page", page);
+      params.append("deletedFilter", statusFilter);
       params.append("pageSize", itemPerPage);
       if (currentSearch) params.append("search", currentSearch);
 
@@ -395,6 +397,48 @@ export default function TableSectionVoucherGrosir({
               </button>
             </div>
 
+            {/* Status Filter */}
+            <div>
+              <label className="block text-sm font-semibold text-gray-700 mb-2">
+                Status Transaksi
+              </label>
+
+              <div className="flex bg-gray-100 p-1 my-3 rounded-xl">
+                <button
+                  onClick={() => setStatusFilter("active")}
+                  className={`flex-1 py-2 rounded-lg text-sm font-semibold transition ${
+                    statusFilter === "active"
+                      ? "bg-white shadow text-blue-600"
+                      : "text-gray-500 hover:text-gray-700"
+                  }`}
+                >
+                  Active
+                </button>
+
+                <button
+                  onClick={() => setStatusFilter("deleted")}
+                  className={`flex-1 py-2 rounded-lg text-sm font-semibold transition ${
+                    statusFilter === "deleted"
+                      ? "bg-white shadow text-red-600"
+                      : "text-gray-500 hover:text-gray-700"
+                  }`}
+                >
+                  Void
+                </button>
+
+                {/* <button
+                  onClick={() => setStatusFilter("all")}
+                  className={`flex-1 py-2 rounded-lg text-sm font-semibold transition ${
+                    statusFilter === "all"
+                      ? "bg-white shadow text-gray-800"
+                      : "text-gray-500 hover:text-gray-700"
+                  }`}
+                >
+                  Semua
+                </button> */}
+              </div>
+            </div>
+
             {/* Body */}
             <div className="space-y-4">
               {/* Search */}
@@ -505,7 +549,11 @@ export default function TableSectionVoucherGrosir({
                     Keuntungan
                   </th>
                   <th className="px-4 py-4 text-left font-semibold">Status</th>
-                  <th className="px-4 py-4 text-center font-semibold">Aksi</th>
+                  {statusFilter !== "deleted" && (
+                    <th className="px-4 py-4 text-center font-semibold">
+                      Aksi
+                    </th>
+                  )}
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-100">
@@ -536,7 +584,13 @@ export default function TableSectionVoucherGrosir({
                         </p>
                       </td>
                       <td className="px-4 py-4 text-gray-600">
-                        {item.tanggal}
+                        {new Date(item.tanggal).toLocaleDateString("id-ID", {
+                          year: "numeric",
+                          month: "long",
+                          day: "numeric",
+                          hour: "numeric",
+                          minute: "numeric",
+                        })}
                       </td>
                       <td className="px-4 py-4 font-bold text-blue-600">
                         Rp {item.totalHarga.toLocaleString("id-ID")}
@@ -559,36 +613,48 @@ export default function TableSectionVoucherGrosir({
                           {item.status}
                         </span>
                       </td>
-                      <td className="px-4 py-4">
-                        <div className="flex justify-center gap-2">
-                          <button
-                            className="p-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition shadow-md hover:shadow-lg"
-                            onClick={() => setOpenDetail(item)}
-                            title="Lihat Detail"
-                          >
-                            <Eye className="w-4 h-4" />
-                          </button>
-                          <button
-                            className="p-2 bg-amber-500 hover:bg-amber-600 text-white rounded-lg transition shadow-md hover:shadow-lg"
-                            onClick={() => {
-                              setOpenEdit(item);
-                              setNewStatus(item.status);
-                            }}
-                            title="Edit Status"
-                          >
-                            <Pencil className="w-4 h-4" />
-                          </button>
-                          {item.status !== "Sukses" && (
+                      {statusFilter !== "deleted" && (
+                        <td className="px-4 py-4">
+                          <div className="flex justify-center gap-2">
                             <button
-                              className="p-2 bg-red-600 hover:bg-red-700 text-white rounded-lg transition shadow-md hover:shadow-lg"
-                              onClick={() => handleDelete(item.id)}
-                              title="Hapus"
+                              className="p-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition shadow-md hover:shadow-lg"
+                              onClick={() => setOpenDetail(item)}
+                              title="Lihat Detail"
                             >
-                              <Trash2 className="w-4 h-4" />
+                              <Eye className="w-4 h-4" />
                             </button>
-                          )}
-                        </div>
-                      </td>
+                            <button
+                              className="p-2 bg-amber-500 hover:bg-amber-600 text-white rounded-lg transition shadow-md hover:shadow-lg"
+                              onClick={() => {
+                                setOpenEdit(item);
+                                setNewStatus(item.status);
+                              }}
+                              title="Edit Status"
+                            >
+                              <Pencil className="w-4 h-4" />
+                            </button>
+
+                            <button
+                              className="p-2 rounded-lg bg-green-50 text-green-600 hover:bg-green-100 transition"
+                              title="Edit Status"
+                              onClick={() =>
+                                navigate(`/print/grosir/${item.id}`)
+                              }
+                            >
+                              <Printer className="w-4 h-4" />
+                            </button>
+                            {item.status !== "Selesai" && (
+                              <button
+                                className="p-2 bg-red-600 hover:bg-red-700 text-white rounded-lg transition shadow-md hover:shadow-lg"
+                                onClick={() => handleDelete(item.id)}
+                                title="Hapus"
+                              >
+                                <Trash2 className="w-4 h-4" />
+                              </button>
+                            )}
+                          </div>
+                        </td>
+                      )}
                     </tr>
                   ))
                 )}
@@ -683,9 +749,11 @@ export default function TableSectionVoucherGrosir({
                 <span className="text-gray-600">Tanggal:</span>
                 <span>
                   {new Date(openDetail.tanggal).toLocaleString("id-ID", {
-                    day: "numeric",
-                    month: "long",
                     year: "numeric",
+                    month: "long",
+                    day: "numeric",
+                    hour: "numeric",
+                    minute: "numeric",
                   })}{" "}
                 </span>
               </div>
@@ -735,7 +803,7 @@ export default function TableSectionVoucherGrosir({
 
             <div className="mt-5 flex gap-x-3 justify-end">
               <button
-                onClick={() => setOpenDetail(null)}
+                onClick={() => navigate(`/print/grosir/${item.id}`)}
                 className="px-4 py-2 bg-gray-700 text-white rounded-lg hover:bg-gray-800"
               >
                 Print
@@ -762,9 +830,11 @@ export default function TableSectionVoucherGrosir({
               value={newStatus}
               onChange={(e) => setNewStatus(e.target.value)}
             >
+              {" "}
+              <option value="">Pilih Status</option>
               <option value="Pending">⏳ Pending</option>
               <option value="Proses">🔧 Proses</option>
-              <option value="Sukses">✅ Sukses</option>
+              <option value="Selesai">✅ Selesai</option>
               <option value="Gagal">❌ Gagal</option>
             </select>
             <div className="flex justify-end gap-3">

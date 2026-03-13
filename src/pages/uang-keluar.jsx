@@ -268,7 +268,7 @@ export default function UangModalPage() {
 
               <div>
                 <h1 className="md:text-2xl text-lg lg:text-3xl font-bold text-gray-800">
-                  Uang Keluar
+                  Uang Keluar / Hutang
                 </h1>
                 <p className="text-gray-600 text-sm mt-1">
                   Kelola transaksi uang keluar Anda
@@ -488,9 +488,7 @@ export default function UangModalPage() {
                   <th className="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">
                     Keterangan
                   </th>
-                  <th className="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">
-                    Penempatan
-                  </th>
+
                   <th className="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">
                     Tanggal
                   </th>
@@ -533,11 +531,7 @@ export default function UangModalPage() {
                           {item.keterangan}
                         </span>
                       </td>
-                      <td className="px-6 py-4">
-                        <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-blue-50 text-blue-700">
-                          {item.penempatan}
-                        </span>
-                      </td>
+
                       <td className="px-6 py-4 text-sm text-gray-600">
                         {new Date(item.tanggal).toLocaleDateString("id-ID", {
                           day: "numeric",

@@ -20,6 +20,7 @@ import {
 } from "lucide-react";
 import api from "../api/client";
 import { useAuthStore } from "../store/useAuthStore";
+import { Html5Qrcode } from "html5-qrcode";
 
 // Komponen KejadianTakTerduga (langsung di sini atau di file terpisah)
 const KejadianTakTerduga = ({ data, onDelete }) => {
@@ -324,6 +325,7 @@ export default function TransaksiPage() {
       memberId: null,
     },
   });
+  const watchIsForMember = watch("isForMember");
 
   // === QUERY: Data Hari Ini ===
   const { data: todayData, isLoading } = useQuery({
@@ -351,7 +353,12 @@ export default function TransaksiPage() {
       }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["transaksi-hari-ini"] });
-      Swal.fire("Berhasil!", "Transaksi berhasil disimpan.", "success");
+      Swal.fire({
+        text: "Transaksi Berhasil Disimpan",
+        icon: "success",
+        timer: 500, // 1.5 detik
+        showConfirmButton: false,
+      });
     },
     onError: (err) => {
       Swal.fire(
@@ -450,7 +457,10 @@ export default function TransaksiPage() {
     manualMutation.mutate({
       kategori: data.kategori,
       nominal: Number(data.nominal),
-      ...(selectedMember?.id && { idMember: selectedMember?.id }),
+      // ...(selectedMember?.id && { idMember: selectedMember?.id }),
+      ...(data.isForMember && selectedMember
+        ? { idMember: selectedMember.id }
+        : {}),
     });
   };
 
@@ -511,31 +521,190 @@ export default function TransaksiPage() {
 
     const cleanedInput = memberSearch.trim();
 
-    const matchedMember = membersList.find((m) => m.noTelp === cleanedInput);
+    const matchedMember = membersList.find(
+      (m) => m.noTelp === cleanedInput || m.kodeMember === cleanedInput
+    );
 
     if (matchedMember) {
       submitTransaksi(matchedMember.id);
     }
   }, [memberSearch]);
 
+  const [isScanning, setIsScanning] = useState(false);
+  const [isScanning2, setIsScanning2] = useState(false);
+
+  const scannerInstance = useRef(null);
+
+  // Fungsi bantu: cari member by noTelp atau kodeMember
+  const findMemberByCode = (code) => {
+    return membersList.find((m) => m.noTelp === code || m.kodeMember === code);
+  };
+
+  useEffect(() => {
+    selectMember(null);
+  }, [selectedKategori, selectedNominal]);
+
+  // Reset member saat checkbox dimatikan
+  useEffect(() => {
+    if (!watchIsForMember) {
+      setSelectedMember(null);
+      setMemberSearch("");
+      setValue("idMember", ""); // Reset field form juga
+    }
+  }, [watchIsForMember, setSelectedMember, setMemberSearch, setValue]);
+
+  useEffect(() => {
+    let html5QrCode = null;
+
+    if (isScanning) {
+      // Tunggu sedikit agar DOM selesai render
+      const timer = setTimeout(() => {
+        const readerElement = document.getElementById("reader");
+        if (!readerElement) {
+          console.error("Elemen #reader tidak ditemukan!");
+          return;
+        }
+
+        const config = {
+          fps: 10,
+          qrbox: { width: 250, height: 250 },
+          aspectRatio: 1.0,
+        };
+
+        html5QrCode = new Html5Qrcode("reader");
+        html5QrCode
+          .start(
+            { facingMode: "environment" },
+            config,
+            async (decodedText) => {
+              const cleaned = decodedText.trim();
+              const matched = membersList.find(
+                (m) => m.noTelp === cleaned || m.kodeMember === cleaned
+              );
+
+              if (matched) {
+                submitTransaksi(matched.id);
+                Swal.fire({
+                  title: "Berhasil!",
+                  text: `${matched.nama} Telah mmelakukan transaksi`,
+                  icon: "success",
+                  timer: 1500,
+                  showConfirmButton: false,
+                });
+              } else {
+                Swal.fire({
+                  title: "Member Tidak Ditemukan!",
+                  text: `Kode "${cleaned}" tidak terdaftar.`,
+                  icon: "error",
+                });
+              }
+              setIsScanning(false);
+            },
+            (errorMessage) => {
+              // Opsional: log error
+              console.log(errorMessage);
+            }
+          )
+          .catch((err) => {
+            console.error("Gagal mulai scanner:", err);
+            Swal.fire("Error", "Gagal membuka kamera", "error");
+            setIsScanning(false);
+          });
+      }, 100); // Delay kecil agar DOM siap
+
+      return () => {
+        clearTimeout(timer);
+        if (html5QrCode) {
+          html5QrCode.stop().then(() => html5QrCode.clear());
+        }
+      };
+    }
+  }, [isScanning, selectedKategori, selectedNominal, membersList]);
+
+  useEffect(() => {
+    let html5QrCode = null;
+
+    if (isScanning2) {
+      // Tunggu sedikit agar DOM selesai render
+      const timer = setTimeout(() => {
+        const readerElement = document.getElementById("reader2");
+        if (!readerElement) {
+          console.error("Elemen #reader tidak ditemukan!");
+          return;
+        }
+
+        const config = {
+          fps: 10,
+          qrbox: { width: 250, height: 250 },
+          aspectRatio: 1.0,
+        };
+
+        html5QrCode = new Html5Qrcode("reader2");
+        html5QrCode
+          .start(
+            { facingMode: "environment" },
+            config,
+            async (decodedText) => {
+              const cleaned = decodedText.trim();
+              const matched = membersList.find(
+                (m) => m.noTelp === cleaned || m.kodeMember === cleaned
+              );
+
+              if (matched) {
+                selectMember(matched);
+                Swal.fire({
+                  title: "Berhasil!",
+                  text: `${matched.nama} Telah mmelakukan transaksi`,
+                  icon: "success",
+                  timer: 1500,
+                  showConfirmButton: false,
+                });
+              } else {
+                Swal.fire({
+                  title: "Member Tidak Ditemukan!",
+                  text: `Kode "${cleaned}" tidak terdaftar.`,
+                  icon: "error",
+                });
+              }
+              setIsScanning2(false);
+            },
+            (errorMessage) => {
+              // Opsional: log error
+              console.log(errorMessage);
+            }
+          )
+          .catch((err) => {
+            console.error("Gagal mulai scanner:", err);
+            Swal.fire("Error", "Gagal membuka kamera", "error");
+            setIsScanning2(false);
+          });
+      }, 100); // Delay kecil agar DOM siap
+
+      return () => {
+        clearTimeout(timer);
+        if (html5QrCode) {
+          html5QrCode.stop().then(() => html5QrCode.clear());
+        }
+      };
+    }
+  }, [isScanning2]);
+
   // === RENDER ===
   if (isLoading) {
     return <div className="p-6 text-center">Memuat data hari ini...</div>;
   }
 
-  const watchIsForMember = watch("isForMember");
-
   return (
     <div className="min-h-screen   ">
       <div className="w-full mx-auto">
         {/* Header */}
-        <div className="bg-white rounded-2xl shadow-md p-6 mb-6">
+        {/* <div className="bg-white rounded-2xl shadow-md p-6 mb-6">
           <div className="flex items-center gap-4">
             <div className="bg-gradient-to-r from-blue-600 to-indigo-600 p-4 rounded-xl">
               <TrendingUp className="w-8 h-8 text-white" />
             </div>
             <div>
-              <h1 className="lg:text-3xl text-base font-bold text-gray-800">
+              <h1 className="xl:text-xl text-base font-bold text-gray-800">
                 Hitung Keuntungan Hari Ini
               </h1>
               <p className="text-gray-600 mt-1 text-xs md:">
@@ -543,7 +712,7 @@ export default function TransaksiPage() {
               </p>
             </div>
           </div>
-        </div>
+        </div> */}
 
         {/* Quick Input Section */}
         <div className="bg-white rounded-2xl p-6 mb-6">
@@ -609,15 +778,41 @@ export default function TransaksiPage() {
                 </p>
 
                 {/* Input No Telp */}
-                <input
-                  ref={memberInputRef}
-                  type="text"
-                  value={memberSearch}
-                  onChange={(e) => setMemberSearch(e.target.value)}
-                  placeholder="Masukkan No Telp Member (Opsional)"
-                  className="w-full border-2 border-gray-200 rounded-lg px-4 py-3 focus:border-blue-500 focus:outline-none"
-                />
+                <div className="relative">
+                  <input
+                    ref={memberInputRef}
+                    type="text"
+                    value={memberSearch}
+                    onChange={(e) => setMemberSearch(e.target.value)}
+                    placeholder="Masukkan No Telp / Kode Member (Opsional)"
+                    className="w-full border-2 border-gray-200 rounded-lg px-4 py-3 pr-12 focus:border-blue-500 focus:outline-none"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setIsScanning(true)} // ✅ BENAR
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-blue-600 hover:text-blue-800"
+                  >
+                    📷
+                  </button>
+                </div>
 
+                {/* Area Scanner — selalu ada di DOM, tapi hidden jika tidak scan */}
+                <div
+                  id="reader"
+                  className={`w-full mx-auto transition-opacity duration-300 ${
+                    isScanning ? "block opacity-100" : "hidden opacity-0"
+                  }`}
+                ></div>
+
+                {isScanning && (
+                  <button
+                    type="button"
+                    onClick={() => setIsScanning(false)}
+                    className="w-full mt-3 py-2 bg-red-500 text-white rounded-lg"
+                  >
+                    Batal Scan
+                  </button>
+                )}
                 {/* Selected */}
                 {selectedMember && (
                   <div className="mt-3 bg-green-50 p-3 rounded-lg text-sm">
@@ -724,7 +919,9 @@ export default function TransaksiPage() {
                   Pilih Member
                 </h3>
                 <div className="relative mb-4">
-                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+                  <Search
+                    className={`absolute left-3  ${selectedMember ? "top-6" : "top-1/2"} -translate-y-1/2 w-5 h-5 text-gray-400`}
+                  />
                   <input
                     type="text"
                     value={memberSearch}
@@ -738,6 +935,31 @@ export default function TransaksiPage() {
                       membersList.length > 0 && setShowMemberDropdown(true)
                     }
                   />
+                  <button
+                    type="button"
+                    onClick={() => setIsScanning2(true)} // ✅ BENAR
+                    className={`absolute right-3 ${selectedMember ? "top-6" : "top-1/2"} -translate-y-1/2 text-blue-600 hover:text-blue-800`}
+                  >
+                    📷
+                  </button>
+
+                  {isScanning2 && (
+                    <button
+                      type="button"
+                      onClick={() => setIsScanning2(false)}
+                      className="w-full mt-3 py-2 bg-red-500 text-white rounded-lg"
+                    >
+                      Batal Scan
+                    </button>
+                  )}
+
+                  {/* Area Scanner — selalu ada di DOM, tapi hidden jika tidak scan */}
+                  <div
+                    id="reader2"
+                    className={`w-full mx-auto transition-opacity duration-300 ${
+                      isScanning2 ? "block opacity-100" : "hidden opacity-0"
+                    }`}
+                  ></div>
 
                   {showMemberDropdown && (
                     <div className="absolute z-50 bg-white border-2 border-blue-200 w-full rounded-lg shadow-md mt-2 max-h-48 overflow-y-auto">

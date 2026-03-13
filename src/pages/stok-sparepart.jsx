@@ -21,6 +21,7 @@ import {
   Barcode,
   Tag,
 } from "lucide-react";
+import { NumericFormat } from "react-number-format";
 
 function useDebounce(value, delay) {
   const [debouncedValue, setDebouncedValue] = useState(value);
@@ -316,6 +317,7 @@ export default function StokBarangSparepartPage() {
   const {
     register,
     handleSubmit,
+    setValue,
     reset,
     formState: { errors },
   } = useForm();
@@ -334,6 +336,14 @@ export default function StokBarangSparepartPage() {
   };
 
   const saveAdd = (form) => {
+    if (form.hargaJual < form.hargaModal) {
+      Swal.fire({
+        icon: "warning",
+        text: "Harga Jual Gaboleh Lebih Kecil Dari Harga Modal",
+      });
+      return;
+    }
+
     createSparepartMutation.mutate({
       ...form,
       kategori: form.kategori || "Umum",
@@ -345,6 +355,14 @@ export default function StokBarangSparepartPage() {
   };
 
   const saveEdit = (form) => {
+    if (form.hargaJual < form.hargaModal) {
+      Swal.fire({
+        icon: "warning",
+        text: "Harga Jual Gaboleh Lebih Kecil Dari Harga Modal",
+      });
+      return;
+    }
+
     updateSparepartMutation.mutate({
       id: openEdit.id,
       payload: {
@@ -870,6 +888,7 @@ export default function StokBarangSparepartPage() {
           onSubmit={handleSubmit(saveAdd)}
           register={register}
           errors={errors}
+          setValue={setValue}
           isLoading={createSparepartMutation.isPending}
           showKategori={true}
         />
@@ -881,6 +900,7 @@ export default function StokBarangSparepartPage() {
           onClose={() => setOpenEdit(null)}
           onSubmit={handleSubmit(saveEdit)}
           register={register}
+          setValue={setValue}
           errors={errors}
           isLoading={createSparepartMutation.isPending}
           isEdit={true}
@@ -896,6 +916,7 @@ function ModalForm({
   title,
   onClose,
   onSubmit,
+  setValue,
   register,
   errors,
   isEdit = false,
@@ -1013,33 +1034,39 @@ function ModalForm({
               <label className="block text-sm font-medium text-gray-700 mb-1">
                 Harga Modal *
               </label>
-              <input
-                type="number"
-                min="0"
-                {...register("hargaModal", {
-                  required: true,
-                  min: 0,
-                  valueAsNumber: true,
-                })}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                placeholder="45000"
-              />
+
+              <div className="relative">
+                <NumericFormat
+                  thousandSeparator="."
+                  decimalSeparator=","
+                  allowNegative={false}
+                  prefix="Rp "
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500"
+                  placeholder="Rp 45.000"
+                  onValueChange={(values) => {
+                    setValue("hargaModal", values.floatValue);
+                  }}
+                />
+              </div>
             </div>
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">
                 Harga Jual *
               </label>
-              <input
-                type="number"
-                min="0"
-                {...register("hargaJual", {
-                  required: true,
-                  min: 0,
-                  valueAsNumber: true,
-                })}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                placeholder="55000"
-              />
+
+              <div className="relative">
+                <NumericFormat
+                  thousandSeparator="."
+                  decimalSeparator=","
+                  allowNegative={false}
+                  prefix="Rp "
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500"
+                  placeholder="Rp 55.000"
+                  onValueChange={(values) => {
+                    setValue("hargaJual", values.floatValue);
+                  }}
+                />
+              </div>
             </div>
           </div>
 

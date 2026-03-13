@@ -29,6 +29,15 @@ import VoucherTerlarisPage from "./pages/item-voucher-harian";
 import Penggabungan from "./pages/penggabungan";
 import PrintVoucherGrosir from "./pages/print-voucher";
 import PrintServiceHP from "./pages/print-service-hp";
+import SuperAdminDashboard from "./pages/super-admin";
+import MemberTransactionHistory from "./pages/member-trx";
+import LogPage from "./pages/log";
+import StoreSettingsPage from "./pages/setting";
+import SettingUser from "./pages/setting-user";
+import PrintTransaksiAksesoris from "./pages/print-trans-acc";
+import PrintTransaksiSparepart from "./pages/print-trans-sparepart";
+import DataMemberPage from "./pages/nomor-trx-member";
+import KeuntunganPage from "./pages/keuntungan";
 
 function App() {
   const { user, isLoading, isCheckingAuth, fetchUser } = useAuthStore();
@@ -42,11 +51,25 @@ function App() {
     <Routes>
       <Route path="/" element={<Home />} />
       <Route path="/login" element={<LoginPage />} />
-      <Route path="/print/grosir/:id" element={<PrintVoucherGrosir />} />
-      <Route path="/print-service-hp/:id" element={<PrintServiceHP />} />
+
+      <Route path="/super-admin" element={<SuperAdminDashboard />} />
+      <Route path="print/grosir/:id" element={<PrintVoucherGrosir />} />
+      <Route path="print-service-hp/:id" element={<PrintServiceHP />} />
+      <Route
+        path="print-transaksi-acc/:id"
+        element={<PrintTransaksiAksesoris />}
+      />
+
+      <Route
+        path="print-transaksi-sparepart/:id"
+        element={<PrintTransaksiSparepart />}
+      />
 
       <Route path="/dashboard" element={<DashboardLayout />}>
         <Route path="jualan-voucher" element={<JualanVoucher />} />
+        <Route path="keuntungan" element={<KeuntunganPage />} />
+        <Route path="setting-toko-user" element={<SettingUser />} />
+        <Route path="log" element={<LogPage />} />
         <Route path="overview" element={<Overview />} />
         <Route path="penggabungan" element={<Penggabungan />} />
         <Route path="user" element={<UserManagementPage />} />
@@ -59,6 +82,15 @@ function App() {
         <Route
           path="master-data/stok-sparepart"
           element={<StokBarangSparepartPage />}
+        />
+        <Route path="master-data/nomor-member" element={<DataMemberPage />} />
+        <Route
+          path="master-data/stok-sparepart"
+          element={<StokBarangSparepartPage />}
+        />{" "}
+        <Route
+          path="master-data/trx/:memberId"
+          element={<MemberTransactionHistory />}
         />
         <Route
           path="master-data/list-downline"

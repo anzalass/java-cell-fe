@@ -11,12 +11,15 @@ import {
   Filter,
   ChevronLeft,
   ChevronRight,
+  MessageCircle,
+  Printer,
 } from "lucide-react";
 import { useState, useMemo } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import Swal from "sweetalert2";
 import api from "../api/client";
 import { useAuthStore } from "../store/useAuthStore";
+import { useNavigate } from "react-router-dom";
 
 export default function TableSectionService({
   title = "Transaksi Service Hari Ini",
@@ -30,6 +33,8 @@ export default function TableSectionService({
   const [searchInput, setSearchInput] = useState("");
   const [searchQuery, setSearchQuery] = useState("");
   const [filterStatus, setFilterStatus] = useState("all");
+  const [statusFilter, setStatusFilter] = useState("active");
+
   const [filterType, setFilterType] = useState("all");
   const [dateFrom, setDateFrom] = useState("");
   const [dateTo, setDateTo] = useState("");
@@ -37,6 +42,8 @@ export default function TableSectionService({
   const [openDetail, setOpenDetail] = useState(null);
   const [openEdit, setOpenEdit] = useState(null);
   const [newStatus, setNewStatus] = useState("");
+
+  const nav = useNavigate();
 
   // Helpers
   const today = new Date().toISOString().slice(0, 10);
@@ -69,11 +76,14 @@ export default function TableSectionService({
       filterType,
       dateFrom,
       dateTo,
+      statusFilter,
     ],
     queryFn: async () => {
       const params = new URLSearchParams();
       params.append("page", page);
       params.append("pageSize", itemPerPage);
+      params.append("deletedFilter", statusFilter);
+
       if (searchQuery) params.append("search", searchQuery);
       if (filterStatus !== "all") params.append("status", filterStatus);
 
@@ -230,6 +240,29 @@ export default function TableSectionService({
     setPage(1);
   };
 
+  const handleWhatsapp = (item) => {
+    const phone = item.noHP; // nomor customer
+
+    const message = `
+Halo ${item.namaPelangan}
+
+Status servis Anda: ${item.status}
+
+Merk : ${item.brandHP}
+
+Keterangan:
+${item.keterangan}
+
+Terima kasih.
+`;
+
+    const encodedMessage = encodeURIComponent(message);
+
+    const url = `https://wa.me/${phone}?text=${encodedMessage}`;
+
+    window.open(url, "_blank");
+  };
+
   const [openFilter, setOpenFilter] = useState(false);
 
   // === RENDER ===
@@ -383,6 +416,122 @@ export default function TableSectionService({
               {/* Body */}
               <div className="space-y-5">
                 {/* Search */}
+
+                <div className="space-y-5">
+                  <div>
+                    <label className="block text-sm font-semibold text-gray-700 mb-2">
+                      Status Transaksi
+                    </label>
+
+                    <div className="flex bg-gray-100 p-1 my-3 rounded-xl">
+                      <button
+                        onClick={() => setStatusFilter("active")}
+                        className={`flex-1 py-2 rounded-lg text-sm font-semibold transition ${
+                          statusFilter === "active"
+                            ? "bg-white shadow text-blue-600"
+                            : "text-gray-500 hover:text-gray-700"
+                        }`}
+                      >
+                        Active
+                      </button>
+
+                      <button
+                        onClick={() => setStatusFilter("deleted")}
+                        className={`flex-1 py-2 rounded-lg text-sm font-semibold transition ${
+                          statusFilter === "deleted"
+                            ? "bg-white shadow text-red-600"
+                            : "text-gray-500 hover:text-gray-700"
+                        }`}
+                      >
+                        Void
+                      </button>
+
+                      {/* <button
+                  onClick={() => setStatusFilter("all")}
+                  className={`flex-1 py-2 rounded-lg text-sm font-semibold transition ${
+                    statusFilter === "all"
+                      ? "bg-white shadow text-gray-800"
+                      : "text-gray-500 hover:text-gray-700"
+                  }`}
+                >
+                  Semua
+                </button> */}
+                    </div>
+                  </div>
+                  {/* Search */}
+                  <div>
+                    <label className="block text-sm font-semibold text-gray-700 mb-2">
+                      Cari Nama Pembeli
+                    </label>
+                    <div className="relative">
+                      <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+                      <input
+                        type="text"
+                        value={searchInput}
+                        onChange={(e) => setSearchInput(e.target.value)}
+                        onKeyDown={(e) => e.key === "Enter" && handleSearch()}
+                        className="w-full pl-11 pr-4 py-3 border border-gray-200 rounded-xl bg-gray-50 focus:bg-white focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 outline-none transition"
+                        placeholder="Ahmad, DL-001, dll..."
+                      />
+                    </div>
+                  </div>
+
+                  {/* Periode */}
+                  <div>
+                    <label className="block text-sm font-semibold text-gray-700 mb-2">
+                      Periode Waktu
+                    </label>
+                    <div className="relative">
+                      <Calendar className="absolute left-3.5 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+                      <select
+                        value={filterType}
+                        onChange={(e) => {
+                          setFilterType(e.target.value);
+                          if (e.target.value !== "custom") {
+                            setDateFrom("");
+                            setDateTo("");
+                          }
+                        }}
+                        className="w-full pl-11 pr-4 py-3 border border-gray-200 rounded-xl bg-gray-50 focus:bg-white focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 outline-none transition font-medium"
+                      >
+                        <option value="all">Semua Waktu</option>
+                        <option value="today">Hari Ini</option>
+                        <option value="week">Minggu Ini</option>
+                        <option value="month">Bulan Ini</option>
+                        <option value="custom">Custom Range</option>
+                      </select>
+                    </div>
+                  </div>
+
+                  {/* Custom Range */}
+                  {filterType === "custom" && (
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 p-4 bg-blue-50 rounded-xl border border-blue-100">
+                      <div>
+                        <label className="block text-sm font-semibold mb-2">
+                          Dari Tanggal
+                        </label>
+                        <input
+                          type="date"
+                          value={dateFrom}
+                          onChange={(e) => setDateFrom(e.target.value)}
+                          className="w-full px-4 py-3 border border-gray-200 rounded-xl"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-sm font-semibold mb-2">
+                          Sampai Tanggal
+                        </label>
+                        <input
+                          type="date"
+                          value={dateTo}
+                          onChange={(e) => setDateTo(e.target.value)}
+                          className="w-full px-4 py-3 border border-gray-200 rounded-xl"
+                        />
+                      </div>
+                    </div>
+                  )}
+                </div>
+
                 <div>
                   <label className="block text-sm font-semibold text-gray-700 mb-2">
                     Cari Nama / Kode
@@ -634,10 +783,12 @@ export default function TableSectionService({
                         <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-700">
                           <Calendar className="w-3.5 h-3.5" />
                           {new Date(item.tanggal).toLocaleDateString("id-ID", {
-                            day: "numeric",
-                            month: "short",
                             year: "numeric",
-                          })}
+                            month: "long",
+                            day: "numeric",
+                            hour: "numeric",
+                            minute: "numeric",
+                          }) || "-"}
                         </span>
                       </td>
 
@@ -649,6 +800,22 @@ export default function TableSectionService({
                             className="p-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-all hover:scale-110 active:scale-95 shadow-sm"
                           >
                             <Eye className="w-4 h-4" />
+                          </button>
+
+                          <button
+                            title="Detail"
+                            onClick={() => handleWhatsapp(item)}
+                            className="p-2 bg-green-500 text-white rounded-lg hover:bg-green-600 transition-all hover:scale-110 active:scale-95 shadow-sm"
+                          >
+                            <MessageCircle className="w-4 h-4" />
+                          </button>
+
+                          <button
+                            title="Detail"
+                            onClick={() => nav(`/print-service-hp/${item.id}`)}
+                            className="p-2 bg-zinc-500 text-white rounded-lg hover:bg-zinc-600 transition-all hover:scale-110 active:scale-95 shadow-sm"
+                          >
+                            <Printer className="w-4 h-4" />
                           </button>
 
                           <button
@@ -764,12 +931,14 @@ export default function TableSectionService({
                   Nama Pelanggan:
                 </span>
                 <span className="font-semibold">
-                  {openDetail.member.nama || "-"}
+                  {openDetail?.member
+                    ? openDetail?.member?.nama
+                    : openDetail?.namaPembeli}
                 </span>
               </div>
 
               {/* Member */}
-              {openDetail.member ? (
+              {openDetail?.member ? (
                 <div className="flex justify-between">
                   <span className="font-medium text-gray-600">Member:</span>
                   <span className="text-green-600 font-medium">Ya</span>
@@ -784,7 +953,11 @@ export default function TableSectionService({
               {/* No HP */}
               <div className="flex justify-between">
                 <span className="font-medium text-gray-600">No. HP:</span>
-                <span>{openDetail.member?.noTelp || "-"}</span>
+                <span>
+                  {openDetail?.member
+                    ? openDetail?.member?.noTelp
+                    : openDetail?.noHP}
+                </span>
               </div>
 
               {/* Brand HP */}
@@ -824,7 +997,15 @@ export default function TableSectionService({
                 <span className="font-medium text-gray-600">
                   Tanggal Service:
                 </span>
-                <span>{openDetail.tanggal || "-"}</span>
+                <span>
+                  {new Date(openDetail.tanggal).toLocaleDateString("id-ID", {
+                    year: "numeric",
+                    month: "long",
+                    day: "numeric",
+                    hour: "numeric",
+                    minute: "numeric",
+                  }) || "-"}
+                </span>
               </div>
 
               {/* Biaya Jasa */}
@@ -935,6 +1116,12 @@ export default function TableSectionService({
             </div>
 
             <div className="p-5 border-t">
+              <button
+                onClick={() => nav(`/print-service-hp/${openDetail.id}`)}
+                className="w-full py-2 mb-3 bg-zinc-600 text-white rounded-lg hover:bg-zinc-700 transition"
+              >
+                Print
+              </button>
               <button
                 onClick={() => setOpenDetail(null)}
                 className="w-full py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition"

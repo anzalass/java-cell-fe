@@ -13,12 +13,14 @@ import {
   Trash2,
   Plus,
 } from "lucide-react";
+import { Html5Qrcode } from "html5-qrcode";
 export default function ModalTransaksiSparepart({
   isOpen,
   onClose,
   onSuccess,
 }) {
   const { user } = useAuthStore();
+  const [isScanning, setIsScanning] = useState(false);
 
   const [barcode, setBarcode] = useState("");
   const [manualId, setManualId] = useState("");
@@ -60,32 +62,89 @@ export default function ModalTransaksiSparepart({
 
   // Fetch member saat ketik (autocomplete)
   useEffect(() => {
-    if (!memberSearch.trim()) {
-      setMembersList([]);
-      return;
-    }
+    if (!isOpen) return;
 
-    const fetchMembers = async () => {
+    const fetchAllMembers = async () => {
       try {
         const res = await api.get("member", {
           headers: { Authorization: `Bearer ${user.token}` },
         });
-        const allMembers = res.data.data || [];
-        const filtered = allMembers.filter(
-          (m) =>
-            m.nama.toLowerCase().includes(memberSearch.toLowerCase()) ||
-            (m.noTelp && m.noTelp.includes(memberSearch))
-        );
-        setMembersList(filtered);
-        setShowMemberDropdown(true);
+        setMembersList(res.data.data || []);
       } catch (err) {
         console.error("Fetch members error:", err);
       }
     };
 
-    clearTimeout(timeoutRef.current);
-    timeoutRef.current = setTimeout(fetchMembers, 300);
-  }, [memberSearch, user.token]);
+    fetchAllMembers();
+  }, [isOpen, user.token]);
+
+  useEffect(() => {
+    let html5QrCode = null;
+
+    if (isScanning) {
+      // Tunggu sedikit agar DOM selesai render
+      const timer = setTimeout(() => {
+        const readerElement = document.getElementById("reader");
+        if (!readerElement) {
+          console.error("Elemen #reader tidak ditemukan!");
+          return;
+        }
+
+        const config = {
+          fps: 10,
+          qrbox: { width: 250, height: 250 },
+          aspectRatio: 1.0,
+        };
+
+        html5QrCode = new Html5Qrcode("reader");
+        html5QrCode
+          .start(
+            { facingMode: "environment" },
+            config,
+            async (decodedText) => {
+              const cleaned = decodedText.trim();
+              const matched = membersList.find(
+                (m) => m.noTelp === cleaned || m.kodeMember === cleaned
+              );
+
+              if (matched) {
+                selectMember(matched);
+                Swal.fire({
+                  title: "Berhasil!",
+                  text: `${matched.nama} Telah mmelakukan transaksi`,
+                  icon: "success",
+                  timer: 1500,
+                  showConfirmButton: false,
+                });
+              } else {
+                Swal.fire({
+                  title: "Member Tidak Ditemukan!",
+                  text: `Kode "${cleaned}" tidak terdaftar.`,
+                  icon: "error",
+                });
+              }
+              setIsScanning(false);
+            },
+            (errorMessage) => {
+              // Opsional: log error
+              console.log(errorMessage);
+            }
+          )
+          .catch((err) => {
+            console.error("Gagal mulai scanner:", err);
+            Swal.fire("Error", "Gagal membuka kamera", "error");
+            setIsScanning(false);
+          });
+      }, 100); // Delay kecil agar DOM siap
+
+      return () => {
+        clearTimeout(timer);
+        if (html5QrCode) {
+          html5QrCode.stop().then(() => html5QrCode.clear());
+        }
+      };
+    }
+  }, [isScanning, membersList]); // ✅ Tambahkan membersList
 
   // Handle barcode scan
   useEffect(() => {
@@ -331,7 +390,9 @@ export default function ModalTransaksiSparepart({
                   Pilih Member (Opsional)
                 </label>
                 <div className="relative">
-                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+                  <Search
+                    className={`absolute  left-3  ${selectedMember ? "top-6" : "top-1/2"}  -translate-y-1/2 w-5 h-5 text-gray-400`}
+                  />
                   <input
                     type="text"
                     value={memberSearch}
@@ -345,6 +406,32 @@ export default function ModalTransaksiSparepart({
                       membersList.length > 0 && setShowMemberDropdown(true)
                     }
                   />
+
+                  <button
+                    type="button"
+                    onClick={() => setIsScanning(true)} // ✅ BENAR
+                    className={`absolute right-3  ${selectedMember ? "top-5" : "top-1/2"}  -translate-y-1/2 text-blue-600 hover:text-blue-800`}
+                  >
+                    📷
+                  </button>
+
+                  {/* Area Scanner — selalu ada di DOM, tapi hidden jika tidak scan */}
+                  <div
+                    id="reader"
+                    className={`w-full mx-auto transition-opacity duration-300 ${
+                      isScanning ? "block opacity-100" : "hidden opacity-0"
+                    }`}
+                  ></div>
+
+                  {isScanning && (
+                    <button
+                      type="button"
+                      onClick={() => setIsScanning(false)}
+                      className="w-full mt-3 py-2 bg-red-500 text-white rounded-lg"
+                    >
+                      Batal Scan
+                    </button>
+                  )}
 
                   {showMemberDropdown && (
                     <div className="absolute z-50 bg-white border-2 border-indigo-200 w-full rounded-lg shadow-lg mt-2 max-h-48 overflow-y-auto">

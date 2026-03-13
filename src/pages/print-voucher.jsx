@@ -1,147 +1,303 @@
 import { useEffect, useState } from "react";
-import { useParams } from "react-router-dom";
+import { useParams, Navigate } from "react-router-dom";
 import api from "../api/client";
+import { useAuthStore } from "../store/useAuthStore";
 
 export default function PrintVoucherGrosir() {
   const { id } = useParams();
   const [data, setData] = useState(null);
+  const { user, isLoading, isCheckingAuth, fetchUser } = useAuthStore();
 
   useEffect(() => {
+    fetchUser();
+  }, [fetchUser]);
+
+  useEffect(() => {
+    if (!user?.token || !id) return;
+
     const fetchData = async () => {
-      const res = await api.get(`/grosir-vd-print/${id}`);
-      setData(res.data.data);
+      try {
+        const res = await api.get(`/grosir-vd-print/${id}`, {
+          headers: { Authorization: `Bearer ${user.token}` },
+        });
+        setData(res.data.data);
+      } catch (err) {
+        console.error("Gagal load transaksi:", err);
+        alert("Gagal memuat data transaksi");
+      }
     };
+
     fetchData();
-  }, [id]);
+  }, [id, user?.token]);
 
   useEffect(() => {
     if (data) {
-      setTimeout(() => {
-        window.print();
-      }, 300);
+      setTimeout(() => window.print(), 500);
     }
   }, [data]);
 
-  if (!data) return null;
+  // Loading state
+  if (isCheckingAuth || isLoading) {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-600 mx-auto"></div>
+          <p className="mt-2 text-gray-600">Memeriksa sesi...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (!user) {
+    return <Navigate to="/login" replace />;
+  }
+
+  if (!data || !data.transaksi) {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <div className="text-center text-red-500 p-6">
+          Data transaksi tidak ditemukan
+        </div>
+      </div>
+    );
+  }
+
+  const trx = data.transaksi;
+  const tanggal = new Date(trx.tanggal);
 
   return (
     <>
       <style>{`
-        html, body {
+        @media screen {
+          body {
+            background: #f5f5f5;
+            padding: 20px;
+          }
+          .print-container {
+            width: 80mm;
+            margin: 0 auto;
+            background: white;
+            padding: 15px;
+            box-shadow: 0 0 15px rgba(0,0,0,0.1);
+          }
+        }
+
+        @media print {
+          @page {
+            size: 80mm 300mm;
+            margin: 0;
+          }
+          html, body {
+            width: 80mm;
+            margin: 0;
+            padding: 0;
+            background: white !important;
+          }
+          .no-print {
+            display: none !important;
+          }
+          .print-container {
+            width: 100% !important;
+            padding: 8px !important;
+            margin: 0 !important;
+            box-shadow: none !important;
+            font-size: 14px !important;
+          }
+        }
+
+        body {
           margin: 0;
           padding: 0;
-          width: 100%;
-          background: #fff;
-          font-family: monospace;
-          font-size: 38px;
-        }
-
-        @page {
-          size: auto;
-          margin: 0mm;
-        }
-
-        .receipt {
-          width: 100%;
-          padding: 10px;
-          box-sizing: border-box;
-
+          font-family: 'Courier New', monospace;
+          background: white;
+          color: black;
+          font-size: 14px;
+          line-height: 1.4;
         }
 
         .center {
           text-align: center;
-
         }
 
         .bold {
           font-weight: bold;
         }
 
-        .small {
-          font-size: 25px;
-          
-        }
-
-        .item {
-          margin-bottom: 40px;
-        }
-
-        .voucher-name {
-          font-weight: 700;
-          margin-bottom: 6px;
+        .divider {
+          border-top: 1px dashed #000;
+          margin: 6px 0;
         }
 
         .row {
           display: flex;
           justify-content: space-between;
-          margin-bottom: 4px;
+          margin-bottom: 3px;
         }
 
-        .line {
-          border-top: 1px dashed #000;
-          margin: 16px 0;
+        .item-row {
+          display: flex;
+          justify-content: space-between;
+          font-size: 13px;
+          margin-bottom: 2px;
         }
 
-        /* HILANGKAN GARIS SAAT PRINT */
-        @media print {
-          .line {
-            display: none;
-          }
+        .item-name {
+          flex: 2;
+          word-break: break-all;
+        }
 
-          body {
-            -webkit-print-color-adjust: exact;
-            print-color-adjust: exact;
-          }
+        .item-qty {
+          flex: 0.8;
+          text-align: center;
+          font-size: 12px;
+        }
+
+        .item-price {
+          flex: 1.2;
+          text-align: right;
+          font-size: 12px;
+        }
+
+        .footer {
+          margin-top: 10px;
+          text-align: center;
+          font-size: 11px;
+          color: #666;
+        }
+
+        .text-xs {
+          font-size: 11px;
+        }
+
+        .text-sm {
+          font-size: 13px;
         }
       `}</style>
 
-      <div className="receipt">
-        <div className="center bold" style={{ fontSize: "40px" }}>
-          VOUCHER GROSIR JAVA CELL
+      <div className="print-container">
+        {/* HEADER TOKO */}
+
+        {data.logoToko !== "" && (
+          <div
+            style={{
+              display: "flex",
+              justifyContent: "center",
+              marginBottom: "8px",
+            }}
+          >
+            <img
+              src={data.logoToko}
+              alt="Logo Toko"
+              style={{
+                height: "100px",
+                width: "100px",
+                objectFit: "cover",
+                borderRadius: "50%",
+              }}
+            />
+          </div>
+        )}
+        <div
+          className="center bold"
+          style={{ fontSize: "18px", marginBottom: "4px" }}
+        >
+          {data.namaToko}
+        </div>
+        {data.alamat && (
+          <div className="center text-xs" style={{ marginBottom: "2px" }}>
+            {data.alamat}
+          </div>
+        )}
+        {data.noTelp && (
+          <div className="center text-xs" style={{ marginBottom: "6px" }}>
+            Telp: {data.noTelp}
+          </div>
+        )}
+
+        <div className="divider" />
+
+        {/* JUDUL TRANSAKSI */}
+        <div
+          className="center bold"
+          style={{ fontSize: "16px", marginBottom: "6px" }}
+        >
+          VOUCHER GROSIR
         </div>
 
-        <div className="center small" style={{ marginBottom: "60px" }}>
-          {data.downline.kodeDownline} - {data.downline.nama}
+        {/* INFO DOWLINE */}
+        <div className="row bold" style={{ marginBottom: "4px" }}>
+          <span>Downline</span>
+          <span>{trx.downline?.kodeDownline || "—"}</span>
+        </div>
+        <div className="row" style={{ marginBottom: "6px" }}>
+          <span>Nama</span>
+          <span>{trx.downline?.nama || "—"}</span>
         </div>
 
-        <div className="line" />
+        <div className="divider" />
 
-        <div className="small">
-          {new Date(data.tanggal).toLocaleDateString("id-ID", {
-            dateStyle: "full",
+        {/* TANGGAL */}
+        <div className="center text-sm" style={{ marginBottom: "6px" }}>
+          {tanggal.toLocaleDateString("id-ID", {
+            weekday: "long",
+            day: "numeric",
+            month: "long",
+            year: "numeric",
+          })}{" "}
+          {tanggal.toLocaleTimeString("id-ID", {
+            hour: "2-digit",
+            minute: "2-digit",
           })}
         </div>
 
-        <div className="line" />
+        <div className="divider" />
 
-        {data.items.map((item, i) => (
-          <div key={i} className="item">
-            <div className="voucher-name">{item.Voucher.nama}</div>
+        {/* HEADER ITEM */}
+        <div className="row bold" style={{ marginBottom: "4px" }}>
+          <span>Produk</span>
+          <span style={{ width: "70px", textAlign: "right" }}>Subtotal</span>
+        </div>
+        <div className="divider" />
 
-            <div className="row">
-              <span>
-                {item.quantity} x{" "}
-                {item.Voucher.hargaJual.toLocaleString("id-ID")}
-              </span>
-              <span>
-                {(item.quantity * item.Voucher.hargaJual).toLocaleString(
-                  "id-ID"
-                )}
-              </span>
+        {/* ITEM LIST */}
+        {trx.items?.map((item, i) => {
+          const subtotal = item.Voucher.hargaJual * item.quantity;
+          return (
+            <div key={i} className="item-row">
+              <div className="item-name">
+                {item.Voucher.nama} x{item.quantity}
+              </div>
+              <div className="item-price">
+                {subtotal.toLocaleString("id-ID")}
+              </div>
             </div>
-          </div>
-        ))}
+          );
+        })}
 
-        <div className="line" />
+        <div className="divider" />
 
-        <div className="row bold" style={{ fontSize: "40px" }}>
-          <span>Total</span>
-          <span>{data.totalHarga.toLocaleString("id-ID")}</span>
+        {/* TOTAL */}
+        <div
+          className="row bold"
+          style={{ fontSize: "16px", marginTop: "4px" }}
+        >
+          <span>TOTAL</span>
+          <span>{trx.totalHarga?.toLocaleString("id-ID")}</span>
         </div>
 
-        <div className="line" />
+        <div className="divider" />
 
-        <div className="center small">Terima kasih 🙏</div>
+        {/* FOOTER */}
+        <div className="center" style={{ marginTop: "10px", fontSize: "13px" }}>
+          Terima kasih 🙏
+        </div>
+        <div className="center text-xs" style={{ marginTop: "4px" }}>
+          Simpan struk sebagai bukti transaksi
+        </div>
+
+        <div className="footer no-print" style={{ marginTop: "15px" }}>
+          Struk ini akan otomatis tercetak. Tutup tab setelah selesai.
+        </div>
       </div>
     </>
   );

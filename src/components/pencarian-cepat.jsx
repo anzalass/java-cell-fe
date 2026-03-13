@@ -2,6 +2,7 @@ import { Search } from "lucide-react";
 import React, { useEffect, useState } from "react";
 import api from "../api/client";
 import { useAuthStore } from "../store/useAuthStore";
+import Swal from "sweetalert2";
 
 function useDebounce(value, delay = 400) {
   const [debouncedValue, setDebouncedValue] = useState(value);
@@ -46,8 +47,9 @@ export default function PencarianCepat() {
             ? "/cari-sparepart"
             : active === "voucher"
               ? "/cari-voucher"
-              : "/cari-acc";
-
+              : active === "acc"
+                ? "/cari-acc"
+                : "/cari-no-pelanggan";
         const res = await api.get(endpoint, {
           params: { q: debouncedKeyword },
           headers: {
@@ -68,6 +70,20 @@ export default function PencarianCepat() {
 
     fetchSearch();
   }, [debouncedKeyword, active, user.token]);
+
+  const copyNomor = async (nomor) => {
+    try {
+      await navigator.clipboard.writeText(nomor);
+      Swal.fire({
+        text: "Berhasil mengcopy",
+        icon: "success",
+        timer: 500, // 1.5 detik
+        showConfirmButton: false,
+      });
+    } catch (err) {
+      console.error("Gagal copy", err);
+    }
+  };
 
   /* =============================
      ⌨️ KEYBOARD HANDLER
@@ -111,7 +127,7 @@ export default function PencarianCepat() {
   };
 
   return (
-    <div className="gap-3 relative flex sm:flex-row flex-col">
+    <div className="gap-3 relative flex flex-row ">
       <InputSearch
         placeholder="Cari Sparepart"
         active={active === "sparepart"}
@@ -133,6 +149,14 @@ export default function PencarianCepat() {
         active={active === "acc"}
         value={active === "acc" ? keyword : ""}
         onChange={(e) => handleChange("acc", e.target.value)}
+        onKeyDown={handleKeyDown}
+      />
+
+      <InputSearch
+        placeholder="Cari No Pelanggan"
+        active={active === "pelanggan"}
+        value={active === "pelanggan" ? keyword : ""}
+        onChange={(e) => handleChange("pelanggan", e.target.value)}
         onKeyDown={handleKeyDown}
       />
 
@@ -164,10 +188,35 @@ export default function PencarianCepat() {
                 <div className="font-medium">
                   {highlightText(item.nama, keyword)}
                 </div>
-                <div className="text-gray-500 flex gap-3">
-                  <span>Stok: {item.stok}</span>
-                  {"hargaJual" in item && (
-                    <span>Rp {item.hargaJual?.toLocaleString("id-ID")}</span>
+                <div className="text-gray-500 flex items-center justify-between">
+                  {active === "pelanggan" && (
+                    <>
+                      <span className="font-medium text-gray-700">
+                        {item.nomor}
+                      </span>
+
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          copyNomor(item.nomor);
+                        }}
+                        className="text-blue-600 font-semibold text-sm px-2 py-1 rounded hover:bg-blue-50"
+                      >
+                        Copy
+                      </button>
+                    </>
+                  )}
+
+                  {active !== "pelanggan" && (
+                    <div className="flex gap-3">
+                      <span>Stok: {item.stok}</span>
+                      <span>{active === "voucher" ? item.brand : ""}</span>
+                      {"hargaJual" in item && (
+                        <span>
+                          Rp {item.hargaJual?.toLocaleString("id-ID")}
+                        </span>
+                      )}
+                    </div>
                   )}
                 </div>
               </div>
@@ -183,13 +232,13 @@ export default function PencarianCepat() {
 ============================= */
 function InputSearch({ placeholder, value, onChange, onKeyDown, active }) {
   return (
-    <div className="relative w-full h-[50px]">
-      <Search
+    <div className="relative w-full md:h-[50px] h-[38px]">
+      {/* <Search
         size={16}
         className={`absolute left-3 top-4 ${
           active ? "text-blue-500" : "text-gray-400"
         }`}
-      />
+      /> */}
       <input
         type="text"
         placeholder={placeholder}
@@ -197,7 +246,7 @@ function InputSearch({ placeholder, value, onChange, onKeyDown, active }) {
         onChange={onChange}
         onKeyDown={onKeyDown}
         className={`
-          w-full text-sm h-full pl-9 pr-3 py-2 rounded-lg border
+          w-full text-sm h-full pl-3 pr-3 py-2 rounded-lg border
           transition
           ${active ? "border-blue-500 ring-2 ring-blue-500/20" : "border-gray-300"}
           focus:outline-none

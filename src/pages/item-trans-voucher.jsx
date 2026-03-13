@@ -1,7 +1,6 @@
-import React, { useState, useEffect, useMemo } from "react";
+import React, { useState, useEffect } from "react";
 import {
   Package,
-  Calendar,
   Search,
   Filter,
   Download,
@@ -9,30 +8,32 @@ import {
   ChevronRight,
   Building2,
   ChevronDown,
+  X,
 } from "lucide-react";
-import api from "../api/client"; // sesuaikan path API client
+import * as XLSX from "xlsx"; // ✅ Install: npm install xlsx
+import api from "../api/client";
 import { useAuthStore } from "../store/useAuthStore";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useQuery } from "@tanstack/react-query";
 
 export default function LaporanBarangKeluarVoucherPage() {
   const { user } = useAuthStore();
-  const queryClient = useQueryClient();
 
-  // State
+  // State filter
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(10);
-
   const [filterPeriod, setFilterPeriod] = useState("all");
   const [dateFrom, setDateFrom] = useState("");
   const [dateTo, setDateTo] = useState("");
-
-  const [openFilter, setOpenFilter] = useState(false);
   const [brand, setBrand] = useState("");
-
   const [searchInput, setSearchInput] = useState("");
   const [searchQuery, setSearchQuery] = useState("");
-
   const [sortQty, setSortQty] = useState("none");
+
+  // State modal
+  const [openFilter, setOpenFilter] = useState(false);
+  const [openExportModal, setOpenExportModal] = useState(false);
+  const [exportOption, setExportOption] = useState("filtered");
+  const [loadingExport, setLoadingExport] = useState(false);
 
   const resetPage = () => setPage(1);
 
@@ -42,36 +43,45 @@ export default function LaporanBarangKeluarVoucherPage() {
     setFilterPeriod("all");
     setDateFrom("");
     setDateTo("");
+    setBrand("");
     setSearchInput("");
     setSearchQuery("");
     setSortQty("none");
-    setBrand("");
   };
 
   /* =======================
         FETCH FUNCTION
   ======================= */
-  const fetchBarangKeluar = async () => {
+  const fetchBarangKeluar = async (customParams = {}) => {
     const params = new URLSearchParams();
 
-    params.append("page", page);
-    params.append("brand", brand);
+    const p = {
+      page: customParams.page || page,
+      pageSize: customParams.pageSize || pageSize,
+      filterPeriod: customParams.filterPeriod || filterPeriod,
+      brand: customParams.brand || brand,
+      searchNama: customParams.searchNama || searchQuery,
+      sortQty: customParams.sortQty || sortQty,
+      startDate: customParams.startDate || dateFrom,
+      endDate: customParams.endDate || dateTo,
+      ...customParams,
+    };
 
-    params.append("pageSize", pageSize);
-    params.append("filterPeriod", filterPeriod);
+    params.append("page", p.page);
+    params.append("pageSize", p.pageSize);
+    params.append("filterPeriod", p.filterPeriod);
+    params.append("brand", p.brand);
 
-    if (searchQuery) params.append("searchNama", searchQuery);
-    if (sortQty !== "none") params.append("sortQty", sortQty);
+    if (p.searchNama) params.append("searchNama", p.searchNama);
+    if (p.sortQty && p.sortQty !== "none") params.append("sortQty", p.sortQty);
 
-    if (filterPeriod === "custom") {
-      if (dateFrom) params.append("startDate", dateFrom);
-      if (dateTo) params.append("endDate", dateTo);
+    if (p.filterPeriod === "custom") {
+      if (p.startDate) params.append("startDate", p.startDate);
+      if (p.endDate) params.append("endDate", p.endDate);
     }
 
     const res = await api.get(`barang-keluar-voucher?${params.toString()}`, {
-      headers: {
-        Authorization: `Bearer ${user.token}`,
-      },
+      headers: { Authorization: `Bearer ${user.token}` },
     });
 
     return res.data;
@@ -82,15 +92,15 @@ export default function LaporanBarangKeluarVoucherPage() {
   ======================= */
   const { data, isLoading, isFetching, isError, error } = useQuery({
     queryKey: [
-      "barang-keluar",
+      "barang-keluar-voucher",
       page,
       pageSize,
       filterPeriod,
       dateFrom,
       dateTo,
+      brand,
       searchQuery,
       sortQty,
-      brand,
     ],
     queryFn: fetchBarangKeluar,
     enabled: !!user?.token,
@@ -101,12 +111,111 @@ export default function LaporanBarangKeluarVoucherPage() {
   const meta = data?.meta;
 
   /* =======================
+        EXPORT FUNCTION
+  ======================= */
+  const exportToExcel = (exportData, filename) => {
+    // Format data untuk Excel
+    const worksheetData = exportData.map((item, index) => ({
+      No: index + 1,
+      "Nama Voucher": item.namaBarang || item.nama || "-",
+      Provider: item.merk || item.brand || "-",
+      "Harga Modal": item.hargaModal
+        ? `Rp ${item.hargaModal.toLocaleString("id-ID")}`
+        : "Rp 0",
+      "Harga Jual": item.hargaJual
+        ? `Rp ${item.hargaJual.toLocaleString("id-ID")}`
+        : "Rp 0",
+      Qty: item.qty || 0,
+      "Modal Dikeluarkan": item.modal
+        ? `Rp ${item.modal.toLocaleString("id-ID")}`
+        : "Rp 0",
+      "Keuntungan Didapatkan": item.keuntungan
+        ? `Rp ${item.keuntungan.toLocaleString("id-ID")}`
+        : "Rp 0",
+    }));
+
+    // Buat worksheet
+    const worksheet = XLSX.utils.json_to_sheet(worksheetData);
+
+    // Atur lebar kolom
+    const wscols = [
+      { wch: 5 }, // No
+      { wch: 25 }, // Nama Voucher
+      { wch: 15 }, // Provider
+      { wch: 18 }, // Harga Modal
+      { wch: 18 }, // Harga Jual
+      { wch: 8 }, // Qty
+      { wch: 20 }, // Tanggal
+    ];
+    worksheet["!cols"] = wscols;
+
+    // Buat workbook
+    const workbook = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(workbook, worksheet, "Voucher Keluar");
+
+    // Generate file
+    XLSX.writeFile(workbook, filename);
+  };
+
+  const handleExport = async () => {
+    try {
+      setLoadingExport(true);
+
+      // Tentukan parameter export
+      const exportParams = {
+        page: 1,
+        pageSize: exportOption === "all" ? 10000 : 1000,
+        filterPeriod: exportOption === "all" ? "all" : filterPeriod,
+        brand: exportOption === "all" ? "" : brand,
+        searchNama: exportOption === "all" ? "" : searchQuery,
+        sortQty: exportOption === "all" ? "none" : sortQty,
+        startDate: exportOption === "all" ? "" : dateFrom,
+        endDate: exportOption === "all" ? "" : dateTo,
+      };
+
+      // Fetch data export
+      const res = await fetchBarangKeluar(exportParams);
+      const exportData = res.paginatedData || res.data || [];
+
+      if (exportData.length === 0) {
+        alert("Tidak ada data untuk di-export");
+        return;
+      }
+
+      // Generate filename dengan timestamp
+      const now = new Date();
+      const dateStr = now.toISOString().split("T")[0];
+      const timeStr = now
+        .toLocaleTimeString("id-ID", { hour12: false })
+        .replace(/:/g, "-");
+      const filename = `voucher-keluar-${dateStr}-${timeStr}.xlsx`;
+
+      // Export ke Excel
+      exportToExcel(exportData, filename);
+
+      // Tutup modal
+      setOpenExportModal(false);
+      alert(`Berhasil export ${exportData.length} data ke ${filename}`);
+    } catch (err) {
+      console.error("Export error:", err);
+      alert(
+        "Gagal export: " +
+          (err.response?.data?.message ||
+            err.message ||
+            "Error tidak diketahui")
+      );
+    } finally {
+      setLoadingExport(false);
+    }
+  };
+
+  /* =======================
         LOADING & ERROR
   ======================= */
   if (isLoading) {
     return (
       <div className="p-6 text-center text-gray-500">
-        Memuat data barang keluar...
+        Memuat data voucher keluar...
       </div>
     );
   }
@@ -128,10 +237,10 @@ export default function LaporanBarangKeluarVoucherPage() {
           </div>
           <div>
             <h1 className="text-xl font-bold text-gray-900">
-              Laporan Barang Keluar
+              Laporan Barang Keluar Voucher
             </h1>
             <p className="text-sm text-gray-500">
-              Rekap stok barang yang keluar
+              Rekap stok voucher yang keluar
             </p>
           </div>
         </div>
@@ -147,24 +256,24 @@ export default function LaporanBarangKeluarVoucherPage() {
           </button>
 
           {/* Export */}
-          <button className="px-4 py-2 bg-emerald-600 text-white rounded-xl shadow hover:bg-emerald-700 flex items-center gap-2 text-sm font-semibold">
+          <button
+            onClick={() => setOpenExportModal(true)}
+            className="px-4 py-2 bg-emerald-600 text-white rounded-xl shadow hover:bg-emerald-700 flex items-center gap-2 text-sm font-semibold"
+          >
             <Download className="w-4 h-4" />
-            Export
+            Export Excel
           </button>
         </div>
       </div>
 
+      {/* MODAL FILTER */}
       {openFilter && (
         <div className="fixed inset-0 z-50 flex items-center justify-center">
-          {/* Overlay */}
           <div
             className="absolute inset-0 bg-black/40 backdrop-blur-sm"
             onClick={() => setOpenFilter(false)}
           />
-
-          {/* Modal */}
           <div className="relative w-full max-w-2xl mx-4 bg-white rounded-2xl shadow-xl p-6">
-            {/* Header */}
             <div className="flex items-start justify-between mb-4">
               <div className="flex items-center gap-3">
                 <div className="p-2 bg-gray-100 rounded-lg">
@@ -175,11 +284,10 @@ export default function LaporanBarangKeluarVoucherPage() {
                     Filter & Pencarian
                   </h2>
                   <p className="text-sm text-gray-500">
-                    Sesuaikan data barang keluar
+                    Sesuaikan data voucher keluar
                   </p>
                 </div>
               </div>
-
               <button
                 onClick={() => setOpenFilter(false)}
                 className="text-gray-400 hover:text-gray-600"
@@ -187,13 +295,11 @@ export default function LaporanBarangKeluarVoucherPage() {
                 ✕
               </button>
             </div>
-
-            {/* Body */}
             <div className="space-y-4">
               {/* Search */}
               <div>
                 <label className="text-sm font-semibold text-gray-700 mb-2 block">
-                  Cari Nama Barang
+                  Cari Nama Voucher
                 </label>
                 <div className="relative">
                   <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
@@ -202,24 +308,22 @@ export default function LaporanBarangKeluarVoucherPage() {
                     value={searchInput}
                     onChange={(e) => setSearchInput(e.target.value)}
                     className="w-full pl-11 pr-4 py-3 border border-gray-200 rounded-xl bg-gray-50 focus:bg-white focus:ring-2 focus:ring-indigo-500/20 outline-none"
-                    placeholder="LCD, Charging Port, dll"
+                    placeholder="Pulsa 50rb, Data 5GB, dll"
                   />
                 </div>
-              </div>{" "}
+              </div>
+
+              {/* Brand Filter */}
               <div>
                 <label className="block text-sm font-semibold text-gray-700 mb-2">
                   Pilih Provider
                 </label>
-
                 <div className="relative">
                   <Building2 className="absolute left-3.5 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
-
                   <select
                     value={brand}
                     onChange={(e) => setBrand(e.target.value)}
-                    className="w-full pl-11 pr-4 py-3 border border-gray-200 rounded-xl bg-gray-50 
-                 focus:bg-white focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 
-                 outline-none transition appearance-none"
+                    className="w-full pl-11 pr-4 py-3 border border-gray-200 rounded-xl bg-gray-50 focus:bg-white focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 outline-none transition appearance-none"
                   >
                     <option value="">Semua Provider</option>
                     <option value="Smartfren">Smartfren</option>
@@ -229,11 +333,10 @@ export default function LaporanBarangKeluarVoucherPage() {
                     <option value="Indosat">Indosat</option>
                     <option value="Telkomsel">Telkomsel</option>
                   </select>
-
-                  {/* Arrow */}
                   <ChevronDown className="absolute right-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400 pointer-events-none" />
                 </div>
               </div>
+
               {/* Sort */}
               <div>
                 <label className="text-sm font-semibold text-gray-700 mb-2 block">
@@ -249,6 +352,7 @@ export default function LaporanBarangKeluarVoucherPage() {
                   <option value="asc">Qty Terdikit</option>
                 </select>
               </div>
+
               {/* Periode */}
               <div>
                 <label className="text-sm font-semibold text-gray-700 mb-2 block">
@@ -282,6 +386,7 @@ export default function LaporanBarangKeluarVoucherPage() {
                   ))}
                 </div>
               </div>
+
               {/* Custom Date */}
               {filterPeriod === "custom" && (
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 p-4 bg-indigo-50 rounded-xl">
@@ -300,8 +405,6 @@ export default function LaporanBarangKeluarVoucherPage() {
                 </div>
               )}
             </div>
-
-            {/* Footer */}
             <div className="flex justify-between items-center mt-6 pt-4 border-t">
               <button
                 onClick={handleReset}
@@ -312,12 +415,102 @@ export default function LaporanBarangKeluarVoucherPage() {
               <button
                 onClick={() => {
                   setSearchQuery(searchInput);
-                  setPage(1);
+                  resetPage();
                   setOpenFilter(false);
                 }}
                 className="px-6 py-2 bg-indigo-600 text-white rounded-xl font-semibold shadow"
               >
                 Terapkan
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* MODAL EXPORT */}
+      {openExportModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
+          <div className="bg-white rounded-2xl p-6 w-full max-w-md mx-4">
+            <div className="flex justify-between items-center mb-4">
+              <h3 className="text-lg font-bold text-gray-900">
+                Export Data Voucher Keluar
+              </h3>
+              <button
+                onClick={() => setOpenExportModal(false)}
+                className="text-gray-400 hover:text-gray-600"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+            <p className="text-gray-600 mb-6">
+              Pilih opsi export data sesuai kebutuhan:
+            </p>
+
+            <div className="space-y-3 mb-6">
+              {/* Opsi 1: Sesuai Filter */}
+              <label className="flex items-start gap-3 p-3 border rounded-lg cursor-pointer hover:border-indigo-300 transition">
+                <input
+                  type="radio"
+                  name="exportOption"
+                  value="filtered"
+                  checked={exportOption === "filtered"}
+                  onChange={() => setExportOption("filtered")}
+                  className="form-radio text-indigo-600 mt-1"
+                />
+                <div>
+                  <p className="font-medium text-gray-800">
+                    Sesuai Filter Saat Ini
+                  </p>
+                  <p className="text-xs text-gray-500 mt-1">
+                    Hanya data yang terlihat di tabel dengan filter yang aktif (
+                    {tableData.length} data)
+                  </p>
+                </div>
+              </label>
+
+              {/* Opsi 2: Semua Data */}
+              <label className="flex items-start gap-3 p-3 border rounded-lg cursor-pointer hover:border-indigo-300 transition">
+                <input
+                  type="radio"
+                  name="exportOption"
+                  value="all"
+                  checked={exportOption === "all"}
+                  onChange={() => setExportOption("all")}
+                  className="form-radio text-indigo-600 mt-1"
+                />
+                <div>
+                  <p className="font-medium text-gray-800">Semua Data</p>
+                  <p className="text-xs text-gray-500 mt-1">
+                    Seluruh data voucher keluar tanpa filter (mungkin ribuan
+                    data)
+                  </p>
+                </div>
+              </label>
+            </div>
+
+            <div className="flex justify-end gap-3">
+              <button
+                onClick={() => setOpenExportModal(false)}
+                className="px-4 py-2 text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200"
+              >
+                Batal
+              </button>
+              <button
+                onClick={handleExport}
+                disabled={loadingExport}
+                className="px-4 py-2 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 disabled:opacity-50 flex items-center gap-2"
+              >
+                {loadingExport ? (
+                  <>
+                    <span className="animate-spin">⏳</span>
+                    <span>Menyiapkan...</span>
+                  </>
+                ) : (
+                  <>
+                    <Download className="w-4 h-4" />
+                    <span>Export Excel</span>
+                  </>
+                )}
               </button>
             </div>
           </div>
@@ -331,11 +524,13 @@ export default function LaporanBarangKeluarVoucherPage() {
             <thead className="bg-gray-50 text-gray-700">
               <tr>
                 <th className="px-4 py-3 text-left">No</th>
-                <th className="px-4 py-3 text-left">Nama Barang</th>
-                <th className="px-4 py-3 text-left">Merk</th>
+                <th className="px-4 py-3 text-left">Nama Voucher</th>
+                <th className="px-4 py-3 text-left">Provider</th>
                 <th className="px-4 py-3 text-left">Harga Modal</th>
                 <th className="px-4 py-3 text-left">Harga Jual</th>
                 <th className="px-4 py-3 text-left">Qty</th>
+                <th className="px-4 py-3 text-left">Modal Dikeluarkan</th>
+                <th className="px-4 py-3 text-left">Keuntungan Didapatkan</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-200">
@@ -345,26 +540,34 @@ export default function LaporanBarangKeluarVoucherPage() {
                     colSpan="7"
                     className="px-4 py-6 text-center text-gray-500"
                   >
-                    Tidak ada data barang keluar
+                    Tidak ada data voucher keluar
                   </td>
                 </tr>
               ) : (
-                tableData.map((item, i) => (
-                  <tr key={item.id} className="hover:bg-gray-50">
+                tableData?.map((item, i) => (
+                  <tr key={item.id || i} className="hover:bg-gray-50">
                     <td className="px-4 py-3">
                       {(page - 1) * pageSize + i + 1}
                     </td>
                     <td className="px-4 py-3 font-medium text-gray-800">
-                      {item.namaBarang}
+                      {item.namaBarang || item.nama || "-"}
                     </td>
-                    <td className="px-4 py-3">{item.merk}</td>
+                    <td className="px-4 py-3 font-medium text-indigo-700">
+                      {item.merk || item.brand || "-"}
+                    </td>
                     <td className="px-4 py-3 text-green-700">
-                      Rp {item.hargaModal.toLocaleString("id-ID")}
+                      Rp {item.hargaModal?.toLocaleString("id-ID") || "0"}
                     </td>
                     <td className="px-4 py-3 text-blue-700">
-                      Rp {item.hargaJual.toLocaleString("id-ID")}
+                      Rp {item.hargaJual?.toLocaleString("id-ID") || "0"}
                     </td>
-                    <td className="px-4 py-3 font-medium">{item.qty}</td>
+                    <td className="px-4 py-3 font-medium">{item.qty || 0}</td>
+                    <td className="px-4 py-3 text-red-700">
+                      Rp {item.modal?.toLocaleString("id-ID") || "0"}
+                    </td>
+                    <td className="px-4 py-3 text-green-700">
+                      Rp {item.keuntungan?.toLocaleString("id-ID") || "0"}
+                    </td>
                   </tr>
                 ))
               )}
@@ -372,64 +575,34 @@ export default function LaporanBarangKeluarVoucherPage() {
           </table>
         </div>
 
-        {/* <div className="bg-gray-50 border-t-2 border-gray-200 p-4">
-          <div className="flex justify-between items-center">
-            <div className="text-sm text-gray-600">
-              <span className="font-semibold">{page}</span> dari{" "}
-              <span className="font-semibold">{meta?.totalPages}</span>
-            </div>
-            <div className="flex items-center  gap-3">
-              <select
-                value={pageSize}
-                onChange={(e) => {
-                  setPageSize(Number(e.target.value));
-                  setPage(1);
-                }}
-                className="
-      px-4 py-2
-      text-sm font-medium
-      rounded-xl
-      border border-gray-200
-      bg-white
-      shadow-sm
-      focus:outline-none
-      focus:ring-2 focus:ring-blue-500
-      focus:border-blue-500
-      hover:bg-gray-50
-      transition
-    "
-              >
-                <option value={5}>5</option>
-                <option value={10}>10</option>
-                <option value={20}>20</option>
-                <option value={50}>50</option>
-              </select>
-            </div>
+        {/* PAGINATION */}
+        {/* {meta?.totalPages > 1 && (
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between p-4 border-t">
+            <p className="text-sm text-gray-600 mb-3 sm:mb-0">
+              Menampilkan {(page - 1) * pageSize + 1}–
+              {Math.min(page * pageSize, meta.total)} dari {meta.total} data
+            </p>
             <div className="flex items-center gap-2">
               <button
-                onClick={() => setPage((prev) => Math.max(prev - 1, 1))}
-                disabled={page <= 1}
-                className="px-4 py-2 border-2 border-gray-300 rounded-lg text-sm font-medium disabled:text-gray-400 disabled:cursor-not-allowed hover:bg-gray-100 transition flex items-center gap-2"
+                onClick={() => setPage(page - 1)}
+                disabled={page === 1}
+                className="p-2 rounded-lg border disabled:text-gray-400 disabled:cursor-not-allowed hover:bg-gray-100"
               >
                 <ChevronLeft className="w-4 h-4" />
               </button>
-              <div className="px-4 py-2 bg-slate-700 text-white rounded-lg font-semibold text-sm">
-                {page}
-              </div>
+              <span className="px-3 py-1 bg-indigo-50 text-indigo-700 rounded font-medium">
+                {page} / {meta.totalPages}
+              </span>
               <button
-                onClick={() =>
-                  setPage((prev) => Math.min(prev + 1, meta?.totalPages))
-                }
-                disabled={page >= meta?.totalPages}
-                className="px-4 py-2 border-2 border-gray-300 rounded-lg text-sm font-medium disabled:text-gray-400 disabled:cursor-not-allowed hover:bg-gray-100 transition flex items-center gap-2"
+                onClick={() => setPage(page + 1)}
+                disabled={page >= meta.totalPages}
+                className="p-2 rounded-lg border disabled:text-gray-400 disabled:cursor-not-allowed hover:bg-gray-100"
               >
                 <ChevronRight className="w-4 h-4" />
               </button>
             </div>
           </div>
-        </div> */}
-
-        {/* PAGINATION */}
+        )} */}
       </div>
     </div>
   );

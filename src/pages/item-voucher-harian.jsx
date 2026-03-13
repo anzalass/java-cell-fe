@@ -12,8 +12,10 @@ import {
   ChevronRight,
   ChevronLeft,
   Download,
+  X,
 } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
+import * as XLSX from "xlsx"; // ✅ Install dulu: npm install xlsx
 import api from "../api/client";
 import { useAuthStore } from "../store/useAuthStore";
 
@@ -30,6 +32,11 @@ export default function VoucherTerlarisPage() {
   const [startDate, setStartDate] = useState("");
   const [endDate, setEndDate] = useState("");
   const [openFilter, setOpenFilter] = useState(false);
+
+  // Export state
+  const [openExportModal, setOpenExportModal] = useState(false);
+  const [exportOption, setExportOption] = useState("filtered");
+  const [loadingExport, setLoadingExport] = useState(false);
 
   console.log(pageSize);
 
@@ -51,8 +58,6 @@ export default function VoucherTerlarisPage() {
     };
     fetchBrands();
   }, [user?.token]);
-
-  const handleExportExcel = () => {};
 
   // Reset ke halaman 1 saat filter berubah
   const resetPage = () => setPage(1);
@@ -103,7 +108,6 @@ export default function VoucherTerlarisPage() {
         }
       );
 
-      // 🔥 BALIKIN ISI SERVICE-NYA, BUKAN WRAPPER
       return res.data.data;
     },
     keepPreviousData: true,
@@ -130,6 +134,126 @@ export default function VoucherTerlarisPage() {
       currency: "IDR",
       minimumFractionDigits: 0,
     }).format(num);
+  };
+
+  // Format angka tanpa rupiah
+  const formatAngka = (num) => {
+    return new Intl.NumberFormat("id-ID").format(num || 0);
+  };
+
+  /* =======================
+        EXPORT TO EXCEL
+  ======================= */
+  const exportToExcel = (exportData, filename) => {
+    // Format data untuk Excel sesuai struktur voucher terlaris
+    const worksheetData = exportData.map((item, index) => ({
+      No: index + 1,
+      "Nama Voucher": item.voucher?.nama || item.nama || "-",
+      Provider: item.voucher?.brand || item.brand || "-",
+      "Harga Modal": item.voucher?.hargaPokok
+        ? `Rp ${formatAngka(item.voucher.hargaPokok)}`
+        : "Rp 0",
+      "Harga Jual": item.voucher?.hargaEceran
+        ? `Rp ${formatAngka(item.voucher.hargaEceran)}`
+        : "Rp 0",
+      "Jumlah Terjual": item.jumlahTerjual || 0,
+      "Modal Dikeluarkan": item.modal
+        ? `Rp ${formatAngka(item.modal)}`
+        : "Rp 0",
+      Pendapatan: item.totalPendapatan
+        ? `Rp ${formatAngka(item.totalPendapatan)}`
+        : "Rp 0",
+      Keuntungan: item.totalKeuntungan
+        ? `Rp ${formatAngka(item.totalKeuntungan)}`
+        : "Rp 0",
+    }));
+
+    // Buat worksheet
+    const worksheet = XLSX.utils.json_to_sheet(worksheetData);
+
+    // Atur lebar kolom
+    const wscols = [
+      { wch: 5 }, // No
+      { wch: 30 }, // Nama Voucher
+      { wch: 15 }, // Provider
+      { wch: 18 }, // Harga Modal
+      { wch: 18 }, // Harga Jual
+      { wch: 15 }, // Jumlah Terjual
+      { wch: 20 }, // Modal Dikeluarkan
+      { wch: 20 }, // Pendapatan
+      { wch: 20 }, // Keuntungan
+    ];
+    worksheet["!cols"] = wscols;
+
+    // Buat workbook
+    const workbook = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(workbook, worksheet, "Voucher Terlaris");
+
+    // Generate file
+    XLSX.writeFile(workbook, filename);
+  };
+
+  const handleExport = async () => {
+    try {
+      setLoadingExport(true);
+
+      // Tentukan parameter export
+      const exportParams = {
+        page: 1,
+        pageSize: exportOption === "all" ? 10000 : 1000,
+        periode: exportOption === "all" ? "semua" : periode,
+        brand: exportOption === "all" ? "" : brand,
+        search: exportOption === "all" ? "" : searchQuery,
+        startDate: exportOption === "all" ? "" : startDate,
+        endDate: exportOption === "all" ? "" : endDate,
+      };
+
+      // Build query params
+      const params = new URLSearchParams();
+      Object.entries(exportParams).forEach(([key, value]) => {
+        if (value) params.append(key, value);
+      });
+
+      // Fetch data export
+      const res = await api.get(
+        `/voucher-harian-terlaris?${params.toString()}`,
+        {
+          headers: { Authorization: `Bearer ${user?.token}` },
+        }
+      );
+
+      const exportData = res.data?.data?.data || [];
+
+      if (exportData.length === 0) {
+        alert("Tidak ada data untuk di-export");
+        return;
+      }
+
+      // Generate filename dengan timestamp
+      const now = new Date();
+      const dateStr = now.toISOString().split("T")[0];
+      const timeStr = now
+        .toLocaleTimeString("id-ID", { hour12: false })
+        .replace(/:/g, "-");
+      const filename = `voucher-terlaris-${dateStr}-${timeStr}.xlsx`;
+
+      // Export ke Excel
+      exportToExcel(exportData, filename);
+
+      // Tutup modal
+      setOpenExportModal(false);
+      alert(`✅ Berhasil export ${exportData.length} data ke ${filename}`);
+    } catch (err) {
+      console.error("Export error:", err);
+      alert(
+        "❌ Gagal export: " +
+          (err.response?.data?.message ||
+            err.message ||
+            "Error tidak diketahui")
+      );
+    } finally {
+      setLoadingExport(false);
+    }
   };
 
   if (isLoading) {
@@ -177,15 +301,17 @@ export default function VoucherTerlarisPage() {
           </button>
 
           {/* Export */}
-          <button className="px-4 py-2 bg-emerald-600 text-white rounded-xl shadow hover:bg-emerald-700 flex items-center gap-2 text-sm font-semibold">
+          <button
+            onClick={() => setOpenExportModal(true)}
+            className="px-4 py-2 bg-emerald-600 text-white rounded-xl shadow hover:bg-emerald-700 flex items-center gap-2 text-sm font-semibold"
+          >
             <Download className="w-4 h-4" />
-            Export
+            Export Excel
           </button>
         </div>
       </div>
 
-      {/* Statistik */}
-
+      {/* MODAL FILTER */}
       {openFilter && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm">
           <div className="bg-white w-full max-w-lg rounded-xl shadow-xl p-6 animate-scaleIn">
@@ -310,6 +436,97 @@ export default function VoucherTerlarisPage() {
         </div>
       )}
 
+      {/* MODAL EXPORT */}
+      {openExportModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm">
+          <div className="bg-white rounded-2xl p-6 w-full max-w-md mx-4 shadow-xl">
+            <div className="flex justify-between items-center mb-4">
+              <h3 className="text-lg font-bold text-gray-900 flex items-center gap-2">
+                <Download className="w-5 h-5 text-emerald-600" />
+                Export Data Voucher Terlaris
+              </h3>
+              <button
+                onClick={() => setOpenExportModal(false)}
+                className="text-gray-400 hover:text-gray-600 transition"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+            <p className="text-gray-600 mb-6">
+              Pilih opsi export data sesuai kebutuhan:
+            </p>
+
+            <div className="space-y-3 mb-6">
+              {/* Opsi 1: Sesuai Filter */}
+              <label className="flex items-start gap-3 p-3 border rounded-lg cursor-pointer hover:border-emerald-300 transition bg-gray-50">
+                <input
+                  type="radio"
+                  name="exportOption"
+                  value="filtered"
+                  checked={exportOption === "filtered"}
+                  onChange={() => setExportOption("filtered")}
+                  className="form-radio text-emerald-600 mt-1"
+                />
+                <div>
+                  <p className="font-medium text-gray-800">
+                    Sesuai Filter Saat Ini
+                  </p>
+                  <p className="text-xs text-gray-500 mt-1">
+                    Hanya data yang terlihat di tabel dengan filter yang aktif (
+                    {laporan.length} data)
+                  </p>
+                </div>
+              </label>
+
+              {/* Opsi 2: Semua Data */}
+              <label className="flex items-start gap-3 p-3 border rounded-lg cursor-pointer hover:border-emerald-300 transition bg-gray-50">
+                <input
+                  type="radio"
+                  name="exportOption"
+                  value="all"
+                  checked={exportOption === "all"}
+                  onChange={() => setExportOption("all")}
+                  className="form-radio text-emerald-600 mt-1"
+                />
+                <div>
+                  <p className="font-medium text-gray-800">Semua Data</p>
+                  <p className="text-xs text-gray-500 mt-1">
+                    Seluruh data voucher terlaris tanpa filter (mungkin ribuan
+                    data)
+                  </p>
+                </div>
+              </label>
+            </div>
+
+            <div className="flex justify-end gap-3">
+              <button
+                onClick={() => setOpenExportModal(false)}
+                className="px-4 py-2 text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200 transition"
+              >
+                Batal
+              </button>
+              <button
+                onClick={handleExport}
+                disabled={loadingExport}
+                className="px-4 py-2 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 disabled:opacity-50 flex items-center gap-2 transition"
+              >
+                {loadingExport ? (
+                  <>
+                    <span className="animate-spin">⏳</span>
+                    <span>Menyiapkan...</span>
+                  </>
+                ) : (
+                  <>
+                    <Download className="w-4 h-4" />
+                    <span>Export Excel</span>
+                  </>
+                )}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Tabel Voucher Terlaris */}
       <div className="bg-white rounded-lg shadow-sm border overflow-hidden">
         <div className="overflow-x-auto">
@@ -319,6 +536,8 @@ export default function VoucherTerlarisPage() {
                 <th className="px-4 py-3 text-left">Peringkat</th>
                 <th className="px-4 py-3 text-left">Nama Voucher</th>
                 <th className="px-4 py-3 text-left">Brand</th>
+                <th className="px-4 py-3 text-left">Harga Modal</th>
+                <th className="px-4 py-3 text-left">Harga Jual</th>
                 <th className="px-4 py-3 text-left">Jumlah Terjual</th>
                 <th className="px-4 py-3 text-left">Modal Dikeluarkan</th>
                 <th className="px-4 py-3 text-left">Pendapatan</th>
@@ -329,7 +548,7 @@ export default function VoucherTerlarisPage() {
               {laporan.length === 0 ? (
                 <tr>
                   <td
-                    colSpan="6"
+                    colSpan="9"
                     className="px-4 py-6 text-center text-gray-500"
                   >
                     Tidak ada data
@@ -337,25 +556,34 @@ export default function VoucherTerlarisPage() {
                 </tr>
               ) : (
                 laporan.map((item, i) => (
-                  <tr key={item.voucher.id} className="hover:bg-gray-50">
+                  <tr key={item.voucher?.id || i} className="hover:bg-gray-50">
                     <td className="px-4 py-3">
                       <span className="bg-blue-100 text-blue-800 px-2 py-1 rounded-full font-bold">
                         #{i + 1}
                       </span>
                     </td>
                     <td className="px-4 py-3 font-medium">
-                      {item.voucher.nama}
+                      {item.voucher?.nama || "-"}
                     </td>
-                    <td className="px-4 py-3">{item.voucher.brand}</td>
-                    <td className="px-4 py-3 font-bold text-blue-600">
-                      {item.jumlahTerjual} pcs
-                    </td>
-                    <td className="px-4 py-3">{formatRupiah(item.modal)}</td>
+                    <td className="px-4 py-3">{item.voucher?.brand || "-"}</td>
                     <td className="px-4 py-3">
-                      {formatRupiah(item.totalPendapatan)}
+                      {formatRupiah(item.voucher?.hargaPokok || 0)}
+                    </td>
+                    <td className="px-4 py-3">
+                      {formatRupiah(item.voucher?.hargaEceran || 0)}
+                    </td>
+
+                    <td className="px-4 py-3 font-bold text-blue-600">
+                      {item.jumlahTerjual || 0} pcs
+                    </td>
+                    <td className="px-4 py-3 text-red-700">
+                      {formatRupiah(item.modal || 0)}
+                    </td>
+                    <td className="px-4 py-3">
+                      {formatRupiah(item.totalPendapatan || 0)}
                     </td>
                     <td className="px-4 py-3 text-green-600">
-                      {formatRupiah(item.totalKeuntungan)}
+                      {formatRupiah(item.totalKeuntungan || 0)}
                     </td>
                   </tr>
                 ))
@@ -365,57 +593,50 @@ export default function VoucherTerlarisPage() {
         </div>
 
         {/* Pagination */}
-        {/* <div className="bg-gray-50 border-t-2 border-gray-200 p-4">
-          <div className="flex justify-between items-center">
+        {/* <div className="bg-gray-50 border-t border-gray-200 p-4">
+          <div className="flex justify-between items-center flex-wrap gap-3">
             <div className="text-sm text-gray-600">
-              <span className="font-semibold">{page}</span> dari{" "}
-              <span className="font-semibold">{meta?.totalPages}</span>
+              Menampilkan {(page - 1) * pageSize + 1}–
+              {Math.min(page * pageSize, meta?.totalItems || 0)} dari{" "}
+              <span className="font-semibold">{meta?.totalItems || 0}</span>{" "}
+              data
             </div>
-            <div className="flex items-center  gap-3">
+            <div className="flex items-center gap-3">
               <select
                 value={pageSize}
                 onChange={(e) => {
                   setPageSize(Number(e.target.value));
                   setPage(1);
                 }}
-                className="
-      px-4 py-2
-      text-sm font-medium
-      rounded-xl
-      border border-gray-200
-      bg-white
-      shadow-sm
-      focus:outline-none
-      focus:ring-2 focus:ring-blue-500
-      focus:border-blue-500
-      hover:bg-gray-50
-      transition
-    "
+                className="px-4 py-2 text-sm font-medium rounded-xl border border-gray-200 bg-white shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
               >
-                <option value={5}>5</option>
-                <option value={10}>10</option>
-                <option value={20}>20</option>
-                <option value={50}>50</option>
+                <option value={3}>3 / halaman</option>
+                <option value={5}>5 / halaman</option>
+                <option value={10}>10 / halaman</option>
+                <option value={20}>20 / halaman</option>
+                <option value={50}>50 / halaman</option>
               </select>
             </div>
             <div className="flex items-center gap-2">
               <button
                 onClick={() => setPage((prev) => Math.max(prev - 1, 1))}
                 disabled={page <= 1}
-                className="px-4 py-2 border-2 border-gray-300 rounded-lg text-sm font-medium disabled:text-gray-400 disabled:cursor-not-allowed hover:bg-gray-100 transition flex items-center gap-2"
+                className="px-4 py-2 border border-gray-300 rounded-lg text-sm font-medium disabled:text-gray-400 disabled:cursor-not-allowed hover:bg-gray-100 transition flex items-center gap-2"
               >
                 <ChevronLeft className="w-4 h-4" />
+                Prev
               </button>
               <div className="px-4 py-2 bg-slate-700 text-white rounded-lg font-semibold text-sm">
-                {page}
+                {page} / {meta?.totalPages || 1}
               </div>
               <button
                 onClick={() =>
-                  setPage((prev) => Math.min(prev + 1, meta?.totalPages))
+                  setPage((prev) => Math.min(prev + 1, meta?.totalPages || 1))
                 }
-                disabled={page >= meta?.totalPages}
-                className="px-4 py-2 border-2 border-gray-300 rounded-lg text-sm font-medium disabled:text-gray-400 disabled:cursor-not-allowed hover:bg-gray-100 transition flex items-center gap-2"
+                disabled={page >= (meta?.totalPages || 1)}
+                className="px-4 py-2 border border-gray-300 rounded-lg text-sm font-medium disabled:text-gray-400 disabled:cursor-not-allowed hover:bg-gray-100 transition flex items-center gap-2"
               >
+                Next
                 <ChevronRight className="w-4 h-4" />
               </button>
             </div>
@@ -425,5 +646,3 @@ export default function VoucherTerlarisPage() {
     </div>
   );
 }
-
-// Stat Card Component

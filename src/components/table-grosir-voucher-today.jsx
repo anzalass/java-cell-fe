@@ -1,4 +1,11 @@
-import { ChevronLeft, ChevronRight, Eye, Pencil, Trash2 } from "lucide-react";
+import {
+  ChevronLeft,
+  ChevronRight,
+  Eye,
+  Pencil,
+  Printer,
+  Trash2,
+} from "lucide-react";
 import { useState, useMemo } from "react";
 import api from "../api/client";
 import { useAuthStore } from "../store/useAuthStore";
@@ -255,14 +262,16 @@ body {
                 </div>
 
                 {/* INFO */}
-                <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 text-sm mb-4">
+                <div className="grid grid-cols-1 gap-3 text-sm mb-4">
                   <div>
                     <p className="text-xs text-gray-500">Tanggal</p>
                     <p className="font-medium text-gray-700">
-                      {new Date(item.tanggal).toLocaleDateString("id-ID", {
+                      {new Date(item.createdAt).toLocaleDateString("id-ID", {
                         day: "numeric",
                         month: "long",
                         year: "numeric",
+                        hour: "2-digit",
+                        minute: "2-digit",
                       })}
                     </p>
                   </div>
@@ -301,6 +310,14 @@ body {
                     title="Edit Status"
                   >
                     <Pencil className="w-4 h-4" />
+                  </button>
+
+                  <button
+                    className="p-2 rounded-lg bg-green-50 text-green-600 hover:bg-green-100 transition"
+                    title="Edit Status"
+                    onClick={() => navigate(`/print/grosir/${item.id}`)}
+                  >
+                    <Printer className="w-4 h-4" />
                   </button>
 
                   {item.status !== "Selesai" && (
@@ -373,10 +390,12 @@ body {
               <div className="flex justify-between">
                 <span className="text-gray-600">Tanggal:</span>
                 <span>
-                  {new Date(openDetail.tanggal).toLocaleString("id-ID", {
+                  {new Date(openDetail.createdAt).toLocaleString("id-ID", {
                     day: "numeric",
                     month: "long",
                     year: "numeric",
+                    hour: "2-digit",
+                    minute: "2-digit",
                   })}{" "}
                 </span>
               </div>
@@ -432,7 +451,7 @@ body {
                 onClick={() => navigate(`/print/grosir/${openDetail.id}`)}
                 className="px-4 py-2 bg-gray-700 text-white rounded-lg hover:bg-gray-800"
               >
-                Printt
+                Print
               </button>
 
               <button

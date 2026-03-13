@@ -1,8 +1,6 @@
 import { useState, useEffect } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import {
-  X,
-  ChevronDown,
   LayoutDashboard,
   Building,
   UserPlus,
@@ -10,29 +8,48 @@ import {
   Boxes,
   FileText,
   Database,
-  MessageCircleHeart,
-  Book,
   CreditCard,
   UserPen,
+  Settings2,
+  ShoppingCart,
+  Ticket,
+  TicketPercent,
+  Wrench,
+  Headphones,
+  Users,
+  User,
+  Phone,
+  Wallet,
+  ShoppingBag,
+  Package,
   LogOut,
+  ChevronDown,
+  CircleDollarSign,
 } from "lucide-react";
-import api from "../api/client";
 
-// Map icon
 const iconMap = {
   dashboard: LayoutDashboard,
   university: Building,
-  userPlus: UserPlus,
   clipboard: Clipboard,
   boxes: Boxes,
-  filetext: FileText,
-  db: Database,
-  messagecircleheart: MessageCircleHeart,
-  book: Book,
-  billing: CreditCard,
+  fileText: FileText,
+  database: Database,
+  creditCard: CreditCard,
   userPen: UserPen,
+  settings: Settings2,
+  shoppingCart: ShoppingCart,
+  ticket: Ticket,
+  ticketPercent: TicketPercent,
+  wrench: Wrench,
+  headphones: Headphones,
+  users: Users,
+  user: User,
+  phone: Phone,
+  wallet: Wallet,
+  shoppingBag: ShoppingBag,
+  package: Package,
+  dollar: CircleDollarSign,
 };
-
 const Sidebar = ({
   navItems,
   isCollapsed = false,

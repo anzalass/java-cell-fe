@@ -50,23 +50,25 @@ export default function LoginPage() {
       fetchUser(); // Perbarui state auth
       navigate("/dashboard/overview");
     } catch (error) {
+      console.log(error);
+
       Swal.close();
 
-      let errorMsg = "Email atau password salah.";
-      if (error.response?.data?.error) {
-        errorMsg = error.response.data.error;
-      } else if (error.response?.status === 401) {
-        errorMsg = "Email atau password salah.";
-      } else if (error.response?.status === 404) {
-        errorMsg = "Akun tidak ditemukan.";
-      } else if (error.message === "Network Error") {
-        errorMsg =
-          "Tidak dapat terhubung ke server. Periksa koneksi internet Anda.";
-      }
+      // let errorMsg = "Email atau password salah.";
+      // if (error.response?.data?.error) {
+      //   errorMsg = error.response.data.error;
+      // } else if (error.response?.status === 401) {
+      //   errorMsg = "Email atau password salah.";
+      // } else if (error.response?.status === 404) {
+      //   errorMsg = "Akun tidak ditemukan.";
+      // } else if (error.message === "Network Error") {
+      //   errorMsg =
+      //     "Tidak dapat terhubung ke server. Periksa koneksi internet Anda.";
+      // }
 
       await Swal.fire({
         title: "Login Gagal",
-        text: errorMsg,
+        text: error?.response?.data?.message,
         icon: "error",
         confirmButtonText: "OK",
       });

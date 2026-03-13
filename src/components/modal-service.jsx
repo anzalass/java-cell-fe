@@ -16,6 +16,8 @@ import {
   Plus,
   Trash2,
 } from "lucide-react";
+import { Html5Qrcode } from "html5-qrcode";
+import { NumericFormat } from "react-number-format";
 
 export default function ModalServiceHP({ isOpen, onClose, onSuccess }) {
   const {
@@ -23,6 +25,7 @@ export default function ModalServiceHP({ isOpen, onClose, onSuccess }) {
     handleSubmit,
     reset,
     watch,
+    setValue,
     formState: { errors },
   } = useForm({
     defaultValues: {
@@ -53,7 +56,9 @@ export default function ModalServiceHP({ isOpen, onClose, onSuccess }) {
   // Tambahkan state baru untuk autocomplete
   const [searchSparepart, setSearchSparepart] = useState("");
   const [showSparepartDropdown, setShowSparepartDropdown] = useState(false);
-  const [selectedSparepartForAdd, setSelectedSparepartForAdd] = useState(null); // opsional: simpan objek, bukan hanya nama
+  const [selectedSparepartForAdd, setSelectedSparepartForAdd] = useState(null);
+  const [isScanning, setIsScanning] = useState(false);
+  // opsional: simpan objek, bukan hanya nama
 
   // Filter sparepart berdasarkan pencarian
   const filteredSpareparts = sparepartMasterData.filter((sp) =>
@@ -118,32 +123,21 @@ export default function ModalServiceHP({ isOpen, onClose, onSuccess }) {
 
   // Fetch members
   useEffect(() => {
-    if (!memberSearch.trim()) {
-      setMembersList([]);
-      return;
-    }
+    if (!isOpen) return;
 
-    const fetchMembers = async () => {
+    const fetchAllMembers = async () => {
       try {
         const res = await api.get("member", {
           headers: { Authorization: `Bearer ${user.token}` },
         });
-        const allMembers = res.data.data || [];
-        const filtered = allMembers.filter(
-          (m) =>
-            m.nama.toLowerCase().includes(memberSearch.toLowerCase()) ||
-            (m.noTelp && m.noTelp.includes(memberSearch))
-        );
-        setMembersList(filtered);
-        setShowMemberDropdown(true);
+        setMembersList(res.data.data || []);
       } catch (err) {
         console.error("Fetch members error:", err);
       }
     };
 
-    clearTimeout(timeoutRef.current);
-    timeoutRef.current = setTimeout(fetchMembers, 300);
-  }, [memberSearch, user.token]);
+    fetchAllMembers();
+  }, [isOpen, user.token]);
 
   // Fetch sparepart master
   useEffect(() => {
@@ -152,7 +146,9 @@ export default function ModalServiceHP({ isOpen, onClose, onSuccess }) {
     const fetchMaster = async () => {
       try {
         setLoadingMaster(true);
-        const res = await api.get("sparepart-master");
+        const res = await api.get("sparepart-master", {
+          headers: { Authorization: `Bearer ${user.token}` },
+        });
         setSparepartsMasterData(res.data || []);
       } catch (err) {
         console.error("Gagal load sparepart:", err);
@@ -270,11 +266,87 @@ export default function ModalServiceHP({ isOpen, onClose, onSuccess }) {
     }
   };
 
+  const closeForm = () => {
+    onClose();
+    setIsScanning(false);
+    reset();
+    setSpareparts([]);
+    setSelectedMember(null);
+  };
+
   const selectMember = (member) => {
     setSelectedMember(member);
     setMemberSearch("");
     setShowMemberDropdown(false);
   };
+
+  useEffect(() => {
+    let html5QrCode = null;
+
+    if (isScanning) {
+      // Tunggu sedikit agar DOM selesai render
+      const timer = setTimeout(() => {
+        const readerElement = document.getElementById("reader");
+        if (!readerElement) {
+          console.error("Elemen #reader tidak ditemukan!");
+          return;
+        }
+
+        const config = {
+          fps: 10,
+          qrbox: { width: 250, height: 250 },
+          aspectRatio: 1.0,
+        };
+
+        html5QrCode = new Html5Qrcode("reader");
+        html5QrCode
+          .start(
+            { facingMode: "environment" },
+            config,
+            async (decodedText) => {
+              const cleaned = decodedText.trim();
+              const matched = membersList.find(
+                (m) => m.noTelp === cleaned || m.kodeMember === cleaned
+              );
+
+              if (matched) {
+                selectMember(matched);
+                Swal.fire({
+                  title: "Berhasil!",
+                  text: `${matched.nama} Telah mmelakukan transaksi`,
+                  icon: "success",
+                  timer: 1500,
+                  showConfirmButton: false,
+                });
+              } else {
+                Swal.fire({
+                  title: "Member Tidak Ditemukan!",
+                  text: `Kode "${cleaned}" tidak terdaftar.`,
+                  icon: "error",
+                });
+              }
+              setIsScanning(false);
+            },
+            (errorMessage) => {
+              // Opsional: log error
+              console.log(errorMessage);
+            }
+          )
+          .catch((err) => {
+            console.error("Gagal mulai scanner:", err);
+            Swal.fire("Error", "Gagal membuka kamera", "error");
+            setIsScanning(false);
+          });
+      }, 100); // Delay kecil agar DOM siap
+
+      return () => {
+        clearTimeout(timer);
+        if (html5QrCode) {
+          html5QrCode.stop().then(() => html5QrCode.clear());
+        }
+      };
+    }
+  }, [isScanning, membersList]); // ✅ Tambahkan membersList
 
   if (!isOpen) return null;
 
@@ -284,7 +356,7 @@ export default function ModalServiceHP({ isOpen, onClose, onSuccess }) {
         {/* Header */}
         <div className="bg-gradient-to-r from-purple-600 to-purple-700 text-white p-6 relative">
           <button
-            onClick={onClose}
+            onClick={closeForm}
             className="absolute top-4 right-4 bg-white/20 hover:bg-white/30 rounded-full p-2 transition"
           >
             <X className="w-5 h-5" />
@@ -320,7 +392,9 @@ export default function ModalServiceHP({ isOpen, onClose, onSuccess }) {
                   Pilih Member (Opsional)
                 </label>
                 <div className="relative">
-                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+                  <Search
+                    className={`absolute left-3   ${selectedMember ? "top-6" : "top-1/2"}  -translate-y-1/2 w-5 h-5 text-gray-400`}
+                  />
                   <input
                     type="text"
                     value={memberSearch}
@@ -334,6 +408,32 @@ export default function ModalServiceHP({ isOpen, onClose, onSuccess }) {
                       membersList.length > 0 && setShowMemberDropdown(true)
                     }
                   />
+
+                  <button
+                    type="button"
+                    onClick={() => setIsScanning(true)} // ✅ BENAR
+                    className={`absolute right-3  ${selectedMember ? "top-5" : "top-1/2"}  -translate-y-1/2 text-blue-600 hover:text-blue-800`}
+                  >
+                    📷
+                  </button>
+
+                  {/* Area Scanner — selalu ada di DOM, tapi hidden jika tidak scan */}
+                  <div
+                    id="reader"
+                    className={`w-full mx-auto transition-opacity duration-300 ${
+                      isScanning ? "block opacity-100" : "hidden opacity-0"
+                    }`}
+                  ></div>
+
+                  {isScanning && (
+                    <button
+                      type="button"
+                      onClick={() => setIsScanning(false)}
+                      className="w-full mt-3 py-2 bg-red-500 text-white rounded-lg"
+                    >
+                      Batal Scan
+                    </button>
+                  )}
 
                   {showMemberDropdown && (
                     <div className="absolute z-50 bg-white border-2 border-purple-200 w-full rounded-lg shadow-lg mt-2 max-h-48 overflow-y-auto">
@@ -590,7 +690,7 @@ export default function ModalServiceHP({ isOpen, onClose, onSuccess }) {
                   <DollarSign className="w-4 h-4" />
                   Biaya Jasa <span className="text-red-500">*</span>
                 </label>
-                <input
+                {/* <input
                   type="number"
                   {...register("biayaJasa", {
                     valueAsNumber: true,
@@ -607,7 +707,21 @@ export default function ModalServiceHP({ isOpen, onClose, onSuccess }) {
                   <p className="text-red-500 text-sm mt-1">
                     {errors.biayaJasa.message}
                   </p>
-                )}
+                )} */}
+
+                <div className="relative">
+                  <NumericFormat
+                    thousandSeparator="."
+                    decimalSeparator=","
+                    allowNegative={false}
+                    prefix="Rp "
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500"
+                    placeholder="Rp 45.000"
+                    onValueChange={(values) => {
+                      setValue("biayaJasa", values.floatValue);
+                    }}
+                  />
+                </div>
               </div>
 
               {/* Keuntungan */}

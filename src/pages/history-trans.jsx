@@ -10,6 +10,7 @@ import {
   Tag,
   ChevronLeft,
   ChevronRight,
+  Search,
 } from "lucide-react";
 import api from "../api/client";
 import { useAuthStore } from "../store/useAuthStore";
@@ -18,7 +19,8 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 export default function LaporanKeuanganPage() {
   const { user, isCheckingAuth, fetchUser } = useAuthStore();
 
-  const kategoriList = ["Tarik Tunai", "Transit", "Transfer-Topup", "VD"];
+  const kategoriList = ["Tarik Tunai", "PPOB", "Transfer-Topup", "VD"];
+  const [statusFilter, setStatusFilter] = useState("active");
 
   const [loading, setLoading] = useState(true);
 
@@ -46,10 +48,13 @@ export default function LaporanKeuanganPage() {
     filterJenis,
     filterKategori,
     token,
+    statusFilter,
   }) => {
     const params = new URLSearchParams();
     params.append("page", page);
     params.append("pageSize", pageSize);
+    params.append("deletedFilter", statusFilter);
+
     params.append("page2", page2);
     params.append("pageSize2", pageSize2);
     params.append("filterPeriod", filterPeriod);
@@ -87,6 +92,7 @@ export default function LaporanKeuanganPage() {
       dateTo,
       filterJenis,
       filterKategori,
+      statusFilter,
     ],
     queryFn: () =>
       fetchLaporanKeuangan({
@@ -100,6 +106,7 @@ export default function LaporanKeuanganPage() {
         filterJenis,
         filterKategori,
         token: user.token,
+        statusFilter,
       }),
     keepPreviousData: true,
   });
@@ -240,6 +247,47 @@ export default function LaporanKeuanganPage() {
             {/* Body */}
             <div className="space-y-6">
               {/* Periode */}
+              <div>
+                <label className="block text-sm font-semibold text-gray-700 mb-2">
+                  Status Transaksi
+                </label>
+
+                <div className="flex bg-gray-100 p-1 my-3 rounded-xl">
+                  <button
+                    onClick={() => setStatusFilter("active")}
+                    className={`flex-1 py-2 rounded-lg text-sm font-semibold transition ${
+                      statusFilter === "active"
+                        ? "bg-white shadow text-blue-600"
+                        : "text-gray-500 hover:text-gray-700"
+                    }`}
+                  >
+                    Active
+                  </button>
+
+                  <button
+                    onClick={() => setStatusFilter("deleted")}
+                    className={`flex-1 py-2 rounded-lg text-sm font-semibold transition ${
+                      statusFilter === "deleted"
+                        ? "bg-white shadow text-red-600"
+                        : "text-gray-500 hover:text-gray-700"
+                    }`}
+                  >
+                    Void
+                  </button>
+
+                  {/* <button
+                  onClick={() => setStatusFilter("all")}
+                  className={`flex-1 py-2 rounded-lg text-sm font-semibold transition ${
+                    statusFilter === "all"
+                      ? "bg-white shadow text-gray-800"
+                      : "text-gray-500 hover:text-gray-700"
+                  }`}
+                >
+                  Semua
+                </button> */}
+                </div>
+              </div>
+
               <div>
                 <label className="block text-sm font-semibold text-gray-700 mb-3">
                   Periode Waktu
@@ -393,7 +441,7 @@ export default function LaporanKeuanganPage() {
           bg="bg-red-50"
         />
         <StatCard
-          title="Saldo Bersih"
+          title="Keuntungan Bersih"
           value={`Rp ${data.saldoBersih.toLocaleString("id-ID")}`}
           icon={<TrendingUp className="w-4 h-4" />}
           color={data.saldoBersih >= 0 ? "text-blue-600" : "text-red-600"}

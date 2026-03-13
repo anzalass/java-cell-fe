@@ -1,14 +1,14 @@
-import { Eye, Pencil, Trash2 } from "lucide-react";
+import { Eye, Pencil, Printer, Trash2 } from "lucide-react";
 import { useMemo, useState } from "react";
 import api from "../api/client";
 import { useAuthStore } from "../store/useAuthStore";
 import Swal from "sweetalert2";
+import { useNavigate } from "react-router-dom";
 
 export default function TableSectionAccToday({ title, data = [], onSuccess }) {
-  console.log("dtt", data);
-
   const { user, isLoading, isCheckingAuth, fetchUser } = useAuthStore();
   const [search, setSearch] = useState("");
+  const nav = useNavigate();
 
   const filteredData = useMemo(() => {
     return data.filter((item) =>
@@ -160,6 +160,14 @@ export default function TableSectionAccToday({ title, data = [], onSuccess }) {
                         <Eye className="w-4 h-4" />
                       </button>
 
+                      <button
+                        title="Detail"
+                        onClick={() => nav(`/print-transaksi-acc/${item.id}`)}
+                        className="p-2 rounded-lg bg-yellow-50 text-yellow-600 hover:bg-blue-100 transition"
+                      >
+                        <Printer className="w-4 h-4" />
+                      </button>
+
                       {item.status !== "Sukses" && (
                         <button
                           title="Delete"
@@ -198,10 +206,12 @@ export default function TableSectionAccToday({ title, data = [], onSuccess }) {
                     <div className="col-span-2">
                       <p className="text-xs text-gray-500">Tanggal</p>
                       <p className="text-gray-700">
-                        {new Date(item.tanggal).toLocaleDateString("id-ID", {
+                        {new Date(item.createdAt).toLocaleDateString("id-ID", {
                           day: "numeric",
                           month: "long",
                           year: "numeric",
+                          hour: "2-digit",
+                          minute: "2-digit",
                         })}
                       </p>
                     </div>
@@ -348,7 +358,13 @@ export default function TableSectionAccToday({ title, data = [], onSuccess }) {
               </table>
             </div>
 
-            <div className="mt-6 flex justify-end">
+            <div className="mt-6 gap-x-4 flex justify-end">
+              <button
+                onClick={() => nav(`/print-transaksi-acc/${openDetail.id}`)}
+                className="px-4 py-2 bg-gray-700 hover:bg-gray-800 text-white font-medium rounded-lg transition-colors focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-offset-2"
+              >
+                Print
+              </button>
               <button
                 onClick={() => setOpenDetail(null)}
                 className="px-4 py-2 bg-gray-700 hover:bg-gray-800 text-white font-medium rounded-lg transition-colors focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-offset-2"

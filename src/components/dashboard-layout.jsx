@@ -16,8 +16,6 @@ export default function DashboardLayout() {
     fetchUser();
   }, []);
 
-  console.log(user);
-
   // Sinkronkan sidebar
   // useEffect(() => {
   //   setSidebarOpen(isDesktop);
@@ -63,9 +61,10 @@ export default function DashboardLayout() {
             >
               ☰
             </button>
-            <p className="mt-3">{user?.nama}</p>
+            {/* <h1 className="text-lg font-semibold mt-2">{user?.nama}</h1> */}
           </div>
-          <h1 className="text-lg font-semibold">Dashboard</h1>
+
+          <h1 className="text-lg font-semibold">{user?.nama}</h1>
         </header>
 
         <div className="-mt-6 p-2 md:p-6 transition-all duration-300">

@@ -13,9 +13,12 @@ import {
   Trash2,
   Plus,
 } from "lucide-react";
+import { Html5Qrcode } from "html5-qrcode";
 
 export default function ModalTransaksiAcc({ isOpen, onClose, onSuccess }) {
   const { user } = useAuthStore();
+
+  const [isScanning, setIsScanning] = useState(false);
 
   const [barcode, setBarcode] = useState("");
   const [manualId, setManualId] = useState("");
@@ -56,33 +59,51 @@ export default function ModalTransaksiAcc({ isOpen, onClose, onSuccess }) {
   }, [isOpen, user.token]);
 
   // Fetch member saat ketik (autocomplete)
-  useEffect(() => {
-    if (!memberSearch.trim()) {
-      setMembersList([]);
-      return;
-    }
+  // useEffect(() => {
+  //   if (!memberSearch.trim()) {
+  //     setMembersList([]);
+  //     return;
+  //   }
 
-    const fetchMembers = async () => {
+  //   const fetchMembers = async () => {
+  //     try {
+  //       const res = await api.get("member", {
+  //         headers: { Authorization: `Bearer ${user.token}` },
+  //       });
+  //       const allMembers = res.data.data || [];
+  //       const filtered = allMembers.filter(
+  //         (m) =>
+  //           m.nama.toLowerCase().includes(memberSearch.toLowerCase()) ||
+  //           (m.noTelp && m.noTelp.includes(memberSearch))
+  //       );
+  //       setMembersList(filtered);
+  //       setShowMemberDropdown(true);
+  //     } catch (err) {
+  //       console.error("Fetch members error:", err);
+  //     }
+  //   };
+
+  //   clearTimeout(timeoutRef.current);
+  //   timeoutRef.current = setTimeout(fetchMembers, 300);
+  // }, [memberSearch, user.token]);
+
+  // Fetch SEMUA member saat modal dibuka (sekali saja)
+  useEffect(() => {
+    if (!isOpen) return;
+
+    const fetchAllMembers = async () => {
       try {
         const res = await api.get("member", {
           headers: { Authorization: `Bearer ${user.token}` },
         });
-        const allMembers = res.data.data || [];
-        const filtered = allMembers.filter(
-          (m) =>
-            m.nama.toLowerCase().includes(memberSearch.toLowerCase()) ||
-            (m.noTelp && m.noTelp.includes(memberSearch))
-        );
-        setMembersList(filtered);
-        setShowMemberDropdown(true);
+        setMembersList(res.data.data || []);
       } catch (err) {
         console.error("Fetch members error:", err);
       }
     };
 
-    clearTimeout(timeoutRef.current);
-    timeoutRef.current = setTimeout(fetchMembers, 300);
-  }, [memberSearch, user.token]);
+    fetchAllMembers();
+  }, [isOpen, user.token]);
 
   // Handle barcode scan
   useEffect(() => {
@@ -97,6 +118,74 @@ export default function ModalTransaksiAcc({ isOpen, onClose, onSuccess }) {
   useEffect(() => {
     if (isOpen && inputRef.current) inputRef.current.focus();
   }, [isOpen]);
+
+  useEffect(() => {
+    let html5QrCode = null;
+
+    if (isScanning) {
+      // Tunggu sedikit agar DOM selesai render
+      const timer = setTimeout(() => {
+        const readerElement = document.getElementById("reader");
+        if (!readerElement) {
+          console.error("Elemen #reader tidak ditemukan!");
+          return;
+        }
+
+        const config = {
+          fps: 10,
+          qrbox: { width: 250, height: 250 },
+          aspectRatio: 1.0,
+        };
+
+        html5QrCode = new Html5Qrcode("reader");
+        html5QrCode
+          .start(
+            { facingMode: "environment" },
+            config,
+            async (decodedText) => {
+              const cleaned = decodedText.trim();
+              const matched = membersList.find(
+                (m) => m.noTelp === cleaned || m.kodeMember === cleaned
+              );
+
+              if (matched) {
+                selectMember(matched);
+                Swal.fire({
+                  title: "Berhasil!",
+                  text: `${matched.nama} Telah mmelakukan transaksi`,
+                  icon: "success",
+                  timer: 1500,
+                  showConfirmButton: false,
+                });
+              } else {
+                Swal.fire({
+                  title: "Member Tidak Ditemukan!",
+                  text: `Kode "${cleaned}" tidak terdaftar.`,
+                  icon: "error",
+                });
+              }
+              setIsScanning(false);
+            },
+            (errorMessage) => {
+              // Opsional: log error
+              console.log(errorMessage);
+            }
+          )
+          .catch((err) => {
+            console.error("Gagal mulai scanner:", err);
+            Swal.fire("Error", "Gagal membuka kamera", "error");
+            setIsScanning(false);
+          });
+      }, 100); // Delay kecil agar DOM siap
+
+      return () => {
+        clearTimeout(timer);
+        if (html5QrCode) {
+          html5QrCode.stop().then(() => html5QrCode.clear());
+        }
+      };
+    }
+  }, [isScanning, membersList]); // ✅ Tambahkan membersList
 
   if (!isOpen) return null;
 
@@ -262,13 +351,21 @@ export default function ModalTransaksiAcc({ isOpen, onClose, onSuccess }) {
     }
   };
 
+  const closeForm = () => {
+    onClose();
+    setItems([]);
+    setSelectedMember(null);
+    setMemberSearch("");
+    setIsScanning(false);
+  };
+
   return (
     <div className="fixed inset-0 -top-10 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
       <div className="bg-white rounded-2xl w-full max-w-6xl max-h-[95vh] overflow-hidden shadow-2xl flex flex-col">
         {/* Header */}
         <div className="bg-gradient-to-r from-indigo-600 to-indigo-700 text-white p-6 relative">
           <button
-            onClick={onClose}
+            onClick={closeForm}
             className="absolute top-4 right-4 bg-white/20 hover:bg-white/30 rounded-full p-2 transition"
           >
             <X className="w-5 h-5" />
@@ -313,7 +410,9 @@ export default function ModalTransaksiAcc({ isOpen, onClose, onSuccess }) {
                   Pilih Member (Opsional)
                 </label>
                 <div className="relative">
-                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+                  <Search
+                    className={`absolute  left-3  ${selectedMember ? "top-6" : "top-1/2"}  -translate-y-1/2 w-5 h-5 text-gray-400`}
+                  />
                   <input
                     type="text"
                     value={memberSearch}
@@ -328,14 +427,43 @@ export default function ModalTransaksiAcc({ isOpen, onClose, onSuccess }) {
                     }
                   />
 
+                  <button
+                    type="button"
+                    onClick={() => setIsScanning(true)} // ✅ BENAR
+                    className={`absolute right-3  ${selectedMember ? "top-5" : "top-1/2"}  -translate-y-1/2 text-blue-600 hover:text-blue-800`}
+                  >
+                    📷
+                  </button>
+
+                  {/* Area Scanner — selalu ada di DOM, tapi hidden jika tidak scan */}
+                  <div
+                    id="reader"
+                    className={`w-full mx-auto transition-opacity duration-300 ${
+                      isScanning ? "block opacity-100" : "hidden opacity-0"
+                    }`}
+                  ></div>
+
+                  {isScanning && (
+                    <button
+                      type="button"
+                      onClick={() => setIsScanning(false)}
+                      className="w-full mt-3 py-2 bg-red-500 text-white rounded-lg"
+                    >
+                      Batal Scan
+                    </button>
+                  )}
+
                   {showMemberDropdown && (
                     <div className="absolute z-50 bg-white border-2 border-indigo-200 w-full rounded-lg shadow-lg mt-2 max-h-48 overflow-y-auto">
-                      {membersList.length === 0 ? (
-                        <p className="p-3 text-gray-500 text-sm text-center">
-                          Member tidak ditemukan
-                        </p>
-                      ) : (
-                        membersList.map((m) => (
+                      {membersList
+                        .filter(
+                          (m) =>
+                            m.nama
+                              .toLowerCase()
+                              .includes(memberSearch.toLowerCase()) ||
+                            (m.noTelp && m.noTelp.includes(memberSearch))
+                        )
+                        .map((m) => (
                           <div
                             key={m.id}
                             className="p-3 hover:bg-indigo-50 cursor-pointer flex justify-between items-center transition"
@@ -346,8 +474,7 @@ export default function ModalTransaksiAcc({ isOpen, onClose, onSuccess }) {
                               {m.noTelp || "-"}
                             </span>
                           </div>
-                        ))
-                      )}
+                        ))}
                     </div>
                   )}
 

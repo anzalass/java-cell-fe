@@ -1,8 +1,9 @@
-import { Eye, Pencil, Trash2 } from "lucide-react";
+import { Eye, Pencil, Printer, Trash2 } from "lucide-react";
 import { useMemo, useState } from "react";
 import api from "../api/client";
 import { useAuthStore } from "../store/useAuthStore";
 import Swal from "sweetalert2";
+import { useNavigate } from "react-router-dom";
 
 export default function TableSectionSparepartToday({
   title,
@@ -27,6 +28,8 @@ export default function TableSectionSparepartToday({
     startIndex,
     startIndex + itemPerPage
   );
+
+  const nav = useNavigate();
 
   const [openDetail, setOpenDetail] = useState(null);
   const [openEdit, setOpenEdit] = useState(null);
@@ -167,6 +170,16 @@ export default function TableSectionSparepartToday({
                       <Eye className="w-4 h-4" />
                     </button>
 
+                    <button
+                      title="Detail"
+                      onClick={() =>
+                        nav(`/print-transaksi-sparepart/${item.id}`)
+                      }
+                      className="p-2 rounded-lg bg-yellow-50 text-yellow-600 hover:bg-blue-100 transition"
+                    >
+                      <Printer className="w-4 h-4" />
+                    </button>
+
                     {item.status !== "Sukses" && (
                       <button
                         title="Delete"
@@ -211,10 +224,12 @@ export default function TableSectionSparepartToday({
                   <div className="col-span-2">
                     <p className="text-xs text-gray-500">Tanggal</p>
                     <p className="text-gray-700">
-                      {new Date(item.tanggal).toLocaleDateString("id-ID", {
+                      {new Date(item.createdAt).toLocaleDateString("id-ID", {
                         day: "numeric",
                         month: "long",
                         year: "numeric",
+                        hour: "2-digit",
+                        minute: "2-digit",
                       })}
                     </p>
                   </div>
@@ -312,7 +327,7 @@ export default function TableSectionSparepartToday({
 
             <h3 className="font-semibold text-gray-800 mb-3">Item Transaksi</h3>
 
-            <div className="overflow-hidden rounded-lg border border-gray-200">
+            <div className="overflow-x-auto rounded-lg border border-gray-200">
               <table className="w-full ">
                 <thead className="bg-gray-50 text-gray-700">
                   <tr>
@@ -365,7 +380,9 @@ export default function TableSectionSparepartToday({
 
             <div className="mt-5 flex gap-x-3 justify-end">
               <button
-                onClick={() => setOpenDetail(null)}
+                onClick={() =>
+                  nav(`/print-transaksi-sparepart/${openDetail.id}`)
+                }
                 className="px-4 py-2 bg-gray-700 text-white rounded-lg hover:bg-gray-800"
               >
                 Print
