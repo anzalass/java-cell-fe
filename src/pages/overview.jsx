@@ -129,6 +129,7 @@ export default function Overview() {
     staleTime: 1000 * 60 * 5,
     cacheTime: 1000 * 60 * 30,
     refetchOnWindowFocus: false,
+    placeholderData: (prev) => prev,
   });
 
   const stats = useMemo(() => {
