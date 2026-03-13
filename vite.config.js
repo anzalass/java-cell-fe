@@ -7,7 +7,13 @@ export default defineConfig({
     react(),
     VitePWA({
       registerType: "autoUpdate",
+
+      workbox: {
+        maximumFileSizeToCacheInBytes: 5000000, // 5 MB
+      },
+
       includeAssets: ["icons/icon-192.png", "icons/icon-512.png"],
+
       manifest: {
         name: "Java Cell",
         short_name: "Java Cell",
@@ -17,14 +23,14 @@ export default defineConfig({
         theme_color: "#1e40af",
         icons: [
           {
-            src: "/vite.svg",
+            src: "/icons/icon-192.png",
             sizes: "192x192",
-            type: "image/svg",
+            type: "image/png",
           },
           {
-            src: "/vite.svg",
+            src: "/icons/icon-512.png",
             sizes: "512x512",
-            type: "image/svg",
+            type: "image/png",
           },
         ],
       },
