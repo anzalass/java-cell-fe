@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useCallback, useState } from "react";
 import {
   Wallet,
   X,
@@ -40,6 +40,7 @@ import { DetailOmsetModal } from "../components/detail-omset-modal";
 import { DetailTrxModal } from "../components/detail-trx-modal";
 import { DetailServiceModal } from "../components/detail-service-modal";
 import { DetailServiceModal2 } from "../components/detail-service-modal2";
+import { StatsSection } from "../components/stats-components";
 
 export default function Overview() {
   const { user } = useAuthStore();
@@ -62,6 +63,26 @@ export default function Overview() {
   const [searchSparepartStok, setSearchSparepartStok] = useState("");
   const [searchVdStok, setSearchVdStok] = useState("");
 
+  const openKeuntungan = useCallback(() => {
+    setModalKeuntungan(true);
+  }, []);
+
+  const openOmset = useCallback(() => {
+    setModalOmset(true);
+  }, []);
+
+  const openTrx = useCallback(() => {
+    setModalTrx(true);
+  }, []);
+
+  const openService = useCallback(() => {
+    setModalService(true);
+  }, []);
+
+  const openService2 = useCallback(() => {
+    setModalService2(true);
+  }, []);
+
   // === REACT QUERY DASHBOARD ===
   const {
     data: dashboardData,
@@ -78,107 +99,58 @@ export default function Overview() {
       return res.data.data;
     },
     enabled: !!user?.token,
-    keepPreviousData: true,
+    staleTime: 1000 * 60 * 5,
+    cacheTime: 1000 * 60 * 30,
+    refetchOnWindowFocus: false,
   });
 
   if (isLoading) {
     return <div className="p-6">Memuat data dashboard...</div>;
   }
 
-  const d = dashboardData;
+  const stats = useMemo(() => {
+    const d = dashboardData || {};
 
+    return {
+      keuntunganHariIni:
+        Number(d.totalKeuntunganHariIni || 0) +
+        Number(d.keuntunganGrosirVoucherHariIni || 0) +
+        Number(d.keuntunganAccHariIni || 0) +
+        Number(d.keuntunganVoucherHarian || 0),
+
+      omsetHariIni:
+        (d.omsetGrosirVoucherHariIni || 0) +
+        (d.omsetAccHariIni || 0) +
+        (d.omsetVoucherHarian || 0),
+
+      transaksiHariIni:
+        (d.totalTransaksiVoucherHarian || 0) +
+        (d.trxAccHariIniTotal || 0) +
+        (d.trxVoucherDownlineHariIniTotal || 0) +
+        (d.trxHariIniTotal || 0),
+
+      voucherPending: d.trxVoucherPendingHariIni || 0,
+
+      omsetService:
+        (d.omsetServicetHariIni || 0) + (d.omsetSparepartHariIni || 0),
+
+      keuntunganService:
+        (d.keuntunganServiceHariIni || 0) + (d.keuntunganSparepartHariIni || 0),
+    };
+  }, [dashboardData]);
   return (
     <div className="p-2 space-y-8 mt-6">
       {/* HEADER */}
       {/* STAT CARDS — DATA REAL */}
       {/* Tambahkan loading state */}
-      {!d ? (
-        <div className="grid grid-cols-2 lg:grid-cols-3 gap-2 sm:gap-3">
-          {[...Array(6)].map((_, i) => (
-            <div
-              key={i}
-              className="bg-gray-100 rounded-2xl p-4 sm:p-5 animate-pulse min-h-[100px]"
-            >
-              <div className="h-4 bg-gray-200 rounded w-3/4 mb-2"></div>
-              <div className="h-6 bg-gray-200 rounded w-1/2"></div>
-            </div>
-          ))}
-        </div>
-      ) : (
-        <div className="grid grid-cols-2 lg:grid-cols-3 gap-2 sm:gap-3">
-          {/* Keuntungan Hari Ini - GREEN */}
-          <StatCard
-            label="Keuntungan Hari Ini"
-            value={`Rp ${(
-              Number(d?.totalKeuntunganHariIni || 0) +
-              Number(d?.keuntunganGrosirVoucherHariIni || 0) +
-              Number(d?.keuntunganAccHariIni || 0) +
-              Number(d?.keuntunganVoucherHarian || 0)
-            ).toLocaleString("id-ID")}`}
-            icon={DollarSign}
-            color="emerald"
-            onClick={() => setModalKeuntungan(true)}
-          />
-
-          {/* Omset Hari Ini - BLUE */}
-          <StatCard
-            label="Omset Hari Ini"
-            value={`Rp ${(
-              (d?.omsetGrosirVoucherHariIni || 0) +
-              (d?.omsetAccHariIni || 0) +
-              (d?.omsetVoucherHarian || 0)
-            ).toLocaleString("id-ID")}`}
-            icon={Wallet}
-            color="blue"
-            onClick={() => setModalOmset(true)}
-          />
-
-          {/* Transaksi Hari Ini - INDIGO */}
-          <StatCard
-            label="Transaksi Hari Ini"
-            value={
-              (d?.totalTransaksiVoucherHarian || 0) +
-              (d?.trxAccHariIniTotal || 0) +
-              (d?.trxVoucherDownlineHariIniTotal || 0) +
-              (d?.trxHariIniTotal || 0)
-            }
-            icon={ArrowRightLeft}
-            color="indigo"
-            onClick={() => setModalTrx(true)}
-          />
-
-          {/* Voucher Pending - AMBER */}
-          <StatCard
-            label="Voucher Pending"
-            value={`${d?.trxVoucherPendingHariIni || 0} Pesanan`}
-            icon={Clock}
-            color="amber"
-          />
-
-          {/* Omset Sparepart + Service - VIOLET */}
-          <StatCard
-            label="Omset Sparepart + Service"
-            value={`Rp ${(
-              (d?.omsetServicetHariIni || 0) + (d?.omsetSparepartHariIni || 0)
-            ).toLocaleString("id-ID")}`}
-            icon={TrendingUp}
-            color="violet"
-            onClick={() => setModalService(true)}
-          />
-
-          {/* Keuntungan Sparepart + Service - ROSE */}
-          <StatCard
-            label="Keuntungan Sparepart + Service"
-            value={`Rp ${(
-              (d?.keuntunganServiceHariIni || 0) +
-              (d?.keuntunganSparepartHariIni || 0)
-            ).toLocaleString("id-ID")}`}
-            icon={Wrench}
-            color="rose"
-            onClick={() => setModalService2(true)}
-          />
-        </div>
-      )}
+      <StatsSection
+        stats={stats}
+        onOpenKeuntungan={openKeuntungan}
+        onOpenOmset={openOmset}
+        onOpenTrx={openTrx}
+        onOpenService={openService}
+        onOpenService2={openService2}
+      />
       <div className="flex flex-col lg:flex-row gap-x-3">
         <div className="lg:w-1/2 w-full ">
           <GrafikKeuntungan />

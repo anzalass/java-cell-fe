@@ -1,13 +1,8 @@
-// ✅ PINDAHKAN INI KE FILE TERPISAH: src/components/StatCard.jsx
-// ATAU minimal di LUAR function Overview()
+import React from "react";
 
-export function StatCard({
-  label,
-  value,
-  icon: Icon,
-  color = "emerald",
-  onClick,
-}) {
+export const StatCard = React.memo(function StatCard(props) {
+  const { label, value, icon: Icon, color = "emerald", onClick } = props;
+
   const colorConfig = {
     emerald: {
       bg: "bg-emerald-50",
@@ -65,7 +60,11 @@ export function StatCard({
       className={`
         ${config.bg} rounded-2xl p-4 sm:p-5 border ${config.border} 
         transition-all duration-300 w-full text-left select-none
-        ${hasClick ? "cursor-pointer hover:-translate-y-0.5 hover:shadow-lg active:scale-95" : ""}
+        ${
+          hasClick
+            ? "cursor-pointer hover:-translate-y-0.5 hover:shadow-lg active:scale-95"
+            : ""
+        }
         ${config.shadow}
       `}
       style={{ minHeight: "100px" }}
@@ -75,19 +74,20 @@ export function StatCard({
           <p className="text-slate-500 text-xs sm:text-sm font-medium">
             {label}
           </p>
+
           <p
             className={`text-base sm:text-lg font-bold mt-1 ${config.text} truncate`}
           >
             {value}
           </p>
         </div>
+
         <div
-          className={`flex-shrink-0 p-2.5 rounded-xl bg-gradient-to-br ${config.gradient} 
-                      shadow-lg shadow-slate-200/50 transition-transform`}
+          className={`flex-shrink-0 p-2.5 rounded-xl bg-gradient-to-br ${config.gradient} shadow-lg shadow-slate-200/50 transition-transform`}
         >
           <Icon className="w-4 h-4 sm:w-5 sm:h-5 text-white" />
         </div>
       </div>
     </div>
   );
-}
+});
