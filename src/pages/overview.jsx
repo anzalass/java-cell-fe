@@ -1,4 +1,4 @@
-import React, { useCallback, useState } from "react";
+import React, { lazy, Suspense, useCallback, useMemo, useState } from "react";
 import {
   Wallet,
   X,
@@ -34,14 +34,41 @@ import { useAuthStore } from "../store/useAuthStore";
 import PencarianCepat from "../components/pencarian-cepat";
 import GrafikKeuntungan from "../components/grafik";
 import GrafikKeuntungan2 from "../components/grafik2";
-import { StatCard } from "../components/stats-overview";
-import { DetailKeuntunganModal } from "../components/detail-keuntungan-modal";
-import { DetailOmsetModal } from "../components/detail-omset-modal";
-import { DetailTrxModal } from "../components/detail-trx-modal";
-import { DetailServiceModal } from "../components/detail-service-modal";
-import { DetailServiceModal2 } from "../components/detail-service-modal2";
-import { StatsSection } from "../components/stats-components";
+const DetailKeuntunganModal = lazy(() =>
+  import("../components/detail-keuntungan-modal").then((m) => ({
+    default: m.DetailKeuntunganModal,
+  }))
+);
 
+const DetailOmsetModal = lazy(() =>
+  import("../components/detail-omset-modal").then((m) => ({
+    default: m.DetailOmsetModal,
+  }))
+);
+
+const DetailTrxModal = lazy(() =>
+  import("../components/detail-trx-modal").then((m) => ({
+    default: m.DetailTrxModal,
+  }))
+);
+
+const DetailServiceModal = lazy(() =>
+  import("../components/detail-service-modal").then((m) => ({
+    default: m.DetailServiceModal,
+  }))
+);
+
+const DetailServiceModal2 = lazy(() =>
+  import("../components/detail-service-modal2").then((m) => ({
+    default: m.DetailServiceModal2,
+  }))
+);
+
+const StatsSection = lazy(() =>
+  import("../components/stats-components").then((m) => ({
+    default: m.StatsSection,
+  }))
+);
 export default function Overview() {
   const { user } = useAuthStore();
 
@@ -105,7 +132,7 @@ export default function Overview() {
   });
 
   if (isLoading) {
-    return <div className="p-6">Memuat data dashboard...</div>;
+    return <div className="p-6">Memuat data dashboard..</div>;
   }
 
   const stats = useMemo(() => {
@@ -143,14 +170,16 @@ export default function Overview() {
       {/* HEADER */}
       {/* STAT CARDS — DATA REAL */}
       {/* Tambahkan loading state */}
-      <StatsSection
-        stats={stats}
-        onOpenKeuntungan={openKeuntungan}
-        onOpenOmset={openOmset}
-        onOpenTrx={openTrx}
-        onOpenService={openService}
-        onOpenService2={openService2}
-      />
+      <Suspense fallback={<div className="p-4">Memuat statistik...</div>}>
+        <StatsSection
+          stats={stats}
+          onOpenKeuntungan={openKeuntungan}
+          onOpenOmset={openOmset}
+          onOpenTrx={openTrx}
+          onOpenService={openService}
+          onOpenService2={openService2}
+        />
+      </Suspense>
       <div className="flex flex-col lg:flex-row gap-x-3">
         <div className="lg:w-1/2 w-full ">
           <GrafikKeuntungan />
@@ -269,82 +298,87 @@ export default function Overview() {
           data={dashboardData.uangModalHariIni}
           onSuccess={refetch}
         />
-        <TableStokVoucher title="Stok Voucher Menipis" data={d.stokVd} />
-        <TableStokAcc title="Stok Aksesoris Menipis" data={d.stokAcc} />
+        <TableStokVoucher
+          title="Stok Voucher Menipis"
+          data={dashboardData.stokVd}
+        />
+        <TableStokAcc
+          title="Stok Aksesoris Menipis"
+          data={dashboardData.stokAcc}
+        />
         <TableStokSparepart
           title="Stok Sparepart Menipis"
-          data={d.stokSparepart}
+          data={dashboardData.stokSparepart}
         />
 
         {/* Uang Keluar — sesuaikan jika punya data */}
       </div>
-      {modalKeuntungan && (
-        <DetailKeuntunganModal
-          isOpen={modalKeuntungan}
-          onClose={setModalKeuntungan}
-          keuntunganGrosirVoucher={d.keuntunganGrosirVoucherHariIni}
-          keuntunganAcc={d.keuntunganAccHariIni}
-          keuntunganTransaksi={d.totalKeuntunganHariIni}
-          keuntunganVoucherHarian={d.keuntunganVoucherHarian}
-        />
-      )}
-      {modalOmset && (
-        <DetailOmsetModal
-          isOpen={modalOmset}
-          onClose={setModalOmset}
-          omsetGrosirVoucher={d.omsetGrosirVoucherHariIni}
-          omsetAcc={d.omsetAccHariIni}
-          omsetVoucherHarian={d.omsetVoucherHarian}
-        />
-      )}
+      <Suspense fallback={null}>
+        {modalKeuntungan && (
+          <DetailKeuntunganModal
+            isOpen={modalKeuntungan}
+            onClose={setModalKeuntungan}
+            keuntunganGrosirVoucher={
+              dashboardData?.keuntunganGrosirVoucherHariIni
+            }
+            keuntunganAcc={dashboardData?.keuntunganAccHariIni}
+            keuntunganTransaksi={dashboardData?.totalKeuntunganHariIni}
+            keuntunganVoucherHarian={dashboardData?.keuntunganVoucherHarian}
+          />
+        )}
 
-      {modalTrx && (
-        <DetailTrxModal
-          isOpen={modalTrx}
-          onClose={setModalTrx}
-          totalTrxGrosirVoucher={d.trxVoucherDownlineHariIniTotal}
-          totalTrxAcc={d.trxAccHariIniTotal}
-          totalTrx={d.trxHariIniTotal}
-          totalTrxVoucherHarian={d.totalTransaksiVoucherHarian}
-        />
-      )}
+        {modalOmset && (
+          <DetailOmsetModal
+            isOpen={modalOmset}
+            onClose={setModalOmset}
+            omsetGrosirVoucher={dashboardData?.omsetGrosirVoucherHariIni}
+            omsetAcc={dashboardData?.omsetAccHariIni}
+            omsetVoucherHarian={dashboardData?.omsetVoucherHarian}
+          />
+        )}
 
-      {modalService && (
-        <DetailServiceModal
-          isOpen={modalService}
-          onClose={setModalService}
-          totalService={d.trxServiceHariIniTotal}
-          totalSparepartTrx={d.trxSparepartHariIniTotal}
-          omsetService={d.omsetServicetHariIni}
-          keuntunganService={d.keuntunganServiceHariIni}
-          omsetSparepart={d.omsetSparepartHariIni}
-          keuntunganSparepart={d.keuntunganSparepartHariIni}
-        />
-      )}
+        {modalTrx && (
+          <DetailTrxModal
+            isOpen={modalTrx}
+            onClose={setModalTrx}
+            totalTrxGrosirVoucher={
+              dashboardData?.trxVoucherDownlineHariIniTotal
+            }
+            totalTrxAcc={dashboardData?.trxAccHariIniTotal}
+            totalTrx={dashboardData?.trxHariIniTotal}
+            totalTrxVoucherHarian={dashboardData?.totalTransaksiVoucherHarian}
+          />
+        )}
 
-      {modalService2 && (
-        <DetailServiceModal2
-          isOpen={modalService2}
-          onClose={setModalService2}
-          totalService={d.trxServiceHariIniTotal}
-          totalSparepartTrx={d.trxSparepartHariIniTotal}
-          omsetService={d.omsetServicetHariIni}
-          keuntunganService={d.keuntunganServiceHariIni}
-          omsetSparepart={d.omsetSparepartHariIni}
-          keuntunganSparepart={d.keuntunganSparepartHariIni}
-        />
-      )}
+        {modalService && (
+          <DetailServiceModal
+            isOpen={modalService}
+            onClose={setModalService}
+            totalService={dashboardData?.trxServiceHariIniTotal}
+            totalSparepartTrx={dashboardData?.trxSparepartHariIniTotal}
+            omsetService={dashboardData?.omsetServicetHariIni}
+            keuntunganService={dashboardData?.keuntunganServiceHariIni}
+            omsetSparepart={dashboardData?.omsetSparepartHariIni}
+            keuntunganSparepart={dashboardData?.keuntunganSparepartHariIni}
+          />
+        )}
+
+        {modalService2 && (
+          <DetailServiceModal2
+            isOpen={modalService2}
+            onClose={setModalService2}
+            totalService={dashboardData?.trxServiceHariIniTotal}
+            totalSparepartTrx={dashboardData?.trxSparepartHariIniTotal}
+            omsetService={dashboardData?.omsetServicetHariIni}
+            keuntunganService={dashboardData?.keuntunganServiceHariIni}
+            omsetSparepart={dashboardData?.omsetSparepartHariIni}
+            keuntunganSparepart={dashboardData?.keuntunganSparepartHariIni}
+          />
+        )}
+      </Suspense>
     </div>
   );
 }
-
-// === Komponen UI Tetap Sama ===
-// StatCard Component dengan Color Variants
-// StatCard Component - Colorful Version
-// StatCard Component (update untuk terima onClick)
-// Gunakan button bukan div untuk onClick
-
-// src/components/DetailKeuntunganModal.jsx
 
 function ActionButton({ label, onClick }) {
   return (
