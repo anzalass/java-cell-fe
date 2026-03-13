@@ -1,7 +1,9 @@
 import React from "react";
+import { useNavigate } from "react-router-dom";
 
 export const StatCard = React.memo(function StatCard(props) {
   const { label, value, icon: Icon, color = "emerald", onClick } = props;
+  const nav = useNavigate();
 
   const colorConfig = {
     emerald: {
@@ -52,8 +54,8 @@ export const StatCard = React.memo(function StatCard(props) {
   const hasClick = !!onClick;
 
   return (
-    <div
-      onClick={onClick}
+    <button
+      onClick={() => nav("/dashboard/detail-overview")}
       role={hasClick ? "button" : undefined}
       tabIndex={hasClick ? 0 : undefined}
       onKeyDown={hasClick ? (e) => e.key === "Enter" && onClick() : undefined}
@@ -88,6 +90,6 @@ export const StatCard = React.memo(function StatCard(props) {
           <Icon className="w-4 h-4 sm:w-5 sm:h-5 text-white" />
         </div>
       </div>
-    </div>
+    </button>
   );
 });

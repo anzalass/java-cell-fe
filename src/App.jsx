@@ -38,6 +38,7 @@ import PrintTransaksiAksesoris from "./pages/print-trans-acc";
 import PrintTransaksiSparepart from "./pages/print-trans-sparepart";
 import DataMemberPage from "./pages/nomor-trx-member";
 import KeuntunganPage from "./pages/keuntungan";
+import DashboardKeuangan from "./pages/detail-overview";
 
 function App() {
   const { user, isLoading, isCheckingAuth, fetchUser } = useAuthStore();
@@ -71,6 +72,7 @@ function App() {
         <Route path="setting-toko-user" element={<SettingUser />} />
         <Route path="log" element={<LogPage />} />
         <Route path="overview" element={<Overview />} />
+        <Route path="detail-overview" element={<DashboardKeuangan />} />
         <Route path="penggabungan" element={<Penggabungan />} />
         <Route path="user" element={<UserManagementPage />} />
         <Route path="transaksi" element={<TransaksiPage />} />

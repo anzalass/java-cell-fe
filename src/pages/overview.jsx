@@ -315,69 +315,6 @@ export default function Overview() {
 
         {/* Uang Keluar — sesuaikan jika punya data */}
       </div>
-      <Suspense fallback={null}>
-        {modalKeuntungan && (
-          <DetailKeuntunganModal
-            isOpen={modalKeuntungan}
-            onClose={setModalKeuntungan}
-            keuntunganGrosirVoucher={
-              dashboardData?.keuntunganGrosirVoucherHariIni
-            }
-            keuntunganAcc={dashboardData?.keuntunganAccHariIni}
-            keuntunganTransaksi={dashboardData?.totalKeuntunganHariIni}
-            keuntunganVoucherHarian={dashboardData?.keuntunganVoucherHarian}
-          />
-        )}
-
-        {modalOmset && (
-          <DetailOmsetModal
-            isOpen={modalOmset}
-            onClose={setModalOmset}
-            omsetGrosirVoucher={dashboardData?.omsetGrosirVoucherHariIni}
-            omsetAcc={dashboardData?.omsetAccHariIni}
-            omsetVoucherHarian={dashboardData?.omsetVoucherHarian}
-          />
-        )}
-
-        {modalTrx && (
-          <DetailTrxModal
-            isOpen={modalTrx}
-            onClose={setModalTrx}
-            totalTrxGrosirVoucher={
-              dashboardData?.trxVoucherDownlineHariIniTotal
-            }
-            totalTrxAcc={dashboardData?.trxAccHariIniTotal}
-            totalTrx={dashboardData?.trxHariIniTotal}
-            totalTrxVoucherHarian={dashboardData?.totalTransaksiVoucherHarian}
-          />
-        )}
-
-        {modalService && (
-          <DetailServiceModal
-            isOpen={modalService}
-            onClose={setModalService}
-            totalService={dashboardData?.trxServiceHariIniTotal}
-            totalSparepartTrx={dashboardData?.trxSparepartHariIniTotal}
-            omsetService={dashboardData?.omsetServicetHariIni}
-            keuntunganService={dashboardData?.keuntunganServiceHariIni}
-            omsetSparepart={dashboardData?.omsetSparepartHariIni}
-            keuntunganSparepart={dashboardData?.keuntunganSparepartHariIni}
-          />
-        )}
-
-        {modalService2 && (
-          <DetailServiceModal2
-            isOpen={modalService2}
-            onClose={setModalService2}
-            totalService={dashboardData?.trxServiceHariIniTotal}
-            totalSparepartTrx={dashboardData?.trxSparepartHariIniTotal}
-            omsetService={dashboardData?.omsetServicetHariIni}
-            keuntunganService={dashboardData?.keuntunganServiceHariIni}
-            omsetSparepart={dashboardData?.omsetSparepartHariIni}
-            keuntunganSparepart={dashboardData?.keuntunganSparepartHariIni}
-          />
-        )}
-      </Suspense>
     </div>
   );
 }
