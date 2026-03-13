@@ -80,11 +80,6 @@ export default function Overview() {
 
   const [jenis, setJenis] = useState("Transaksi Aksesoris Harian");
 
-  // Search
-  const [searchAccStok, setSearchAccStok] = useState("");
-  const [searchSparepartStok, setSearchSparepartStok] = useState("");
-  const [searchVdStok, setSearchVdStok] = useState("");
-
   // === REACT QUERY DASHBOARD ===
   const {
     data: dashboardData,
