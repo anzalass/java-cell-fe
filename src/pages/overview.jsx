@@ -131,10 +131,6 @@ export default function Overview() {
     refetchOnWindowFocus: false,
   });
 
-  if (isLoading) {
-    return <div className="p-6">Memuat data dashboard..</div>;
-  }
-
   const stats = useMemo(() => {
     const d = dashboardData || {};
 
@@ -165,6 +161,11 @@ export default function Overview() {
         (d.keuntunganServiceHariIni || 0) + (d.keuntunganSparepartHariIni || 0),
     };
   }, [dashboardData]);
+
+  if (isLoading) {
+    return <div className="p-6">Memuat data dashboard..</div>;
+  }
+
   return (
     <div className="p-2 space-y-8 mt-6">
       {/* HEADER */}
