@@ -56,9 +56,6 @@ export const StatCard = React.memo(function StatCard(props) {
   return (
     <button
       onClick={() => nav("/dashboard/detail-overview")}
-      role={hasClick ? "button" : undefined}
-      tabIndex={hasClick ? 0 : undefined}
-      onKeyDown={hasClick ? (e) => e.key === "Enter" && onClick() : undefined}
       className={`
         ${config.bg} rounded-2xl p-4 sm:p-5 border ${config.border} 
         transition-all duration-300 w-full text-left select-none

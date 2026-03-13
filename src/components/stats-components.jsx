@@ -9,14 +9,7 @@ import {
   Wrench,
 } from "lucide-react";
 
-export const StatsSection = React.memo(function StatsSection({
-  stats,
-  onOpenKeuntungan,
-  onOpenOmset,
-  onOpenTrx,
-  onOpenService,
-  onOpenService2,
-}) {
+export const StatsSection = React.memo(function StatsSection({ stats }) {
   const d = stats || {};
 
   return (
@@ -26,7 +19,6 @@ export const StatsSection = React.memo(function StatsSection({
         value={`Rp ${d.keuntunganHariIni?.toLocaleString("id-ID")}`}
         icon={DollarSign}
         color="emerald"
-        onClick={onOpenKeuntungan}
       />
 
       <StatCard
@@ -34,7 +26,6 @@ export const StatsSection = React.memo(function StatsSection({
         value={`Rp ${d.omsetHariIni?.toLocaleString("id-ID")}`}
         icon={Wallet}
         color="blue"
-        onClick={onOpenOmset}
       />
 
       <StatCard
@@ -42,7 +33,6 @@ export const StatsSection = React.memo(function StatsSection({
         value={d.transaksiHariIni}
         icon={ArrowRightLeft}
         color="indigo"
-        onClick={onOpenTrx}
       />
 
       <StatCard
@@ -57,7 +47,6 @@ export const StatsSection = React.memo(function StatsSection({
         value={`Rp ${d.omsetService?.toLocaleString("id-ID")}`}
         icon={TrendingUp}
         color="violet"
-        onClick={onOpenService}
       />
 
       <StatCard
@@ -65,7 +54,6 @@ export const StatsSection = React.memo(function StatsSection({
         value={`Rp ${d.keuntunganService?.toLocaleString("id-ID")}`}
         icon={Wrench}
         color="rose"
-        onClick={onOpenService2}
       />
     </div>
   );

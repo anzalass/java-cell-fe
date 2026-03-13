@@ -77,11 +77,6 @@ export default function Overview() {
   const [openModalVD, setOpenModalVD] = useState(false);
   const [openModalSparepart, setOpenModalSparepart] = useState(false);
   const [openModalService, setOpenModalService] = useState(false);
-  const [modalKeuntungan, setModalKeuntungan] = useState(false);
-  const [modalOmset, setModalOmset] = useState(false);
-  const [modalTrx, setModalTrx] = useState(false);
-  const [modalService, setModalService] = useState(false);
-  const [modalService2, setModalService2] = useState(false);
 
   const [jenis, setJenis] = useState("Transaksi Aksesoris Harian");
 
@@ -90,33 +85,13 @@ export default function Overview() {
   const [searchSparepartStok, setSearchSparepartStok] = useState("");
   const [searchVdStok, setSearchVdStok] = useState("");
 
-  const openKeuntungan = useCallback(() => {
-    setModalKeuntungan(true);
-  }, []);
-
-  const openOmset = useCallback(() => {
-    setModalOmset(true);
-  }, []);
-
-  const openTrx = useCallback(() => {
-    setModalTrx(true);
-  }, []);
-
-  const openService = useCallback(() => {
-    setModalService(true);
-  }, []);
-
-  const openService2 = useCallback(() => {
-    setModalService2(true);
-  }, []);
-
   // === REACT QUERY DASHBOARD ===
   const {
     data: dashboardData,
     isLoading,
     refetch,
   } = useQuery({
-    queryKey: ["dashboard", searchAccStok, searchSparepartStok, searchVdStok],
+    queryKey: ["dashboard"],
     queryFn: async () => {
       const res = await api.get("/dashboard2", {
         headers: {
@@ -129,7 +104,6 @@ export default function Overview() {
     staleTime: 1000 * 60 * 5,
     cacheTime: 1000 * 60 * 30,
     refetchOnWindowFocus: false,
-    placeholderData: (prev) => prev,
   });
 
   const stats = useMemo(() => {
@@ -172,16 +146,9 @@ export default function Overview() {
       {/* HEADER */}
       {/* STAT CARDS — DATA REAL */}
       {/* Tambahkan loading state */}
-      <Suspense fallback={<div className="p-4">Memuat statistik...</div>}>
-        <StatsSection
-          stats={stats}
-          onOpenKeuntungan={openKeuntungan}
-          onOpenOmset={openOmset}
-          onOpenTrx={openTrx}
-          onOpenService={openService}
-          onOpenService2={openService2}
-        />
-      </Suspense>
+      <Suspense fallback={<div className="p-4">Loading stats...</div>}>
+        <StatsSection stats={stats} />
+      </Suspense>{" "}
       <div className="flex flex-col lg:flex-row gap-x-3">
         <div className="lg:w-1/2 w-full ">
           <GrafikKeuntungan />
@@ -213,7 +180,6 @@ export default function Overview() {
       <div className="">
         <PencarianCepat />
       </div>
-
       <div>
         <label className="block text-sm font-semibold text-gray-700 mb-2">
           Pilih Transaksi
@@ -245,7 +211,6 @@ export default function Overview() {
           <ChevronDown className="absolute right-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400 pointer-events-none" />
         </div>
       </div>
-
       {/* MODALS */}
       <ModalTransaksiAcc
         isOpen={openModalAcc}
