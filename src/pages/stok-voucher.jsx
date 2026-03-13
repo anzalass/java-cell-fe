@@ -19,6 +19,7 @@ import {
   Trash2,
   TrendingUp,
 } from "lucide-react";
+import { NumericFormat } from "react-number-format";
 
 function useDebounce(value, delay) {
   const [debouncedValue, setDebouncedValue] = useState(value);
@@ -284,6 +285,7 @@ export default function StokVoucherPage() {
     register,
     handleSubmit,
     reset,
+    setValue,
     formState: { errors },
   } = useForm();
 
@@ -293,12 +295,36 @@ export default function StokVoucherPage() {
   };
 
   const saveAdd = (form) => {
+    const hargaPokok = Number(form.hargaPokok);
+    const hargaJual = Number(form.hargaJual);
+    const hargaEceran = Number(form.hargaEceran);
+
+    if (!(hargaPokok <= hargaJual && hargaJual <= hargaEceran)) {
+      Swal.fire({
+        icon: "warning",
+        text: "Urutan harga harus: Harga Pokok ≤ Harga Jual ≤ Harga Eceran",
+      });
+      return;
+    }
+
     const today = new Date();
     const tanggal = today.toISOString().split("T")[0];
     createVoucherMutation.mutate({ ...form, tanggal });
   };
 
   const saveEdit = (form) => {
+    const hargaPokok = Number(form.hargaPokok);
+    const hargaJual = Number(form.hargaJual);
+    const hargaEceran = Number(form.hargaEceran);
+
+    if (!(hargaPokok <= hargaJual && hargaJual <= hargaEceran)) {
+      Swal.fire({
+        icon: "warning",
+        text: "Urutan harga harus: Harga Pokok ≤ Harga Jual ≤ Harga Eceran",
+      });
+      return;
+    }
+
     updateVoucherMutation.mutate({
       id: openEdit.id,
       payload: form,
@@ -797,6 +823,7 @@ export default function StokVoucherPage() {
           onClose={() => setOpenAdd(false)}
           onSubmit={handleSubmit(saveAdd)}
           register={register}
+          setValue={setValue}
           errors={errors}
           isLoading={createVoucherMutation.isPending}
         />
@@ -808,6 +835,7 @@ export default function StokVoucherPage() {
           onClose={() => setOpenEdit(null)}
           onSubmit={handleSubmit(saveEdit)}
           register={register}
+          setValue={setValue}
           errors={errors}
           isEdit={true}
           isLoading={updateVoucherMutation.isPending}
@@ -823,6 +851,7 @@ function ModalForm({
   onClose,
   onSubmit,
   register,
+  setValue,
   errors,
   isEdit = false,
   isLoading = false, // ⬅️ baru
@@ -934,22 +963,19 @@ function ModalForm({
               <label className="block text-sm font-medium text-gray-700 mb-1">
                 Harga Modal *
               </label>
-              <input
-                type="number"
-                min="0"
-                {...register("hargaPokok", {
-                  required: true,
-                  min: 0,
-                  valueAsNumber: true,
-                })}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                placeholder="12000"
-              />
-              {errors.hargaPokok && (
-                <p className="text-xs text-red-500 mt-1">
-                  {errors.hargaPokok.message || "Harga modal wajib diisi"}
-                </p>
-              )}
+              <div className="relative">
+                <NumericFormat
+                  thousandSeparator="."
+                  decimalSeparator=","
+                  allowNegative={false}
+                  prefix="Rp "
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500"
+                  placeholder="Rp 45.000"
+                  onValueChange={(values) => {
+                    setValue("hargaPokok", values.floatValue);
+                  }}
+                />
+              </div>
             </div>
 
             {/* Harga Grosir */}
@@ -957,28 +983,19 @@ function ModalForm({
               <label className="block text-sm font-medium text-gray-700 mb-1">
                 Harga Grosir *
               </label>
-              <input
-                type="number"
-                min="0"
-                {...register("hargaJual", {
-                  required: true,
-                  min: 0,
-                  valueAsNumber: true,
-                  validate: (value) =>
-                    validateHargaJual(value, {
-                      hargaPokok: document.querySelector(
-                        'input[name="hargaPokok"]'
-                      )?.value,
-                    }),
-                })}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                placeholder="15000"
-              />
-              {errors.hargaJual && (
-                <p className="text-xs text-red-500 mt-1">
-                  {errors.hargaJual.message || "Harga grosir wajib diisi"}
-                </p>
-              )}
+              <div className="relative">
+                <NumericFormat
+                  thousandSeparator="."
+                  decimalSeparator=","
+                  allowNegative={false}
+                  prefix="Rp "
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500"
+                  placeholder="Rp 45.000"
+                  onValueChange={(values) => {
+                    setValue("hargaJual", values.floatValue);
+                  }}
+                />
+              </div>
             </div>
 
             {/* Harga Eceran */}
@@ -986,28 +1003,19 @@ function ModalForm({
               <label className="block text-sm font-medium text-gray-700 mb-1">
                 Harga Eceran *
               </label>
-              <input
-                type="number"
-                min="0"
-                {...register("hargaEceran", {
-                  required: true,
-                  min: 0,
-                  valueAsNumber: true,
-                  validate: (value) =>
-                    validateHargaEceran(value, {
-                      hargaJual: document.querySelector(
-                        'input[name="hargaJual"]'
-                      )?.value,
-                    }),
-                })}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                placeholder="18000"
-              />
-              {errors.hargaEceran && (
-                <p className="text-xs text-red-500 mt-1">
-                  {errors.hargaEceran.message || "Harga eceran wajib diisi"}
-                </p>
-              )}
+              <div className="relative">
+                <NumericFormat
+                  thousandSeparator="."
+                  decimalSeparator=","
+                  allowNegative={false}
+                  prefix="Rp "
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500"
+                  placeholder="Rp 45.000"
+                  onValueChange={(values) => {
+                    setValue("hargaEceran", values.floatValue);
+                  }}
+                />
+              </div>
             </div>
           </div>
           <div className="flex justify-end gap-3 pt-2">

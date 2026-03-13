@@ -26,6 +26,7 @@ import {
   ChevronDown,
   CircleDollarSign,
 } from "lucide-react";
+import api from "../api/client";
 
 const iconMap = {
   dashboard: LayoutDashboard,
