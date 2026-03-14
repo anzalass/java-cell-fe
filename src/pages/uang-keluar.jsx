@@ -15,6 +15,7 @@ import {
 } from "lucide-react";
 import api from "../api/client";
 import { useAuthStore } from "../store/useAuthStore";
+import { NumericFormat } from "react-number-format";
 
 export default function UangModalPage() {
   const { user } = useAuthStore();
@@ -23,6 +24,7 @@ export default function UangModalPage() {
   const {
     register,
     handleSubmit,
+    setValue,
     reset: resetForm,
     formState: { errors },
   } = useForm();
@@ -617,6 +619,7 @@ export default function UangModalPage() {
             onClose={() => setOpenModal(false)}
             isEdit={true}
             register={register}
+            setValue={setValue}
             onSubmit={handleSubmit(saveAdd)}
             errors={errors}
             isLoading={createUangModalMutation.isPending}
@@ -630,6 +633,7 @@ export default function UangModalPage() {
             isEdit={true}
             onSubmit={handleSubmit(saveEdit)}
             register={register}
+            setValue={setValue}
             errors={errors}
             defaultValues={{
               keterangan: openModalEdit.keterangan,
@@ -650,6 +654,7 @@ function UangModalForm({
   title,
   onClose,
   onSubmit,
+  setValue,
   register,
   isEdit = false,
   errors,
@@ -712,22 +717,19 @@ function UangModalForm({
             <label className="block text-sm font-medium text-gray-700 mb-1">
               Jumlah (Rp) *
             </label>
-            <input
-              type="number"
-              min="1"
-              {...register("jumlah", {
-                required: "Jumlah wajib diisi",
-                min: { value: 1, message: "Jumlah minimal 1" },
-                valueAsNumber: true,
-              })}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-              placeholder="100000"
-            />
-            {errors.jumlah && (
-              <p className="text-red-500 text-sm mt-1">
-                {errors.jumlah.message}
-              </p>
-            )}
+            <div className="relative">
+              <NumericFormat
+                thousandSeparator="."
+                decimalSeparator=","
+                allowNegative={false}
+                prefix="Rp "
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500"
+                placeholder="Rp 45.000"
+                onValueChange={(values) => {
+                  setValue("jumlah", values.floatValue);
+                }}
+              />
+            </div>
           </div>
 
           <div className="flex justify-end gap-3 pt-2">

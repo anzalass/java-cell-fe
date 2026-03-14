@@ -106,7 +106,6 @@ export default function StokBarangSparepartPage() {
     queryFn: async () => {
       const params = new URLSearchParams();
 
-      params.append("filterBarcode", filterBarcode);
       params.append("brand", debouncedBrand);
       params.append("penempatan", debouncedPenempatan);
       params.append("search", debouncedSearchNama);
@@ -118,8 +117,6 @@ export default function StokBarangSparepartPage() {
       if (updatedRange.start) params.append("updatedStart", updatedRange.start);
 
       if (updatedRange.end) params.append("updatedEnd", updatedRange.end);
-
-      params.append("filterBarcode", filterBarcode);
 
       params.append("filterBarcode", filterBarcode);
 

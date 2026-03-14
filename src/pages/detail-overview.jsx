@@ -119,9 +119,9 @@ function StatCard({
         </div>
 
         <div
-          className={`flex-shrink-0 p-2.5 rounded-xl bg-gradient-to-br ${config.gradient}`}
+          className={`flex-shrink-0 p-1.5 rounded-xl bg-gradient-to-br ${config.gradient}`}
         >
-          <Icon className="w-4 h-4 sm:w-5 sm:h-5 text-white" />
+          <Icon className="w-3 h-3 sm:w-5 sm:h-5 text-white" />
         </div>
       </div>
     </div>
@@ -293,17 +293,18 @@ export default function DashboardKeuangan() {
   }
 
   const d = dashboardData || {};
+  console.log(d);
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-slate-100">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8">
         {/* HEADER */}
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-8">
+        <div className="flex flex-row sm:items-center sm:justify-between gap-4 mb-8">
           <div>
-            <h1 className="text-2xl sm:text-3xl font-bold bg-gradient-to-r from-slate-800 to-slate-600 bg-clip-text text-transparent">
+            <h1 className="text-base sm:text-3xl font-bold bg-gradient-to-r from-slate-800 to-slate-600 bg-clip-text text-transparent">
               Dashboard Keuangan
             </h1>
-            <p className="text-slate-500 mt-1 text-sm flex items-center gap-2">
+            <p className="text-slate-500 mt-1 text-xs flex items-center gap-2">
               <Clock className="w-4 h-4" />
               {getTodayDate()}
             </p>
@@ -532,7 +533,7 @@ export default function DashboardKeuangan() {
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
             <StatCard
               label="Total Uang Keluar"
-              value={d.uangKeluar || 0}
+              value={d.uangModal || 0}
               icon={DollarSign}
               color="slate"
             />
@@ -540,17 +541,17 @@ export default function DashboardKeuangan() {
               <div>
                 <p className="text-slate-500 text-xs font-medium">Status</p>
                 <p className="text-slate-700 font-semibold mt-1">
-                  {d.uangKeluar > 0 ? "Ada Pengeluaran" : "Tidak Ada"}
+                  {d.uangModal > 0 ? "Ada Pengeluaran" : "Tidak Ada"}
                 </p>
               </div>
               <div
                 className={`px-3 py-1 rounded-full text-xs font-medium ${
-                  d.uangKeluar > 0
+                  d.uangModal > 0
                     ? "bg-amber-100 text-amber-700"
                     : "bg-emerald-100 text-emerald-700"
                 }`}
               >
-                {d.uangKeluar > 0 ? "⚠️" : "✅"}
+                {d.uangModal > 0 ? "⚠️" : "✅"}
               </div>
             </div>
           </div>

@@ -47,13 +47,13 @@ export default function DashboardLayout() {
 
       {sidebarOpen && (
         <div
-          className="fixed inset-0 bg-black/40"
+          className="fixed inset-0 bg-black/40 z-40"
           onClick={() => setSidebarOpen(false)}
         />
       )}
 
       <div className={`w-full flex flex-col transition-all duration-300`}>
-        <header className="sticky shadow-xl top-0 z-40 flex items-center justify-between bg-white p-4">
+        <header className="sticky shadow-xl top-0 z-50 flex items-center justify-between bg-white p-4">
           <div className="flex space-x-3">
             <button
               onClick={() => setSidebarOpen((prev) => !prev)}
@@ -67,7 +67,7 @@ export default function DashboardLayout() {
           <h1 className="text-lg font-semibold">{user?.nama}</h1>
         </header>
 
-        <div className="-mt-6 p-2 md:p-6 transition-all duration-300">
+        <div className="-mt-6 p-2 md:p-6  transition-all duration-300">
           <Outlet />
         </div>
       </div>

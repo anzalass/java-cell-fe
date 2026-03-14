@@ -461,7 +461,7 @@ Terima kasih.
                   {/* Search */}
                   <div>
                     <label className="block text-sm font-semibold text-gray-700 mb-2">
-                      Cari Nama Pembeli
+                      Cari Nama Pembeli, Merk, Keterangan
                     </label>
                     <div className="relative">
                       <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
@@ -530,23 +530,6 @@ Terima kasih.
                       </div>
                     </div>
                   )}
-                </div>
-
-                <div>
-                  <label className="block text-sm font-semibold text-gray-700 mb-2">
-                    Cari Nama / Kode
-                  </label>
-                  <div className="relative">
-                    <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
-                    <input
-                      type="text"
-                      value={searchInput}
-                      onChange={(e) => setSearchInput(e.target.value)}
-                      onKeyDown={(e) => e.key === "Enter" && handleSearch()}
-                      className="w-full pl-11 pr-4 py-3 border border-gray-200 rounded-xl bg-gray-50 focus:bg-white focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 outline-none transition"
-                      placeholder="DL-001, Ahmad, dll..."
-                    />
-                  </div>
                 </div>
 
                 {/* Status */}

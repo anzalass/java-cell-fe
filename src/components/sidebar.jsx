@@ -146,7 +146,7 @@ const Sidebar = ({
 
   return (
     <aside
-      className={`fixed top-0 left-0 z-10 h-screen border-r bg-white shadow-md transition-all duration-300
+      className={`fixed top-0 left-0 z-50 h-screen border-r bg-white shadow-md transition-all duration-300
         ${isCollapsed ? "w-0" : "w-64"}
         ${isMobile ? (sidebarOpen ? "translate-x-0" : "-translate-x-full") : ""}
       `}

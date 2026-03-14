@@ -104,6 +104,10 @@ export default function StokVoucherPage() {
       brand,
       sortConfig,
       page,
+      createdRange.start,
+      createdRange.end,
+      updatedRange.start,
+      updatedRange.end,
       perPage,
     ],
     queryFn: async () => {

@@ -904,6 +904,7 @@ export default function StokBarangAksesorisPage() {
           onClose={() => setOpenEdit(null)}
           onSubmit={handleSubmit(saveEdit)}
           register={register}
+          setValue={setValue}
           errors={errors}
           isEdit={true}
           isLoading={updateMutation.isPending}
