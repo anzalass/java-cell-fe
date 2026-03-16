@@ -461,7 +461,7 @@ export default function KeuntunganPage() {
                       className="hover:bg-gradient-to-r hover:from-indigo-50/50 hover:to-transparent transition-colors"
                     >
                       <td className="px-4 sm:px-6 py-4 font-medium text-slate-700">
-                        {new Date(item.createdAt).toLocaleDateString("id-ID", {
+                        {new Date(item.tanggal).toLocaleDateString("id-ID", {
                           weekday: "short",
                           day: "numeric",
                           month: "short",
