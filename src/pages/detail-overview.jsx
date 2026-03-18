@@ -229,7 +229,8 @@ export default function DashboardKeuangan() {
         (d.totalTransaksiVoucherHarian || 0) +
         (d.trxAccHariIniTotal || 0) +
         (d.trxVoucherDownlineHariIniTotal || 0) +
-        (d.trxHariIniTotal || 0),
+        (d.trxHariIniTotal || 0) +
+        (d.trxServiceHariIniTotal || 0),
 
       voucherPending: d.trxVoucherPendingHariIni || 0,
 
