@@ -12,6 +12,7 @@ import {
   ChevronLeft,
   ChevronRight,
   Trash2,
+  ShoppingCart,
 } from "lucide-react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import api from "../api/client";
@@ -249,6 +250,7 @@ export default function TransaksiVoucherHarianPage() {
       </div>
       {/* Stats Cards */}
       <div className="grid grid-cols-2 md:grid-cols-3 gap-4 mb-6">
+        {/* Total Transaksi */}
         <div className="group bg-white rounded-xl p-4 border border-gray-100 hover:shadow-md transition-all flex items-center justify-between">
           <div>
             <p className="text-sm font-bold text-gray-900 mb-1">
@@ -256,11 +258,12 @@ export default function TransaksiVoucherHarianPage() {
             </p>
             <p className="text-xs font-medium text-gray-500">Total Transaksi</p>
           </div>
-          <div className="p-2 rounded-lg bg-green-50 group-hover:bg-green-100 transition">
-            <Wallet className="w-4 h-4 text-green-600" />
+          <div className="p-2 rounded-lg bg-blue-50 group-hover:bg-blue-100 transition">
+            <ShoppingCart className="w-4 h-4 text-blue-600" />
           </div>
         </div>
 
+        {/* Total Omset */}
         <div className="group bg-white rounded-xl p-4 border border-gray-100 hover:shadow-md transition-all flex items-center justify-between">
           <div>
             <p className="text-sm font-bold text-gray-900 mb-1">
@@ -273,19 +276,21 @@ export default function TransaksiVoucherHarianPage() {
           </div>
         </div>
 
+        {/* Total Keuntungan */}
         <div className="group bg-white rounded-xl p-4 border border-gray-100 hover:shadow-md transition-all flex items-center justify-between">
           <div>
             <p className="text-sm font-bold text-gray-900 mb-1">
               {formatRupiah(stats.totalKeuntungan)}
             </p>
-            <p className="text-xs font-medium text-gray-500">Total Omset</p>
+            <p className="text-xs font-medium text-gray-500">
+              Total Keuntungan
+            </p>
           </div>
-          <div className="p-2 rounded-lg bg-green-50 group-hover:bg-green-100 transition">
-            <Wallet className="w-4 h-4 text-green-600" />
+          <div className="p-2 rounded-lg bg-emerald-50 group-hover:bg-emerald-100 transition">
+            <TrendingUp className="w-4 h-4 text-emerald-600" />
           </div>
         </div>
       </div>
-
       {/* Filter Section */}
       {openFilter && (
         <div className="fixed inset-0 z-50 flex items-center justify-center">
@@ -506,7 +511,6 @@ export default function TransaksiVoucherHarianPage() {
           </div>
         </div>
       )}
-
       {/* Table */}
       <div className="bg-white rounded-lg shadow-sm border overflow-hidden">
         <div className="overflow-x-auto">

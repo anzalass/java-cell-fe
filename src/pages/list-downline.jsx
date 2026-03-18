@@ -306,7 +306,7 @@ export default function ListDownlinePage() {
             {/* Search Nama */}
             <div>
               <label className="block text-sm font-semibold text-gray-700 mb-2">
-                Nama Downline
+                Nama Downline / Kode Downline
               </label>
               <div className="relative">
                 <User className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
@@ -319,8 +319,7 @@ export default function ListDownlinePage() {
                 />
               </div>
             </div>
-
-            {/* Kode Downline */}
+            {/* Kode Downline
             <div>
               <label className="block text-sm font-semibold text-gray-700 mb-2">
                 Kode Downline
@@ -335,8 +334,7 @@ export default function ListDownlinePage() {
                   placeholder="DL001, dll..."
                 />
               </div>
-            </div>
-
+            </div> */}
             {/* Date Filter */}
             <div>
               <label className="block text-sm font-semibold text-gray-700 mb-2">
@@ -352,7 +350,6 @@ export default function ListDownlinePage() {
                 />
               </div>
             </div>
-
             {/* Per Page */}
             <div>
               <label className="block text-sm font-semibold text-gray-700 mb-2">

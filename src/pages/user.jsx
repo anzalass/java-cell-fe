@@ -83,7 +83,12 @@ export default function UserManagementPage() {
   ============================= */
 
   const deleteUserMutation = useMutation({
-    mutationFn: (id) => api.delete(`auth/${id}`),
+    mutationFn: (id) =>
+      api.delete(`auth/${id}`, {
+        headers: {
+          Authorization: `Bearer ${user.token}`,
+        },
+      }),
 
     onSuccess: () => {
       queryClient.invalidateQueries(["users"]);

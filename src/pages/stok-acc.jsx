@@ -223,6 +223,7 @@ export default function StokBarangAksesorisPage() {
     setSearchNama("");
     setFilterBrand("");
     setFilterBarcode("all");
+    setPenempatan("");
     setFilterDibuat("");
     setFilterDiupdate("");
     setPage(1);

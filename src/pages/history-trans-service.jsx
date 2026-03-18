@@ -13,6 +13,8 @@ import {
   ChevronRight,
   MessageCircle,
   Printer,
+  Receipt,
+  Wrench,
 } from "lucide-react";
 import { useState, useMemo } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
@@ -320,8 +322,6 @@ Terima kasih.
           </div>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
             {/* Total Transaksi */}
-
-            {/* Nominal */}
             <div className="group bg-white rounded-xl p-4 border border-gray-100 hover:shadow-md transition-all flex items-center justify-between">
               <div>
                 <p className="text-sm font-bold text-gray-900 mb-1">
@@ -331,11 +331,12 @@ Terima kasih.
                   Total Transaksi
                 </p>
               </div>
-              <div className="p-2 rounded-lg bg-green-50 group-hover:bg-green-100 transition">
-                <Wallet className="w-4 h-4 text-green-600" />
+              <div className="p-2 rounded-lg bg-blue-50 group-hover:bg-blue-100 transition">
+                <Receipt className="w-4 h-4 text-blue-600" />
               </div>
             </div>
 
+            {/* Biaya Jasa */}
             <div className="group bg-white rounded-xl p-4 border border-gray-100 hover:shadow-md transition-all flex items-center justify-between">
               <div>
                 <p className="text-sm font-bold text-gray-900 mb-1">
@@ -343,11 +344,12 @@ Terima kasih.
                 </p>
                 <p className="text-xs font-medium text-gray-500">Biaya Jasa</p>
               </div>
-              <div className="p-2 rounded-lg bg-green-50 group-hover:bg-green-100 transition">
-                <Wallet className="w-4 h-4 text-green-600" />
+              <div className="p-2 rounded-lg bg-orange-50 group-hover:bg-orange-100 transition">
+                <Wrench className="w-4 h-4 text-orange-600" />
               </div>
             </div>
 
+            {/* Keuntungan */}
             <div className="group bg-white rounded-xl p-4 border border-gray-100 hover:shadow-md transition-all flex items-center justify-between">
               <div>
                 <p className="text-sm font-bold text-gray-900 mb-1">
@@ -355,11 +357,12 @@ Terima kasih.
                 </p>
                 <p className="text-xs font-medium text-gray-500">Keuntungan</p>
               </div>
-              <div className="p-2 rounded-lg bg-green-50 group-hover:bg-green-100 transition">
-                <Wallet className="w-4 h-4 text-green-600" />
+              <div className="p-2 rounded-lg bg-emerald-50 group-hover:bg-emerald-100 transition">
+                <TrendingUp className="w-4 h-4 text-emerald-600" />
               </div>
             </div>
 
+            {/* Rata-rata */}
             <div className="group bg-white rounded-xl p-4 border border-gray-100 hover:shadow-md transition-all flex items-center justify-between">
               <div>
                 <p className="text-sm font-bold text-gray-900 mb-1">
@@ -369,12 +372,10 @@ Terima kasih.
                   Rata Rata Transaksi
                 </p>
               </div>
-              <div className="p-2 rounded-lg bg-green-50 group-hover:bg-green-100 transition">
-                <Wallet className="w-4 h-4 text-green-600" />
+              <div className="p-2 rounded-lg bg-purple-50 group-hover:bg-purple-100 transition">
+                <BarChart3 className="w-4 h-4 text-purple-600" />
               </div>
             </div>
-
-            {/* Rata-rata */}
           </div>
         </div>
 
@@ -551,59 +552,8 @@ Terima kasih.
                 </div>
 
                 {/* Periode */}
-                <div>
-                  <label className="block text-sm font-semibold text-gray-700 mb-2">
-                    Periode Waktu
-                  </label>
-                  <div className="relative">
-                    <Calendar className="absolute left-3.5 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
-                    <select
-                      value={filterType}
-                      onChange={(e) => {
-                        setFilterType(e.target.value);
-                        if (e.target.value !== "custom") {
-                          setDateFrom("");
-                          setDateTo("");
-                        }
-                      }}
-                      className="w-full pl-11 pr-4 py-3 border border-gray-200 rounded-xl bg-gray-50 focus:bg-white focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 outline-none transition font-medium"
-                    >
-                      <option value="all">Semua Waktu</option>
-                      <option value="today">Hari Ini</option>
-                      <option value="week">Minggu Ini</option>
-                      <option value="month">Bulan Ini</option>
-                      <option value="custom">Custom Range</option>
-                    </select>
-                  </div>
-                </div>
 
                 {/* Custom Range */}
-                {filterType === "custom" && (
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 p-4 bg-blue-50 rounded-xl border border-blue-100">
-                    <div>
-                      <label className="block text-sm font-semibold mb-2">
-                        Dari Tanggal
-                      </label>
-                      <input
-                        type="date"
-                        value={dateFrom}
-                        onChange={(e) => setDateFrom(e.target.value)}
-                        className="w-full px-4 py-3 border border-gray-200 rounded-xl"
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-sm font-semibold mb-2">
-                        Sampai Tanggal
-                      </label>
-                      <input
-                        type="date"
-                        value={dateTo}
-                        onChange={(e) => setDateTo(e.target.value)}
-                        className="w-full px-4 py-3 border border-gray-200 rounded-xl"
-                      />
-                    </div>
-                  </div>
-                )}
 
                 {/* Item per page */}
                 {/* <div>

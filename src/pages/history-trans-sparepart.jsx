@@ -11,6 +11,8 @@ import {
   ChevronRight,
   ChevronLeft,
   Printer,
+  DollarSign,
+  Receipt,
 } from "lucide-react";
 import { useState, useMemo } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
@@ -255,6 +257,7 @@ export default function TableSectionSparepart({
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
             {/* Total Transaksi */}
 
+            {/* Total Transaksi */}
             <div className="group bg-white rounded-xl p-4 border border-gray-100 hover:shadow-md transition-all flex items-center justify-between">
               <div>
                 <p className="text-sm font-bold text-gray-900 mb-1">
@@ -264,11 +267,12 @@ export default function TableSectionSparepart({
                   Total Transaksi
                 </p>
               </div>
-              <div className="p-2 rounded-lg bg-green-50 group-hover:bg-green-100 transition">
-                <Wallet className="w-4 h-4 text-green-600" />
+              <div className="p-2 rounded-lg bg-blue-50 group-hover:bg-blue-100 transition">
+                <Receipt className="w-4 h-4 text-blue-600" />
               </div>
             </div>
 
+            {/* Total Omset */}
             <div className="group bg-white rounded-xl p-4 border border-gray-100 hover:shadow-md transition-all flex items-center justify-between">
               <div>
                 <p className="text-sm font-bold text-gray-900 mb-1">
@@ -281,6 +285,7 @@ export default function TableSectionSparepart({
               </div>
             </div>
 
+            {/* Total Keuntungan */}
             <div className="group bg-white rounded-xl p-4 border border-gray-100 hover:shadow-md transition-all flex items-center justify-between">
               <div>
                 <p className="text-sm font-bold text-gray-900 mb-1">
@@ -290,11 +295,12 @@ export default function TableSectionSparepart({
                   Total Keuntungan
                 </p>
               </div>
-              <div className="p-2 rounded-lg bg-green-50 group-hover:bg-green-100 transition">
-                <Wallet className="w-4 h-4 text-green-600" />
+              <div className="p-2 rounded-lg bg-emerald-50 group-hover:bg-emerald-100 transition">
+                <TrendingUp className="w-4 h-4 text-emerald-600" />
               </div>
             </div>
 
+            {/* Rata-rata */}
             <div className="group bg-white rounded-xl p-4 border border-gray-100 hover:shadow-md transition-all flex items-center justify-between">
               <div>
                 <p className="text-sm font-bold text-gray-900 mb-1">
@@ -304,8 +310,8 @@ export default function TableSectionSparepart({
                   Rata Rata Transaksi
                 </p>
               </div>
-              <div className="p-2 rounded-lg bg-green-50 group-hover:bg-green-100 transition">
-                <Wallet className="w-4 h-4 text-green-600" />
+              <div className="p-2 rounded-lg bg-purple-50 group-hover:bg-purple-100 transition">
+                <BarChart3 className="w-4 h-4 text-purple-600" />
               </div>
             </div>
           </div>

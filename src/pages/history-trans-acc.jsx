@@ -11,6 +11,7 @@ import {
   ChevronLeft,
   ChevronRight,
   Printer,
+  Receipt,
 } from "lucide-react";
 import { useState, useMemo } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
@@ -242,8 +243,7 @@ export default function TableSectionAccecoris({
             </div>
 
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-              {/* Total */}
-
+              {/* Total Transaksi */}
               <div className="group bg-white rounded-xl p-4 border border-gray-100 hover:shadow-md transition-all flex items-center justify-between">
                 <div>
                   <p className="text-sm font-bold text-gray-900 mb-1">
@@ -254,10 +254,11 @@ export default function TableSectionAccecoris({
                   </p>
                 </div>
                 <div className="p-2 rounded-lg bg-blue-50 group-hover:bg-blue-100 transition">
-                  <BarChart3 className="w-4 h-4 text-blue-600" />
+                  <Receipt className="w-4 h-4 text-blue-600" />
                 </div>
               </div>
 
+              {/* Total Omset */}
               <div className="group bg-white rounded-xl p-4 border border-gray-100 hover:shadow-md transition-all flex items-center justify-between">
                 <div>
                   <p className="text-sm font-bold text-gray-900 mb-1">
@@ -267,11 +268,12 @@ export default function TableSectionAccecoris({
                     Total Omset
                   </p>
                 </div>
-                <div className="p-2 rounded-lg bg-blue-50 group-hover:bg-blue-100 transition">
-                  <BarChart3 className="w-4 h-4 text-blue-600" />
+                <div className="p-2 rounded-lg bg-green-50 group-hover:bg-green-100 transition">
+                  <Wallet className="w-4 h-4 text-green-600" />
                 </div>
               </div>
 
+              {/* Total Keuntungan */}
               <div className="group bg-white rounded-xl p-4 border border-gray-100 hover:shadow-md transition-all flex items-center justify-between">
                 <div>
                   <p className="text-sm font-bold text-gray-900 mb-1">
@@ -281,22 +283,23 @@ export default function TableSectionAccecoris({
                     Total Keuntungan
                   </p>
                 </div>
-                <div className="p-2 rounded-lg bg-blue-50 group-hover:bg-blue-100 transition">
-                  <BarChart3 className="w-4 h-4 text-blue-600" />
+                <div className="p-2 rounded-lg bg-emerald-50 group-hover:bg-emerald-100 transition">
+                  <TrendingUp className="w-4 h-4 text-emerald-600" />
                 </div>
               </div>
 
+              {/* Rata-rata Keuntungan */}
               <div className="group bg-white rounded-xl p-4 border border-gray-100 hover:shadow-md transition-all flex items-center justify-between">
                 <div>
                   <p className="text-sm font-bold text-gray-900 mb-1">
-                    Rp {stats.totalKeuntungan.toLocaleString("id-ID")}
+                    Rp {stats.avgKeuntungan.toLocaleString("id-ID")}
                   </p>
                   <p className="text-xs font-medium text-gray-500">
                     Rata Rata Keuntungan
                   </p>
                 </div>
-                <div className="p-2 rounded-lg bg-blue-50 group-hover:bg-blue-100 transition">
-                  <BarChart3 className="w-4 h-4 text-blue-600" />
+                <div className="p-2 rounded-lg bg-purple-50 group-hover:bg-purple-100 transition">
+                  <BarChart3 className="w-4 h-4 text-purple-600" />
                 </div>
               </div>
             </div>
@@ -457,49 +460,8 @@ export default function TableSectionAccecoris({
                   </div>
 
                   {/* Search */}
-                  <div>
-                    <label className="block text-sm font-semibold text-gray-700 mb-2">
-                      Cari Nama Pembeli
-                    </label>
-                    <div className="relative">
-                      <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
-                      <input
-                        type="text"
-                        value={searchInput}
-                        onChange={(e) => setSearchInput(e.target.value)}
-                        onKeyDown={(e) => e.key === "Enter" && handleSearch()}
-                        className="w-full pl-11 pr-4 py-3 border border-gray-200 rounded-xl bg-gray-50 focus:bg-white focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 outline-none transition"
-                        placeholder="Ahmad, DL-001, dll..."
-                      />
-                    </div>
-                  </div>
 
                   {/* Periode */}
-                  <div>
-                    <label className="block text-sm font-semibold text-gray-700 mb-2">
-                      Periode Waktu
-                    </label>
-                    <div className="relative">
-                      <Calendar className="absolute left-3.5 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
-                      <select
-                        value={filterType}
-                        onChange={(e) => {
-                          setFilterType(e.target.value);
-                          if (e.target.value !== "custom") {
-                            setDateFrom("");
-                            setDateTo("");
-                          }
-                        }}
-                        className="w-full pl-11 pr-4 py-3 border border-gray-200 rounded-xl bg-gray-50 focus:bg-white focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 outline-none transition font-medium"
-                      >
-                        <option value="all">Semua Waktu</option>
-                        <option value="today">Hari Ini</option>
-                        <option value="week">Minggu Ini</option>
-                        <option value="month">Bulan Ini</option>
-                        <option value="custom">Custom Range</option>
-                      </select>
-                    </div>
-                  </div>
 
                   {/* Custom */}
                   {filterType === "custom" && (
