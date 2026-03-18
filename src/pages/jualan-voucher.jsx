@@ -56,6 +56,9 @@ export default function JualanVoucher() {
   };
 
   useEffect(() => {
+    // ✅ TAMBAH DI SINI
+    if (isScanning) return;
+
     if (!memberSearch || !selectedVoucher) return;
 
     const cleaned = memberSearch.trim();
@@ -63,6 +66,7 @@ export default function JualanVoucher() {
     const matched = membersList.find(
       (m) => m.noTelp === cleaned || m.kodeMember === cleaned
     );
+
     if (matched) {
       jualVoucherMutation.mutate(
         {
@@ -77,7 +81,7 @@ export default function JualanVoucher() {
         }
       );
     }
-  }, [memberSearch, isScanning === false]);
+  }, [memberSearch]); // ❗ HAPUS isScanning === false
 
   // === QUERY: Ambil Voucher Master ===
   const {
@@ -227,86 +231,100 @@ export default function JualanVoucher() {
   // Mulai scan
   // Tambahkan useEffect untuk handle scan
   useEffect(() => {
-    let html5QrCode = null;
+    try {
+      let html5QrCode = null;
 
-    if (isScanning) {
-      // Tunggu sedikit agar DOM selesai render
-      const timer = setTimeout(() => {
-        const readerElement = document.getElementById("reader");
-        if (!readerElement) {
-          console.error("Elemen #reader tidak ditemukan!");
-          return;
-        }
+      if (isScanning) {
+        // Tunggu sedikit agar DOM selesai render
+        const timer = setTimeout(() => {
+          const readerElement = document.getElementById("reader");
+          if (!readerElement) {
+            console.error("Elemen #reader tidak ditemukan!");
+            return;
+          }
 
-        const config = {
-          fps: 10,
-          qrbox: { width: 250, height: 250 },
-          aspectRatio: 1.0,
-        };
+          const config = {
+            fps: 10,
+            qrbox: { width: 250, height: 250 },
+            aspectRatio: 1.0,
+          };
 
-        html5QrCode = new Html5Qrcode("reader");
-        html5QrCode
-          .start(
-            { facingMode: "environment" },
-            config,
-            async (decodedText) => {
-              if (isProcessingRef.current) return; // ✅ cegah double
-              isProcessingRef.current = true;
+          html5QrCode = new Html5Qrcode("reader");
+          html5QrCode
+            .start(
+              { facingMode: "environment" },
+              config,
+              async (decodedText) => {
+                if (isProcessingRef.current) return;
+                isProcessingRef.current = true;
 
-              const cleaned = decodedText.trim();
-              const matched = membersList.find(
-                (m) => m.noTelp === cleaned || m.kodeMember === cleaned
-              );
+                try {
+                  // ✅ STOP SCANNER DULU (INI KUNCI)
+                  if (html5QrCode) {
+                    await html5QrCode.stop().catch(() => {});
+                  }
 
-              try {
-                if (matched) {
-                  await jualVoucherMutation.mutateAsync({
-                    idVoucher: selectedVoucher.id,
-                    idMember: matched.id,
-                  });
-
-                  Swal.fire({
-                    title: "Berhasil!",
-                    text: `Voucher terjual ke ${matched.nama}`,
-                    icon: "success",
-                    timer: 1200,
-                    showConfirmButton: false,
-                  });
-
-                  // ✅ RESET SEMUA
-                  setSelectedVoucher(null);
-                  setMemberSearch("");
                   setIsScanning(false);
-                } else {
-                  Swal.fire({
-                    title: "Member Tidak Ditemukan!",
-                    text: `Kode "${cleaned}" tidak terdaftar.`,
-                    icon: "error",
-                  });
-                  setIsScanning(false);
+
+                  const cleaned = decodedText.trim();
+                  const matched = membersList.find(
+                    (m) => m.noTelp === cleaned || m.kodeMember === cleaned
+                  );
+
+                  if (matched) {
+                    await jualVoucherMutation.mutateAsync({
+                      idVoucher: selectedVoucher.id,
+                      idMember: matched.id,
+                    });
+
+                    Swal.fire({
+                      title: "Berhasil!",
+                      text: `Voucher terjual ke ${matched.nama}`,
+                      icon: "success",
+                      timer: 1200,
+                      showConfirmButton: false,
+                    });
+
+                    setSelectedVoucher(null);
+                    setMemberSearch("");
+                  } else {
+                    Swal.fire({
+                      title: "Member Tidak Ditemukan!",
+                      text: `Kode "${cleaned}" tidak terdaftar.`,
+                      icon: "error",
+                    });
+                  }
+                } finally {
+                  isProcessingRef.current = false;
                 }
-              } finally {
-                isProcessingRef.current = false;
+              },
+              (errorMessage) => {
+                // Opsional: log error
+                console.log(errorMessage);
               }
-            },
-            (errorMessage) => {
-              // Opsional: log error
-              console.log(errorMessage);
-            }
-          )
-          .catch((err) => {
-            console.error("Gagal mulai scanner:", err);
-            Swal.fire("Error", "Gagal membuka kamera", "error");
-            setIsScanning(false);
-          });
-      }, 100); // Delay kecil agar DOM siap
+            )
+            .catch((err) => {
+              console.error("Gagal mulai scanner:", err);
+              Swal.fire("Error", "Gagal membuka kamera", "error");
+              setIsScanning(false);
+            });
+        }, 100); // Delay kecil agar DOM siap
 
-      return () => {
-        clearTimeout(timer);
-        if (html5QrCode) {
-          html5QrCode.stop().then(() => html5QrCode.clear());
-        }
-      };
+        return () => {
+          clearTimeout(timer);
+
+          if (html5QrCode) {
+            if (html5QrCode.isScanning) {
+              html5QrCode
+                .stop()
+                .then(() => html5QrCode.clear())
+                .catch(() => {});
+            }
+          }
+        };
+      }
+    } catch (error) {
+      console.log(error);
     }
   }, [isScanning, selectedVoucher, membersList]);
 

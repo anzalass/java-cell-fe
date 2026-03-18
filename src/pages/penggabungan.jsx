@@ -63,7 +63,7 @@ export default function Penggabungan() {
           active={viewMode === "transaksi"}
           onClick={() => setViewMode("transaksi")}
           icon={<Receipt className="w-4 h-4" />}
-          label="Transaksi"
+          label="Transaksii"
         />
         <ToggleViewButton
           active={viewMode === "voucher"}
