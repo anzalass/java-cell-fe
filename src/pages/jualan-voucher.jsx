@@ -19,12 +19,14 @@ import { Html5Qrcode } from "html5-qrcode";
 export default function JualanVoucher() {
   const { user } = useAuthStore();
   const queryClient = useQueryClient();
+  const [isScanning, setIsScanning] = useState(false);
 
   const [selectedBrand, setSelectedBrand] = useState("");
   const [selectedVoucher, setSelectedVoucher] = useState(null);
   const [memberSearch, setMemberSearch] = useState("");
   const [membersList, setMembersList] = useState([]);
   const memberInputRef = useRef(null);
+  const isProcessingRef = useRef(false);
 
   useEffect(() => {
     const fetchMembers = async () => {
@@ -75,7 +77,7 @@ export default function JualanVoucher() {
         }
       );
     }
-  }, [memberSearch]);
+  }, [memberSearch, isScanning === false]);
 
   // === QUERY: Ambil Voucher Master ===
   const {
@@ -215,7 +217,6 @@ export default function JualanVoucher() {
   const isError = errorMaster || errorTransaksi;
 
   // Tambahkan state untuk scanner
-  const [isScanning, setIsScanning] = useState(false);
   const scannerInstance = useRef(null);
 
   // Fungsi bantu: cari member by noTelp atau kodeMember
@@ -249,31 +250,44 @@ export default function JualanVoucher() {
             { facingMode: "environment" },
             config,
             async (decodedText) => {
+              if (isProcessingRef.current) return; // ✅ cegah double
+              isProcessingRef.current = true;
+
               const cleaned = decodedText.trim();
               const matched = membersList.find(
                 (m) => m.noTelp === cleaned || m.kodeMember === cleaned
               );
 
-              if (matched) {
-                await jualVoucherMutation.mutateAsync({
-                  idVoucher: selectedVoucher.id,
-                  idMember: matched.id,
-                });
-                Swal.fire({
-                  title: "Berhasil!",
-                  text: `Voucher terjual ke ${matched.nama}`,
-                  icon: "success",
-                  timer: 1500,
-                  showConfirmButton: false,
-                });
-              } else {
-                Swal.fire({
-                  title: "Member Tidak Ditemukan!",
-                  text: `Kode "${cleaned}" tidak terdaftar.`,
-                  icon: "error",
-                });
+              try {
+                if (matched) {
+                  await jualVoucherMutation.mutateAsync({
+                    idVoucher: selectedVoucher.id,
+                    idMember: matched.id,
+                  });
+
+                  Swal.fire({
+                    title: "Berhasil!",
+                    text: `Voucher terjual ke ${matched.nama}`,
+                    icon: "success",
+                    timer: 1200,
+                    showConfirmButton: false,
+                  });
+
+                  // ✅ RESET SEMUA
+                  setSelectedVoucher(null);
+                  setMemberSearch("");
+                  setIsScanning(false);
+                } else {
+                  Swal.fire({
+                    title: "Member Tidak Ditemukan!",
+                    text: `Kode "${cleaned}" tidak terdaftar.`,
+                    icon: "error",
+                  });
+                  setIsScanning(false);
+                }
+              } finally {
+                isProcessingRef.current = false;
               }
-              setIsScanning(false);
             },
             (errorMessage) => {
               // Opsional: log error
