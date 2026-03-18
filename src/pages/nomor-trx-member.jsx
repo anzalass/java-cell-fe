@@ -395,6 +395,7 @@ export default function DataMemberPage() {
                   onClick={() => {
                     setIsOpenModal(false);
                     resetForm();
+                    setSelectedMember(null);
                   }}
                   className="text-gray-400 hover:text-gray-600"
                 >

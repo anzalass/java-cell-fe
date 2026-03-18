@@ -199,6 +199,7 @@ export default function UangModalPage() {
       tanggal: data.tanggal,
       jumlah: data.jumlah,
     });
+    resetForm();
   };
 
   const saveEdit = (data) => {
@@ -210,6 +211,7 @@ export default function UangModalPage() {
         jumlah: data.jumlah,
       },
     });
+    resetForm();
   };
 
   // Handlers

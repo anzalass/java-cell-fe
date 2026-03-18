@@ -211,7 +211,12 @@ export default function ListDownlinePage() {
   } = useForm();
 
   const openAddModal = () => {
-    resetForm();
+    resetForm({
+      kodeDownline: "",
+      namaDownline: "",
+      noHp: "",
+    }); // ✅ paksa kosong
+
     setOpenAdd(true);
   };
 
@@ -221,6 +226,7 @@ export default function ListDownlinePage() {
       nama: data.namaDownline,
       noHp: data.noHp,
     });
+    resetForm();
   };
 
   const saveEdit = (data) => {
@@ -232,6 +238,8 @@ export default function ListDownlinePage() {
         noHp: data.noHp,
       },
     });
+
+    resetForm();
   };
 
   const formatDate = (dateString) => {
@@ -486,11 +494,12 @@ export default function ListDownlinePage() {
                         </span>
                       </td>
                       <td className="p-4 font-medium text-gray-800">
-                        {item.noHp}
-                      </td>
-                      <td className="p-4 font-medium text-gray-800">
                         {item.nama}
                       </td>
+                      <td className="p-4 font-medium text-gray-800">
+                        {item.noHp}
+                      </td>
+
                       <td className="p-4 text-gray-600">
                         {formatDate(item.createdAt)}
                       </td>
@@ -650,15 +659,13 @@ function DownlineModal({
                   message: "Hanya boleh angka",
                 },
               })}
-              defaultValue={defaultValues?.kodeDownline || ""}
+              defaultValue={defaultValues?.noHp || ""}
               className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
               placeholder="08xxx"
             />
 
             {errors.kodeDownline && (
-              <p className="text-xs text-red-500 mt-1">
-                {errors.kodeDownline.message}
-              </p>
+              <p className="text-xs text-red-500 mt-1">{errors.noHp.message}</p>
             )}
           </div>
 
