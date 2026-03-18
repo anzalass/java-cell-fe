@@ -910,6 +910,7 @@ function ModalForm({
               <option value="Tri">Tri</option>
               <option value="Indosat / IM3">Indosat / IM3</option>
               <option value="XL">XL</option>
+              <option value="Byu">Byu</option>
             </select>
             {errors.brand && (
               <p className="text-xs text-red-500 mt-1">Wajib diisi</p>
