@@ -21,9 +21,13 @@ import {
   TrendingUp,
   UserCheck,
   Eye,
+  Download,
+  X,
 } from "lucide-react";
 import { useDebounce } from "../components/use-debounce";
 import { useNavigate } from "react-router-dom";
+
+import * as XLSX from "xlsx";
 
 export default function ListMemberPage() {
   const { user } = useAuthStore();
@@ -37,6 +41,118 @@ export default function ListMemberPage() {
   const [filterNoTelp, setFilterNoTelp] = useState("");
   const [filterMinTransaksi, setFilterMinTransaksi] = useState("");
   const [filterMaxTransaksi, setFilterMaxTransaksi] = useState("");
+  const [startDate, setStartDate] = useState("");
+  const [endDate, setEndDate] = useState("");
+
+  // State untuk modal export
+  const [openExportModal, setOpenExportModal] = useState(false);
+  const [exportOption, setExportOption] = useState("filtered");
+  const [loadingExport, setLoadingExport] = useState(false);
+
+  // === EXPORT FUNCTION ===
+  const exportToExcel = (exportData, filename) => {
+    // Format data untuk Excel
+    const worksheetData = exportData.map((member, index) => ({
+      No: index + 1,
+      "Nama Member": member.nama || "-",
+      "No. Telepon": member.noTelp || "-",
+      "Kode Member": member.kodeMember || "-",
+      "Tanggal Dibuat": new Date(member.createdAt).toLocaleDateString("id-ID", {
+        day: "2-digit",
+        month: "short",
+        year: "numeric",
+      }),
+    }));
+
+    // Buat worksheet
+    const worksheet = XLSX.utils.json_to_sheet(worksheetData);
+
+    // Atur lebar kolom
+    const wscols = [
+      { wch: 5 }, // No
+      { wch: 25 }, // Nama Member
+      { wch: 18 }, // No. Telepon
+      { wch: 18 }, // Kode Member
+      { wch: 15 }, // Tanggal Dibuat
+    ];
+    worksheet["!cols"] = wscols;
+
+    // Buat workbook
+    const workbook = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(workbook, worksheet, "Daftar Member");
+
+    // Generate file
+    XLSX.writeFile(workbook, filename);
+  };
+
+  const handleExport = async () => {
+    try {
+      setLoadingExport(true);
+
+      // Tentukan parameter export
+      const exportParams = new URLSearchParams();
+
+      if (exportOption === "filtered") {
+        // Gunakan filter yang aktif
+        if (startDate) exportParams.append("startDate", startDate);
+        if (endDate) exportParams.append("endDate", endDate);
+        if (filterNama || filterNoTelp) {
+          const search =
+            filterNama && filterNoTelp
+              ? `${filterNama} ${filterNoTelp}`
+              : filterNama || filterNoTelp;
+          exportParams.append("search", search);
+        }
+        if (filterMinTransaksi)
+          exportParams.append("minTotalTransaksi", filterMinTransaksi);
+        if (filterMaxTransaksi)
+          exportParams.append("maxTotalTransaksi", filterMaxTransaksi);
+        exportParams.append("sortBy", sortConfig.key);
+        exportParams.append("sortOrder", sortConfig.direction);
+      }
+
+      // Ambil semua data (pageSize besar)
+      exportParams.append("page", "1");
+      exportParams.append("pageSize", "10000");
+
+      // Fetch data export
+      const res = await api.get(`member/filter?${exportParams.toString()}`, {
+        headers: { Authorization: `Bearer ${user.token}` },
+      });
+
+      const exportData = res.data.data || [];
+
+      if (exportData.length === 0) {
+        alert("Tidak ada data untuk di-export");
+        return;
+      }
+
+      // Generate filename dengan timestamp
+      const now = new Date();
+      const dateStr = now.toISOString().split("T")[0];
+      const timeStr = now
+        .toLocaleTimeString("id-ID", { hour12: false })
+        .replace(/:/g, "-");
+      const filename = `daftar-member-${dateStr}-${timeStr}.xlsx`;
+
+      // Export ke Excel
+      exportToExcel(exportData, filename);
+
+      // Tutup modal
+      setOpenExportModal(false);
+      alert(`Berhasil export ${exportData.length} data ke ${filename}`);
+    } catch (err) {
+      console.error("Export error:", err);
+      alert(
+        "Gagal export: " +
+          (err.response?.data?.message ||
+            err.message ||
+            "Error tidak diketahui")
+      );
+    } finally {
+      setLoadingExport(false);
+    }
+  };
 
   // Sorting
   const [sortConfig, setSortConfig] = useState({
@@ -74,11 +190,21 @@ export default function ListMemberPage() {
       sortConfig,
       page,
       perPage,
+      startDate,
+      endDate,
     ],
     queryFn: async () => {
       const params = new URLSearchParams();
-      if (filterNama) params.append("search", filterNama);
-      if (filterNoTelp) params.append("search", filterNoTelp);
+      if (startDate) params.append("startDate", startDate);
+      if (endDate) params.append("endDate", endDate);
+
+      if (filterNama && filterNoTelp) {
+        params.append("search", `${filterNama} ${filterNoTelp}`);
+      } else if (filterNama) {
+        params.append("search", filterNama);
+      } else if (filterNoTelp) {
+        params.append("search", filterNoTelp);
+      }
       if (filterMinTransaksi)
         params.append("minTotalTransaksi", filterMinTransaksi);
       if (filterMaxTransaksi)
@@ -226,6 +352,8 @@ export default function ListMemberPage() {
     setFilterMinTransaksi("");
     setFilterMaxTransaksi("");
     resetPage();
+    setStartDate("");
+    setEndDate("");
   };
 
   const {
@@ -308,15 +436,115 @@ export default function ListMemberPage() {
                 </p>
               </div>
             </div>
-            <button
-              onClick={openAddModal}
-              className="px-6 py-3 bg-gradient-to-r from-rose-600 to-pink-600 hover:from-rose-700 hover:to-pink-700 text-white rounded-lg font-semibold shadow-md hover:shadow-lg transition-all flex items-center gap-2 justify-center"
-            >
-              <Plus className="w-5 h-5" />
-              Tambah Member
-            </button>
+            <div className="flex gap-3">
+              <button
+                onClick={() => setOpenExportModal(true)}
+                className="px-4 py-3 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg font-semibold shadow-md hover:shadow-lg transition-all flex items-center gap-2 justify-center"
+              >
+                <Download className="w-5 h-5" />
+                Export Excel
+              </button>
+              <button
+                onClick={openAddModal}
+                className="px-6 py-3 bg-gradient-to-r from-rose-600 to-pink-600 hover:from-rose-700 hover:to-pink-700 text-white rounded-lg font-semibold shadow-md hover:shadow-lg transition-all flex items-center gap-2 justify-center"
+              >
+                <Plus className="w-5 h-5" />
+                Tambah Member
+              </button>
+            </div>
           </div>
         </div>
+
+        {/* ... (stats cards & filters tetap sama) */}
+
+        {/* MODAL EXPORT */}
+        {openExportModal && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
+            <div className="bg-white rounded-2xl p-6 w-full max-w-md mx-4">
+              <div className="flex justify-between items-center mb-4">
+                <h3 className="text-lg font-bold text-gray-900">
+                  Export Data Member
+                </h3>
+                <button
+                  onClick={() => setOpenExportModal(false)}
+                  className="text-gray-400 hover:text-gray-600"
+                >
+                  <X className="w-5 h-5" />
+                </button>
+              </div>
+              <p className="text-gray-600 mb-6">
+                Pilih opsi export data sesuai kebutuhan:
+              </p>
+
+              <div className="space-y-3 mb-6">
+                {/* Opsi 1: Sesuai Filter */}
+                <label className="flex items-start gap-3 p-3 border rounded-lg cursor-pointer hover:border-emerald-300 transition">
+                  <input
+                    type="radio"
+                    name="exportOption"
+                    value="filtered"
+                    checked={exportOption === "filtered"}
+                    onChange={() => setExportOption("filtered")}
+                    className="form-radio text-emerald-600 mt-1"
+                  />
+                  <div>
+                    <p className="font-medium text-gray-800">
+                      Sesuai Filter Saat Ini
+                    </p>
+                    <p className="text-xs text-gray-500 mt-1">
+                      Hanya data yang terlihat di tabel dengan filter yang aktif
+                      ({members.length} data)
+                    </p>
+                  </div>
+                </label>
+
+                {/* Opsi 2: Semua Data */}
+                <label className="flex items-start gap-3 p-3 border rounded-lg cursor-pointer hover:border-emerald-300 transition">
+                  <input
+                    type="radio"
+                    name="exportOption"
+                    value="all"
+                    checked={exportOption === "all"}
+                    onChange={() => setExportOption("all")}
+                    className="form-radio text-emerald-600 mt-1"
+                  />
+                  <div>
+                    <p className="font-medium text-gray-800">Semua Data</p>
+                    <p className="text-xs text-gray-500 mt-1">
+                      Seluruh data member tanpa filter (mungkin ribuan data)
+                    </p>
+                  </div>
+                </label>
+              </div>
+
+              <div className="flex justify-end gap-3">
+                <button
+                  onClick={() => setOpenExportModal(false)}
+                  className="px-4 py-2 text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200"
+                >
+                  Batal
+                </button>
+                <button
+                  onClick={handleExport}
+                  disabled={loadingExport}
+                  className="px-4 py-2 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 disabled:opacity-50 flex items-center gap-2"
+                >
+                  {loadingExport ? (
+                    <>
+                      <span className="animate-spin">⏳</span>
+                      <span>Menyiapkan...</span>
+                    </>
+                  ) : (
+                    <>
+                      <Download className="w-4 h-4" />
+                      <span>Export Excel</span>
+                    </>
+                  )}
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
 
         {/* Stats Cards */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
@@ -382,6 +610,32 @@ export default function ListMemberPage() {
               </div>
             </div>
 
+            {/* Start Date */}
+            <div>
+              <label className="block text-sm font-semibold text-gray-700 mb-2">
+                Tanggal Mulai
+              </label>
+              <input
+                type="date"
+                value={startDate}
+                onChange={(e) => setStartDate(e.target.value)}
+                className="w-full px-4 py-3 border-2 border-gray-200 rounded-lg focus:border-rose-500 focus:outline-none"
+              />
+            </div>
+
+            {/* End Date */}
+            <div>
+              <label className="block text-sm font-semibold text-gray-700 mb-2">
+                Tanggal Akhir
+              </label>
+              <input
+                type="date"
+                value={endDate}
+                onChange={(e) => setEndDate(e.target.value)}
+                className="w-full px-4 py-3 border-2 border-gray-200 rounded-lg focus:border-rose-500 focus:outline-none"
+              />
+            </div>
+
             {/* Min Transaksi */}
           </div>
 
@@ -424,6 +678,10 @@ export default function ListMemberPage() {
                     </div>
                   </th>
 
+                  <th className="p-4 text-left font-semibold cursor-pointer hover:bg-rose-700 transition">
+                    <div className="flex items-center gap-2">Kode Member</div>
+                  </th>
+
                   <th
                     className="p-4 text-left font-semibold cursor-pointer hover:bg-rose-700 transition"
                     onClick={() => handleSort("createdAt")}
@@ -460,6 +718,18 @@ export default function ListMemberPage() {
                         {member.noTelp ? (
                           <span className="bg-gray-100 px-2 py-1 rounded font-mono text-xs">
                             {member.noTelp}
+                          </span>
+                        ) : (
+                          <span className="text-gray-400 italic text-xs">
+                            -
+                          </span>
+                        )}
+                      </td>
+
+                      <td className="p-4 text-gray-600">
+                        {member.kodeMember ? (
+                          <span className="bg-gray-100 px-2 py-1 rounded font-mono text-xs">
+                            {member.kodeMember}
                           </span>
                         ) : (
                           <span className="text-gray-400 italic text-xs">

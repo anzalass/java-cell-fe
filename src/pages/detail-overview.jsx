@@ -218,12 +218,16 @@ export default function DashboardKeuangan() {
         Number(d.totalKeuntunganHariIni || 0) +
         Number(d.keuntunganGrosirVoucherHariIni || 0) +
         Number(d.keuntunganAccHariIni || 0) +
-        Number(d.keuntunganVoucherHarian || 0),
+        Number(d.keuntunganVoucherHarian || 0) +
+        Number(d.keuntunganServiceHariIni || 0) +
+        Number(d.keuntunganSparepartHariIni || 0),
 
       omsetHariIni:
-        (d.omsetGrosirVoucherHariIni || 0) +
         (d.omsetAccHariIni || 0) +
-        (d.omsetVoucherHarian || 0),
+        (d.omsetVoucherHarian || 0) +
+        (d.omsetGrosirVoucherHariIni || 0) +
+        (d.omsetSparepartHariIni || 0) +
+        (d.omsetServicetHariIni || 0),
 
       transaksiHariIni:
         (d.totalTransaksiVoucherHarian || 0) +

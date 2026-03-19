@@ -29,7 +29,7 @@ export const StatsSection = React.memo(function StatsSection({ stats }) {
             <p className="text-slate-500 text-xs sm:text-sm font-medium">
               Keuntungan Hari Ini
             </p>
-            <p className="text-base sm:text-lg font-bold mt-1 text-emerald-700 truncate">
+            <p className="text-sm sm:text-lg font-bold mt-1 text-emerald-700 truncate">
               Rp {(d.keuntunganHariIni ?? 0).toLocaleString("id-ID")}
             </p>
           </div>
@@ -51,7 +51,7 @@ export const StatsSection = React.memo(function StatsSection({ stats }) {
             <p className="text-slate-500 text-xs sm:text-sm font-medium">
               Omset Hari Ini
             </p>
-            <p className="text-base sm:text-lg font-bold mt-1 text-blue-700 truncate">
+            <p className="text-sm sm:text-lg font-bold mt-1 text-blue-700 truncate">
               Rp {(d.omsetHariIni ?? 0).toLocaleString("id-ID")}
             </p>
           </div>
@@ -73,7 +73,7 @@ export const StatsSection = React.memo(function StatsSection({ stats }) {
             <p className="text-slate-500 text-xs sm:text-sm font-medium">
               Transaksi Hari Ini
             </p>
-            <p className="text-base sm:text-lg font-bold mt-1 text-indigo-700 truncate">
+            <p className="text-sm sm:text-lg font-bold mt-1 text-indigo-700 truncate">
               {d.transaksiHariIni ?? 0}
             </p>
           </div>
@@ -94,7 +94,7 @@ export const StatsSection = React.memo(function StatsSection({ stats }) {
             <p className="text-slate-500 text-xs sm:text-sm font-medium">
               Voucher Pending
             </p>
-            <p className="text-base sm:text-lg font-bold mt-1 text-amber-700 truncate">
+            <p className="text-sm sm:text-lg font-bold mt-1 text-amber-700 truncate">
               {d.voucherPending ?? 0} Pesanan
             </p>
           </div>
@@ -116,7 +116,7 @@ export const StatsSection = React.memo(function StatsSection({ stats }) {
             <p className="text-slate-500 text-xs sm:text-sm font-medium">
               Omset Sparepart + Service
             </p>
-            <p className="text-base sm:text-lg font-bold mt-1 text-violet-700 truncate">
+            <p className="text-sm sm:text-lg font-bold mt-1 text-violet-700 truncate">
               Rp {(d.omsetService ?? 0).toLocaleString("id-ID")}
             </p>
           </div>
@@ -138,7 +138,7 @@ export const StatsSection = React.memo(function StatsSection({ stats }) {
             <p className="text-slate-500 text-xs sm:text-sm font-medium">
               Keuntungan Sparepart + Service
             </p>
-            <p className="text-base sm:text-lg font-bold mt-1 text-rose-700 truncate">
+            <p className="text-sm sm:text-lg font-bold mt-1 text-rose-700 truncate">
               Rp {(d.keuntunganService ?? 0).toLocaleString("id-ID")}
             </p>
           </div>
